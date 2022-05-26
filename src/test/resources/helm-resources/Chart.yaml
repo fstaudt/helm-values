@@ -1,0 +1,20 @@
+apiVersion: v2
+name: helm-chart
+version: 0.0.0
+description: Example helm chart
+dependencies:
+  - name: sub-chart-with-external-json-schema
+    version: 0.1.0
+    repository: "@mycharts"
+  - name: sub-chart-with-external-json-schema
+    version: 0.1.0
+    repository: "@mycharts"
+    alias: sub-chart-alias
+  - name: sub-chart-with-embedded-json-schema
+    version: 0.1.0
+    repository: "@thirdpartycharts"
+maintainers:
+  - name: François Staudt
+    email: fstaudt@gmail.com
+    url: https://github.com/fstaudt
+icon: https://helm.sh/img/helm.svg
