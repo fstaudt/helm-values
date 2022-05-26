@@ -20,16 +20,17 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
 import java.io.File
+import java.net.URL
 
 @UntrackedTask(because = "depends on external JSON schema repositories")
 open class HelmDownloadJsonSchemas : DefaultTask() {
     companion object {
         const val HELM_DOWNLOAD_JSON_SCHEMAS = "helmDownloadJsonSchemas"
-        const val DOWNLOADS = "downloads"
+        const val DOWNLOADS = "$HELM_VALUES/downloads"
     }
 
     @OutputDirectory
-    val downloadedSchemasFolder = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS")
+    val downloadedSchemasFolder = File(project.buildDir, DOWNLOADS)
 
     @Nested
     lateinit var extension: HelmValuesAssistantExtension
@@ -54,14 +55,14 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
     }
 
     private fun downloadSchema(dependency: ChartDependency, fileName: String) {
-        val valuesSchemaFile = File(downloadedSchemasFolder, "${dependency.alias ?: dependency.name}/$fileName")
-        valuesSchemaFile.ensureParentDirsCreated()
         extension.repositoryMappings[dependency.repository]?.let { repository ->
             val url = "${repository.basePath}/${dependency.name}/${dependency.version}/$fileName"
             jsonSchema(url, repository.authorizationHeader).let {
+                val valuesSchemaFile = File(downloadedSchemasFolder, "${repository.downloadFolder}${URL(url).path}")
+                valuesSchemaFile.ensureParentDirsCreated()
                 valuesSchemaFile.writeText(it)
             }
-        } ?: valuesSchemaFile.writeText("{}")
+        }
     }
 
     private fun jsonSchema(url: String, authorizationHeader: String?): String {

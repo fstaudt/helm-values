@@ -7,7 +7,7 @@ dependencies:
     version: 0.1.0
     repository: "@myCharts"
   - name: external-json-schema
-    version: 0.1.0
+    version: 0.1.1
     repository: "@myCharts"
     alias: external-json-schema-alias
   - name: protected-json-schema
