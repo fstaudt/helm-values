@@ -1,10 +1,12 @@
 package io.github.fstaudt.helm.tasks
 
 import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.notFound
 import com.github.tomakehurst.wiremock.client.WireMock.ok
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
+import com.github.tomakehurst.wiremock.client.WireMock.unauthorized
 import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
@@ -28,24 +30,18 @@ import java.io.File
 class HelmDownloadJsonSchemasTest {
     private lateinit var testProject: TestProject
 
-    companion object {
-        private const val DOWNLOADS_EXTERNAL_CHART = "$HELM_VALUES/$DOWNLOADS/sub-chart-with-external-json-schema"
-        const val DOWNLOADED_EXTERNAL_VALUES_SCHEMA = "$DOWNLOADS_EXTERNAL_CHART/helm-values.json"
-        const val DOWNLOADED_EXTERNAL_GLOBAL_SCHEMA = "$DOWNLOADS_EXTERNAL_CHART/helm-global.json"
-        private const val DOWNLOADS_EMBEDDED_CHART = "$HELM_VALUES/$DOWNLOADS/sub-chart-with-embedded-json-schema"
-        const val DOWNLOADED_EMBEDDED_VALUES_SCHEMA = "$DOWNLOADS_EMBEDDED_CHART/helm-values.json"
-        const val DOWNLOADED_EMBEDDED_GLOBAL_SCHEMA = "$DOWNLOADS_EMBEDDED_CHART/helm-global.json"
-        private const val DOWNLOADS_ALIAS_CHART = "$HELM_VALUES/$DOWNLOADS/sub-chart-alias"
-        const val DOWNLOADED_ALIAS_VALUES_SCHEMA = "$DOWNLOADS_ALIAS_CHART/helm-values.json"
-        const val DOWNLOADED_ALIAS_GLOBAL_SCHEMA = "$DOWNLOADS_ALIAS_CHART/helm-global.json"
-    }
-
     @BeforeEach
     fun `init wiremock`() {
-        stubFor(get("/charts/sub-chart-with-external-json-schema/0.1.0/helm-values.json")
-                .willReturn(ok().withResponseBody(bodySchema("sub-chart-with-external-json-schema/helm-values.json"))))
-        stubFor(get("/charts/sub-chart-with-external-json-schema/0.1.0/helm-global.json")
-                .willReturn(ok().withResponseBody(bodySchema("sub-chart-with-external-json-schema/helm-global.json"))))
+        stubFor(get("/charts/external-json-schema/0.1.0/helm-values.json")
+                .willReturn(ok().withResponseBody(bodySchema("external-json-schema/helm-values.json"))))
+        stubFor(get("/charts/external-json-schema/0.1.0/helm-global.json")
+                .willReturn(ok().withResponseBody(bodySchema("external-json-schema/helm-global.json"))))
+        stubFor(get("/protected-charts/protected-json-schema/0.1.0/helm-values.json")
+                .withHeader("Authorization", equalTo("Basic dXNlcjpwYXNzd29yZA=="))
+                .willReturn(ok().withResponseBody(bodySchema("protected-json-schema/helm-values.json"))))
+        stubFor(get("/protected-charts/protected-json-schema/0.1.0/helm-global.json")
+                .withHeader("Authorization", equalTo("Basic dXNlcjpwYXNzd29yZA=="))
+                .willReturn(ok().withResponseBody(bodySchema("protected-json-schema/helm-global.json"))))
     }
 
     @BeforeEach
@@ -55,7 +51,8 @@ class HelmDownloadJsonSchemasTest {
             appendText("""
                 helmValuesAssistant {
                   repositoryMappings = mapOf(
-                    "@mycharts" to io.github.fstaudt.helm.model.RepositoryMapping("http://localhost:1080/charts")
+                    "@myCharts" to RepositoryMapping("http://localhost:1080/charts"),
+                    "@myProtectedCharts" to RepositoryMapping("http://localhost:1080/protected-charts", "Basic dXNlcjpwYXNzd29yZA==")
                   )
                 }
             """.trimIndent())
@@ -70,44 +67,61 @@ class HelmDownloadJsonSchemasTest {
     }
 
     @Test
-    fun `downloadJsonSchema should download JSON schemas of dependencies from JSON schema repository in build folder`() {
+    fun `helmDownloadJsonSchema should download JSON schemas of dependencies from JSON schema repository`() {
         testProject.runTask(WITH_BUILD_CACHE, HELM_DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(File("${testProject.buildDir}/$DOWNLOADED_EXTERNAL_VALUES_SCHEMA")).isFile
-                    .content().contains("http://mycharts.schema.repository/sub-chart-with-external-json-schema/0.1.0/helm-values.json")
-            assertThat(File("${testProject.buildDir}/$DOWNLOADED_EXTERNAL_GLOBAL_SCHEMA")).isFile
-                    .content().contains("http://mycharts.schema.repository/sub-chart-with-external-json-schema/0.1.0/helm-global.json")
+            val downloadFolder = "${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS/external-json-schema"
+            assertThat(File("$downloadFolder/helm-values.json")).isFile
+                    .content().contains("http://myCharts/external-json-schema/0.1.0/helm-values.json")
+            assertThat(File("$downloadFolder/helm-global.json")).isFile
+                    .content().contains("http://myCharts/external-json-schema/0.1.0/helm-global.json")
         }
     }
 
     @Test
-    fun `downloadJsonSchema should use dependency alias as download folder in build folder`() {
+    fun `helmDownloadJsonSchema should download JSON schemas of dependencies from protected JSON schema repository`() {
         testProject.runTask(WITH_BUILD_CACHE, HELM_DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(File("${testProject.buildDir}/$DOWNLOADED_ALIAS_VALUES_SCHEMA")).isFile
-                    .content().contains("http://mycharts.schema.repository/sub-chart-with-external-json-schema/0.1.0/helm-values.json")
-            assertThat(File("${testProject.buildDir}/$DOWNLOADED_ALIAS_GLOBAL_SCHEMA")).isFile
-                    .content().contains("http://mycharts.schema.repository/sub-chart-with-external-json-schema/0.1.0/helm-global.json")
+            val downloadFolder = "${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS/protected-json-schema"
+            assertThat(File("$downloadFolder/helm-values.json")).isFile
+                    .content().contains("http://myProtectedCharts/protected-json-schema/0.1.0/helm-values.json")
+            assertThat(File("$downloadFolder/helm-global.json")).isFile
+                    .content().contains("http://myProtectedCharts/protected-json-schema/0.1.0/helm-global.json")
         }
     }
 
     @Test
-    fun `downloadJsonSchema should generate empty JSON schema in build folder when JSON schema is not found in repository`() {
+    fun `helmDownloadJsonSchema should use dependency alias as download folder`() {
+        testProject.runTask(WITH_BUILD_CACHE, HELM_DOWNLOAD_JSON_SCHEMAS).also {
+            assertThat(it.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            val downloadFolder = "${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS/external-json-schema-alias"
+            assertThat(File("$downloadFolder/helm-values.json")).isFile
+                    .content().contains("http://myCharts/external-json-schema/0.1.0/helm-values.json")
+            assertThat(File("$downloadFolder/helm-global.json")).isFile
+                    .content().contains("http://myCharts/external-json-schema/0.1.0/helm-global.json")
+        }
+    }
+
+    @Test
+    fun `helmDownloadJsonSchema should generate JSON schema with error code when JSON schema is not downloaded from repository`() {
         WireMock.reset()
-        stubFor(get("/charts/sub-chart-with-external-json-schema/0.1.0/helm-values.json").willReturn(notFound()))
+        stubFor(get("/charts/external-json-schema/0.1.0/helm-values.json").willReturn(unauthorized()))
+        stubFor(get("/charts/external-json-schema/0.1.0/helm-global.json").willReturn(notFound()))
         testProject.runTask(WITH_BUILD_CACHE, HELM_DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(File("${testProject.buildDir}/$DOWNLOADED_EXTERNAL_VALUES_SCHEMA")).isFile.hasContent("{}")
-            assertThat(File("${testProject.buildDir}/$DOWNLOADED_EXTERNAL_GLOBAL_SCHEMA")).isFile.hasContent("{}")
+            val downloadFolder = "${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS/external-json-schema"
+            assertThat(File("$downloadFolder/helm-values.json")).isFile.hasContent("{\"errorCode\":\"401\"}")
+            assertThat(File("$downloadFolder/helm-global.json")).isFile.hasContent("{\"errorCode\":\"404\"}")
         }
     }
 
     @Test
-    fun `downloadJsonSchema should generate empty JSON schema in build folder when repository mapping is not configured`() {
+    fun `helmDownloadJsonSchema should generate empty JSON schema when repository mapping is not configured`() {
         testProject.runTask(WITH_BUILD_CACHE, HELM_DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(File("${testProject.buildDir}/$DOWNLOADED_EMBEDDED_VALUES_SCHEMA")).isFile.hasContent("{}")
-            assertThat(File("${testProject.buildDir}/$DOWNLOADED_EMBEDDED_GLOBAL_SCHEMA")).isFile.hasContent("{}")
+            val downloadFolder = "${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS/embedded-json-schema"
+            assertThat(File("$downloadFolder/helm-values.json")).isFile.hasContent("{}")
+            assertThat(File("$downloadFolder/helm-global.json")).isFile.hasContent("{}")
         }
     }
 

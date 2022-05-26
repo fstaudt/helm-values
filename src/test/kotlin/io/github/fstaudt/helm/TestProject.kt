@@ -30,6 +30,8 @@ private fun TestProject.initSettingsFile(): File {
 fun TestProject.initBuildFile(customizeBuildFile: File.() -> Unit = {}): File {
     return File(this, "build.gradle.kts").apply {
         writeText("""
+                import io.github.fstaudt.helm.model.RepositoryMapping;
+                
                 plugins {
                   id("io.github.fstaudt.helm-values-assistant")
                 }

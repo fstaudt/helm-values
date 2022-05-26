@@ -3,16 +3,19 @@ name: helm-chart
 version: 0.0.0
 description: Example helm chart
 dependencies:
-  - name: sub-chart-with-external-json-schema
+  - name: external-json-schema
     version: 0.1.0
-    repository: "@mycharts"
-  - name: sub-chart-with-external-json-schema
+    repository: "@myCharts"
+  - name: external-json-schema
     version: 0.1.0
-    repository: "@mycharts"
-    alias: sub-chart-alias
-  - name: sub-chart-with-embedded-json-schema
+    repository: "@myCharts"
+    alias: external-json-schema-alias
+  - name: protected-json-schema
     version: 0.1.0
-    repository: "@thirdpartycharts"
+    repository: "@myProtectedCharts"
+  - name: embedded-json-schema
+    version: 0.1.0
+    repository: "@thirdpartyCharts"
 maintainers:
   - name: François Staudt
     email: fstaudt@gmail.com

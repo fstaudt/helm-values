@@ -57,15 +57,18 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
         val valuesSchemaFile = File(downloadedSchemasFolder, "${dependency.alias ?: dependency.name}/$fileName")
         valuesSchemaFile.ensureParentDirsCreated()
         extension.repositoryMappings[dependency.repository]?.let { repository ->
-            jsonSchema("${repository.basePath}/${dependency.name}/${dependency.version}/$fileName")?.let {
+            val url = "${repository.basePath}/${dependency.name}/${dependency.version}/$fileName"
+            jsonSchema(url, repository.authorizationHeader).let {
                 valuesSchemaFile.writeText(it)
-            } ?: valuesSchemaFile.writeText("{}")
+            }
         } ?: valuesSchemaFile.writeText("{}")
     }
 
-    private fun jsonSchema(url: String): String? {
-        return client.execute(HttpGet(url)).use {
-            it.takeIf { it.code == 200 }?.run { EntityUtils.toString(entity) }
+    private fun jsonSchema(url: String, authorizationHeader: String?): String {
+        val request = HttpGet(url)
+        authorizationHeader?.let { request.addHeader("Authorization", authorizationHeader) }
+        return client.execute(request).use {
+            if (it.code == 200) EntityUtils.toString(it.entity) else "{\"errorCode\":\"${it.code}\"}"
         }
     }
 }
