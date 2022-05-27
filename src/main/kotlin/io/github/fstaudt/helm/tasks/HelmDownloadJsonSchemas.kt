@@ -25,6 +25,7 @@ import java.net.URL
 @UntrackedTask(because = "depends on external JSON schema repositories")
 open class HelmDownloadJsonSchemas : DefaultTask() {
     companion object {
+        const val SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
         const val HELM_DOWNLOAD_JSON_SCHEMAS = "helmDownloadJsonSchemas"
         const val DOWNLOADS = "$HELM_VALUES/downloads"
     }
@@ -69,7 +70,17 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
         val request = HttpGet(url)
         authorizationHeader?.let { request.addHeader("Authorization", authorizationHeader) }
         return client.execute(request).use {
-            if (it.code == 200) EntityUtils.toString(it.entity) else "{\"errorCode\":\"${it.code}\"}"
+            if (it.code == 200)
+                EntityUtils.toString(it.entity)
+            else
+                """
+                    {
+                      "${'$'}schema":"$SCHEMA_VERSION",
+                      "${'$'}id":"$url",
+                      "type":"object",
+                      "${'$'}error":"${it.code} - ${it.reasonPhrase}"
+                    }
+                """.trimIndent()
         }
     }
 }

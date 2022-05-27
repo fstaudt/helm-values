@@ -10,7 +10,7 @@ import java.io.File
 
 class HelmValuesAssistantPlugin : Plugin<Project> {
     companion object {
-        const val HELM_VALUES = "helm-values"
+        const val HELM_VALUES = "helm-values-assistant"
     }
     override fun apply(project: Project) {
         with(project) {

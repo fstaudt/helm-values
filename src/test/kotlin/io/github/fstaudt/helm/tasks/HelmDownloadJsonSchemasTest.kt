@@ -11,6 +11,7 @@ import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
+import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.buildDir
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmResources
@@ -30,6 +31,7 @@ class HelmDownloadJsonSchemasTest {
     private lateinit var testProject: TestProject
 
     companion object {
+        const val REPOSITORY_URL = "http://localhost:1080"
         const val PATH_EXTERNAL = "charts/external-json-schema/0.1.0"
         const val PATH_EXTERNAL_ALIAS = "charts/external-json-schema/0.1.1"
         const val PATH_PROTECTED = "protected/protected-json-schema/0.1.0"
@@ -37,18 +39,21 @@ class HelmDownloadJsonSchemasTest {
         const val PROTECTED_DOWNLOADS_FOLDER = "my-protected-charts"
         const val AUTHORIZATION_HEADER = "Basic dXNlcjpwYXNzd29yZA=="
     }
+
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
         testProject.initBuildFile {
-            appendText("""
+            appendText(
+                """
                 helmValuesAssistant {
                   repositoryMappings = mapOf(
-                    "@myCharts" to RepositoryMapping("$CHART_DOWNLOADS_FOLDER", "http://localhost:1080/charts"),
-                    "@myProtectedCharts" to RepositoryMapping("$PROTECTED_DOWNLOADS_FOLDER", "http://localhost:1080/protected", "$AUTHORIZATION_HEADER")
+                    "@myCharts" to RepositoryMapping("$CHART_DOWNLOADS_FOLDER", "$REPOSITORY_URL/charts"),
+                    "@myProtectedCharts" to RepositoryMapping("$PROTECTED_DOWNLOADS_FOLDER", "$REPOSITORY_URL/protected", "$AUTHORIZATION_HEADER")
                   )
                 }
-            """.trimIndent())
+            """.trimIndent()
+            )
         }
         testProject.initHelmResources()
     }
@@ -56,22 +61,12 @@ class HelmDownloadJsonSchemasTest {
     @BeforeEach
     fun `init wiremock`() {
         WireMock.reset()
-        stubFor(get("/$PATH_EXTERNAL/helm-values.json")
-                .willReturn(ok().withResponseBody(bodyFrom("external-json-schema-0.1.0/helm-values.json"))))
-        stubFor(get("/$PATH_EXTERNAL/helm-global.json")
-                .willReturn(ok().withResponseBody(bodyFrom("external-json-schema-0.1.0/helm-global.json"))))
-
-        stubFor(get("/$PATH_EXTERNAL_ALIAS/helm-values.json")
-                .willReturn(ok().withResponseBody(bodyFrom("external-json-schema-0.1.1/helm-values.json"))))
-        stubFor(get("/$PATH_EXTERNAL_ALIAS/helm-global.json")
-                .willReturn(ok().withResponseBody(bodyFrom("external-json-schema-0.1.1/helm-global.json"))))
-
-        stubFor(get("/$PATH_PROTECTED/helm-values.json")
-                .withHeader("Authorization", equalTo(AUTHORIZATION_HEADER))
-                .willReturn(ok().withResponseBody(bodyFrom("protected-json-schema-0.1.0/helm-values.json"))))
-        stubFor(get("/$PATH_PROTECTED/helm-global.json")
-                .withHeader("Authorization", equalTo(AUTHORIZATION_HEADER))
-                .willReturn(ok().withResponseBody(bodyFrom("protected-json-schema-0.1.0/helm-global.json"))))
+        stubForSchemaResource("$PATH_EXTERNAL/helm-values.json")
+        stubForSchemaResource("$PATH_EXTERNAL/helm-global.json")
+        stubForSchemaResource("$PATH_EXTERNAL_ALIAS/helm-values.json")
+        stubForSchemaResource("$PATH_EXTERNAL_ALIAS/helm-global.json")
+        stubForProtectedSchemaResource("$PATH_PROTECTED/helm-values.json")
+        stubForProtectedSchemaResource("$PATH_PROTECTED/helm-global.json")
     }
 
     @AfterEach
@@ -84,15 +79,15 @@ class HelmDownloadJsonSchemasTest {
         testProject.runTask(WITH_BUILD_CACHE, HELM_DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             val externalDownloadFolder = "${testProject.buildDir}/$DOWNLOADS/$CHART_DOWNLOADS_FOLDER/$PATH_EXTERNAL"
-            assertThat(File("$externalDownloadFolder/helm-values.json")).isFile
-                    .content().contains("http://myCharts/external-json-schema/0.1.0/helm-values.json")
-            assertThat(File("$externalDownloadFolder/helm-global.json")).isFile
-                    .content().contains("http://myCharts/external-json-schema/0.1.0/helm-global.json")
+            assertThatJsonFile("$externalDownloadFolder/helm-values.json").isFile.hasContent()
+                .node("\$id").isEqualTo("http://myCharts/external-json-schema/0.1.0/helm-values.json")
+            assertThatJsonFile("$externalDownloadFolder/helm-global.json").isFile.hasContent()
+                .node("\$id").isEqualTo("http://myCharts/external-json-schema/0.1.0/helm-global.json")
             val aliasDownloadFolder = "${testProject.buildDir}/$DOWNLOADS/$CHART_DOWNLOADS_FOLDER/$PATH_EXTERNAL_ALIAS"
-            assertThat(File("$aliasDownloadFolder/helm-values.json")).isFile
-                    .content().contains("http://myCharts/external-json-schema/0.1.1/helm-values.json")
-            assertThat(File("$aliasDownloadFolder/helm-global.json")).isFile
-                    .content().contains("http://myCharts/external-json-schema/0.1.1/helm-global.json")
+            assertThatJsonFile("$aliasDownloadFolder/helm-values.json").isFile.hasContent()
+                .node("\$id").isEqualTo("http://myCharts/external-json-schema/0.1.1/helm-values.json")
+            assertThatJsonFile("$aliasDownloadFolder/helm-global.json").isFile.hasContent()
+                .node("\$id").isEqualTo("http://myCharts/external-json-schema/0.1.1/helm-global.json")
         }
     }
 
@@ -102,9 +97,9 @@ class HelmDownloadJsonSchemasTest {
             assertThat(it.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             val downloadFolder = "${testProject.buildDir}/$DOWNLOADS/$PROTECTED_DOWNLOADS_FOLDER/$PATH_PROTECTED"
             assertThat(File("$downloadFolder/helm-values.json")).isFile
-                    .content().contains("http://myProtectedCharts/protected-json-schema/0.1.0/helm-values.json")
+                .content().contains("http://myProtectedCharts/protected-json-schema/0.1.0/helm-values.json")
             assertThat(File("$downloadFolder/helm-global.json")).isFile
-                    .content().contains("http://myProtectedCharts/protected-json-schema/0.1.0/helm-global.json")
+                .content().contains("http://myProtectedCharts/protected-json-schema/0.1.0/helm-global.json")
         }
     }
 
@@ -113,12 +108,35 @@ class HelmDownloadJsonSchemasTest {
         WireMock.reset()
         stubFor(get("/$PATH_EXTERNAL/helm-values.json").willReturn(unauthorized()))
         stubFor(get("/$PATH_EXTERNAL/helm-global.json").willReturn(notFound()))
-        testProject.runTask(WITH_BUILD_CACHE, HELM_DOWNLOAD_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(WITH_BUILD_CACHE, HELM_DOWNLOAD_JSON_SCHEMAS).also { build ->
+            assertThat(build.task(":$HELM_DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             val downloadFolder = "${testProject.buildDir}/$DOWNLOADS/$CHART_DOWNLOADS_FOLDER/$PATH_EXTERNAL"
-            assertThat(File("$downloadFolder/helm-values.json")).isFile.hasContent("{\"errorCode\":\"401\"}")
-            assertThat(File("$downloadFolder/helm-global.json")).isFile.hasContent("{\"errorCode\":\"404\"}")
+            assertThatJsonFile("$downloadFolder/helm-values.json").isFile.hasContent().and(
+                { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
+                { it.node("\$id").isEqualTo("$REPOSITORY_URL/$PATH_EXTERNAL/helm-values.json") },
+                { it.node("type").isEqualTo("object") },
+                { it.node("\$error").isEqualTo("401 - Unauthorized") }
+            )
+            assertThatJsonFile("$downloadFolder/helm-global.json").isFile.hasContent().and(
+                { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
+                { it.node("\$id").isEqualTo("$REPOSITORY_URL/$PATH_EXTERNAL/helm-global.json") },
+                { it.node("type").isEqualTo("object") },
+                { it.node("\$error").isEqualTo("404 - Not Found") }
+            )
+
         }
+    }
+
+    private fun stubForSchemaResource(filePath: String) {
+        stubFor(get("/$filePath").willReturn(ok().withResponseBody(bodyFrom(filePath))))
+    }
+
+    private fun stubForProtectedSchemaResource(filePath: String, authorizationHeader: String = AUTHORIZATION_HEADER) {
+        stubFor(
+            get("/$filePath")
+                .withHeader("Authorization", equalTo(authorizationHeader))
+                .willReturn(ok().withResponseBody(bodyFrom(filePath)))
+        )
     }
 
     private fun bodyFrom(file: String) = Body(File("src/test/resources/schemas/$file").readBytes())
