@@ -44,8 +44,9 @@ dependencies {
     testImplementation(gradleTestKit())
     testImplementation("org.assertj:assertj-core:3.22.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("com.github.tomakehurst:wiremock-jre8:2.33.2")
+    testImplementation("net.javacrumbs.json-unit:json-unit-assertj:2.35.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.test {
