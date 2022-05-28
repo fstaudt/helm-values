@@ -44,6 +44,23 @@ fun TestProject.initHelmResources(helmSourcesDirectory: String = HELM_SOURCES_DI
     File("src/test/resources/helm-resources").copyRecursively(File(this, helmSourcesDirectory))
 }
 
+fun TestProject.initHelmChart(customizeHelmChart: File.() -> Unit = {}): File {
+    return File(this, "Chart.yaml").apply {
+        writeText("""
+            apiVersion: v2
+            name: helm-chart
+            version: 0.1.0
+            description: Test helm chart
+            maintainers:
+              - name: François Staudt
+                url: https://github.com/fstaudt
+            icon: https://helm.sh/img/helm.svg
+            
+        """.trimIndent())
+        customizeHelmChart()
+    }
+}
+
 fun TestProject.runTask(vararg task: String): BuildResult {
     return gradleRunner(*task).build()
 }

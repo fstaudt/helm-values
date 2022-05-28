@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "http://myCharts/ref-json-schema/0.1.1/helm-global.json",
+  "$id": "ref-json-schema/0.1.1/helm-global.json",
   "properties": {
     "refs": {
       "$ref": "#/objects/refs"
@@ -8,7 +8,7 @@
   },
   "objects": {
     "refs": {
-      "title": "configMaps",
+      "title": "refs",
       "description": "\\n",
       "type": "object",
       "patternProperties": {

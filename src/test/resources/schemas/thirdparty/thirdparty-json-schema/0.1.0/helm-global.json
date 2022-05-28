@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "protected-json-schema/0.1.0/helm-global.json",
+  "$id": "thirdparty-json-schema/0.1.0/helm-global.json",
   "properties": {
     "configMaps": {
       "title": "configMaps",

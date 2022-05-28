@@ -13,5 +13,5 @@ open class HelmValuesAssistantExtension {
     var sourcesDirectory: String = HELM_SOURCES_DIRECTORY
 
     @Input
-    var repositoryMappings: List<RepositoryMapping> = emptyList()
+    var repositoryMappings: Map<String, RepositoryMapping> = emptyMap()
 }

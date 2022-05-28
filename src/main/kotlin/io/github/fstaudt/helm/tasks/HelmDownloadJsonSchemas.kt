@@ -9,6 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HelmValuesAssistantExtension
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.RepositoryMapping
@@ -20,6 +21,8 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
@@ -31,12 +34,10 @@ import java.net.URI
 @UntrackedTask(because = "depends on external JSON schema repositories")
 open class HelmDownloadJsonSchemas : DefaultTask() {
     companion object {
-        const val SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
         const val HELM_DOWNLOAD_JSON_SCHEMAS = "helmDownloadJsonSchemas"
         const val DOWNLOADS = "$HELM_VALUES/downloads"
         private val FULL_URI_REGEX = Regex("http(s)?://.*")
         private val URI_FILENAME_REGEX = Regex("/[^/]*$")
-        private val DEFAULT_REPOSITORY = RepositoryMapping("default", "")
     }
 
     private val logger: Logger = LoggerFactory.getLogger(HelmDownloadJsonSchemas::class.java)
@@ -48,6 +49,7 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
     lateinit var extension: HelmValuesAssistantExtension
 
     @InputFile
+    @PathSensitive(RELATIVE)
     lateinit var chartFile: File
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
@@ -62,6 +64,7 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
     @TaskAction
     fun download() {
         downloadedSchemasFolder.deleteRecursively()
+        downloadedSchemasFolder.mkdirs()
         val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         chart.dependencies.forEach { dependency ->
             downloadSchema(dependency, "helm-values.json")
@@ -70,27 +73,32 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
     }
 
     private fun downloadSchema(dependency: ChartDependency, fileName: String) {
-        extension.repositoryMappings.firstOrNull { it.id == dependency.repository }?.let {
+        extension.repositoryMappings[dependency.repository]?.let {
             val uri = URI("${it.basePath}/${dependency.name}/${dependency.version}/$fileName")
-            val downloadedSchema = File(downloadedSchemasFolder, "${it.id.toFolderName()}${uri.path}")
-            downloadSchema(uri, downloadedSchema, it)
+            val downloadFolder = File(downloadedSchemasFolder, it.downloadFolder)
+            downloadSchema(uri, downloadFolder, it)
         }
     }
 
-    private fun downloadSchema(uri: URI, downloadedSchema: File, repository: RepositoryMapping) {
+    private fun downloadSchema(uri: URI, downloadFolder: File, repository: RepositoryMapping?) {
+        val downloadedSchema = File(downloadFolder, uri.path)
         if (!downloadedSchema.exists()) {
             logger.info("Downloading $downloadedSchema from $uri")
             val request = HttpGet(uri)
-            repository.authorizationHeader?.let { request.addHeader("Authorization", it) }
+            repository?.authorizationHeader?.let { request.addHeader("Authorization", it) }
             request.toResponseBody().let {
                 downloadedSchema.ensureParentDirsCreated()
                 downloadedSchema.writeText(it)
-                downloadSchemaReferences(downloadedSchema, uri, repository)
+                downloadSchemaReferences(downloadFolder, downloadedSchema, uri)
             }
         }
     }
 
-    private fun downloadSchemaReferences(downloadedSchema: File, uri: URI, repository: RepositoryMapping) {
+    private fun downloadSchemaReferences(
+        downloadFolder: File,
+        downloadedSchema: File,
+        uri: URI
+    ) {
         val jsonSchema = jsonMapper.readTree(downloadedSchema)
         val containsFullUri = jsonSchema.findParents("\$ref").map {
             val ref = it.get("\$ref")
@@ -100,15 +108,14 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
                     ref.isFullUri() -> URI(ref.textValue())
                     else -> URI("$uri".replace(URI_FILENAME_REGEX, "/${ref.textValue()}")).normalize()
                 }
-                val refDownloadedSchema = when {
-                    ref.isFullUri() -> File(downloadedSchema.parentFile, "refs${refUri.path}")
-                    else -> File(downloadedSchemasFolder, "${repository.id.toFolderName()}${refUri.path}")
+                val refDownloadFolder = when {
+                    ref.isFullUri() -> File(downloadedSchema.parentFile, "refs")
+                    else -> downloadFolder
                 }
-                val refRepository = when {
-                    ref.isFullUri() -> extension.repositoryMappings.firstOrNull { "$refUri".startsWith(it.basePath) }
-                    else -> repository
-                } ?: DEFAULT_REPOSITORY
-                downloadSchema(refUri, refDownloadedSchema, refRepository)
+                val refRepository = extension.repositoryMappings
+                    .filterValues { "$refUri".startsWith(it.basePath) }.values
+                    .firstOrNull()
+                downloadSchema(refUri, refDownloadFolder, refRepository)
                 if (ref.isFullUri()) {
                     (it as ObjectNode).replace("\$ref", TextNode(refUri.toRelativeUri()))
                 }
@@ -137,7 +144,6 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
     private fun JsonNode.isLocalReference() = textValue().startsWith("#")
     private fun JsonNode.isFullUri() = textValue().matches(FULL_URI_REGEX)
     private fun URI.toRelativeUri() = "refs${path}${fragment?.let { "#$it" } ?: ""}"
-    private fun String.toFolderName() = replace(Regex("[^a-zA-Z\\d]"), "").toLowerCase()
 }
 
 

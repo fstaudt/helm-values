@@ -11,7 +11,9 @@ import java.io.File
 class HelmValuesAssistantPlugin : Plugin<Project> {
     companion object {
         const val HELM_VALUES = "helm-values-assistant"
+        const val SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
     }
+
     override fun apply(project: Project) {
         with(project) {
             val pluginExtension = extensions.create(EXTENSION, HelmValuesAssistantExtension::class.java)

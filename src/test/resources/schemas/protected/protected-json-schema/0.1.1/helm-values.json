@@ -1,14 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "protected-json-schema/0.1.0/helm-global.json",
+  "$id": "protected-json-schema/0.1.1/helm-values.json",
   "properties": {
-    "configMaps": {
-      "title": "configMaps",
+    "global": {
+      "$ref": "helm-global.json"
+    }
+  },
+  "objects": {
+    "refs": {
+      "title": "refs",
       "description": "\\n",
       "type": "object",
       "patternProperties": {
         "[a-z][a-z\\d-]*": { "type": "string" }
       }
-     }
+    }
   }
 }

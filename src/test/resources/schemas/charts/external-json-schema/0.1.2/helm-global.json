@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "external-json-schema/0.1.2/helm-global.json",
+  "$ref": "http://localhost:1980/thirdparty/thirdparty-json-schema/0.1.0/helm-global.json"
+}

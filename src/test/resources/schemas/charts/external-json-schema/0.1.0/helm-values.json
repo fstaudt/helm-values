@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "http://myCharts/external-json-schema/0.1.0/helm-values.json",
+  "$id": "external-json-schema/0.1.0/helm-values.json",
   "properties": {
     "global": {
       "properties": {
@@ -12,19 +12,7 @@
             "[a-z][a-z\\d-]*": { "type": "string" }
           }
         }
-      },
-      "additionalProperties": false
-    },
-    "key": {
-      "title": "Key for configMap",
-      "description": "\\n",
-      "type": "string"
-    },
-    "value": {
-      "title": "Value for configMap",
-      "description": "\\n",
-      "type": "string"
+      }
     }
-  },
-  "required": ["key", "value"]
+  }
 }

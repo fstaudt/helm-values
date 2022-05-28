@@ -1,35 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "http://myCharts/external-json-schema/0.1.1/helm-values.json",
+  "$id": "external-json-schema/0.1.1/helm-values.json",
   "properties": {
-    "ref-json-schema": {
+    "ref": {
       "$ref": "../../ref-json-schema/0.1.0/helm-values.json"
-    },
-    "protected-json-schema": {
-      "$ref": "http://localhost:1980/protected/protected-json-schema/0.1.0/helm-values.json"
     },
     "global": {
       "properties": {
         "refs": {
           "$ref": "../../ref-json-schema/0.1.1/helm-global.json#/objects/refs"
-        },
-        "configMaps": {
-          "$ref": "http://localhost:1980/protected/protected-json-schema/0.1.1/helm-global.json#/objects/configMaps"
         }
-
-      },
-      "additionalProperties": false
-    },
-    "key": {
-      "title": "Key for configMap",
-      "description": "\\n",
-      "type": "string"
-    },
-    "value": {
-      "title": "Value for configMap",
-      "description": "\\n",
-      "type": "string"
+      }
     }
-  },
-  "required": ["key", "value"]
+  }
 }
