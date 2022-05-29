@@ -1,6 +1,7 @@
 package io.github.fstaudt.helm.tasks
 
 import io.github.fstaudt.helm.TestProject
+import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.buildDir
 import io.github.fstaudt.helm.initBuildFile
@@ -11,6 +12,7 @@ import io.github.fstaudt.helm.tasks.HelmUnpackJsonSchemas.Companion.HELM_UNPACK_
 import io.github.fstaudt.helm.tasks.HelmUnpackJsonSchemas.Companion.UNPACK
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
 import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -33,12 +35,7 @@ class HelmUnpackJsonSchemasTest {
     fun `init test project`() {
         testProject = testProject()
         testProject.initHelmResources()
-        testProject.initBuildFile {
-            appendText(
-                """
-            """.trimIndent()
-            )
-        }
+        testProject.initBuildFile()
     }
 
     @AfterEach
@@ -60,6 +57,31 @@ class HelmUnpackJsonSchemasTest {
         }
         testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
+                .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
+        }
+    }
+
+    @Test
+    fun `helmUnpackJsonSchema should retrieve JSON schemas from cache on second run`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: 0.1.0
+                  repository: "$THIRDPARTY_ID"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(WITH_BUILD_CACHE, HELM_UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+            assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
+                .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
+        }
+        File("${testProject.buildDir}/$UNPACK").deleteRecursively()
+        testProject.runTask(WITH_BUILD_CACHE, HELM_UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }

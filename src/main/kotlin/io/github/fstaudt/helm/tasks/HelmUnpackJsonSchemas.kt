@@ -14,6 +14,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
@@ -41,6 +42,10 @@ open class HelmUnpackJsonSchemas : DefaultTask() {
     @Nested
     lateinit var extension: HelmValuesAssistantExtension
 
+    @InputDirectory
+    @PathSensitive(RELATIVE)
+    lateinit var chartsFolder: File
+
     @InputFile
     @PathSensitive(RELATIVE)
     lateinit var chartFile: File
@@ -61,8 +66,7 @@ open class HelmUnpackJsonSchemas : DefaultTask() {
     }
 
     private fun unpackSchema(dependency: ChartDependency) {
-        val chartsFolder = "${project.projectDir}/${extension.sourcesDirectory}/charts"
-        val archive = File("$chartsFolder/${dependency.name}-${dependency.version}.tgz")
+        val archive = File(chartsFolder,"${dependency.name}-${dependency.version}.tgz")
         if (archive.exists()) {
             try {
                 archive.inputStream().use {

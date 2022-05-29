@@ -31,6 +31,7 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
                 description = "Unpack JSON schemas values.schema.json from chart dependencies"
                 extension = pluginExtension
                 chartFile = helmChartFile
+                chartsFolder = File("${projectDir}/${pluginExtension.sourcesDirectory}/charts")
             }
         }
     }
