@@ -74,33 +74,28 @@ open class DownloadJsonSchemas : DefaultTask() {
 
     private fun downloadSchema(dependency: ChartDependency, fileName: String) {
         extension.repositoryMappings[dependency.repository]?.let {
-            val uri = URI("${it.basePath}/${dependency.name}/${dependency.version}/$fileName")
-            val downloadFolder = File(downloadedSchemasFolder, it.downloadFolder)
-            downloadSchema(uri, downloadFolder, it)
+            val uri = URI("${it.baseUri}/${dependency.name}/${dependency.version}/$fileName")
+            val downloadFolder = File(downloadedSchemasFolder, dependency.alias ?: dependency.name)
+            downloadSchema(uri, DownloadedSchema(downloadFolder, fileName, false), it)
         }
     }
 
-    private fun downloadSchema(uri: URI, downloadFolder: File, repository: RepositoryMapping?) {
-        val downloadedSchema = File(downloadFolder, uri.path)
-        if (!downloadedSchema.exists()) {
+    private fun downloadSchema(uri: URI, downloadedSchema: DownloadedSchema, repository: RepositoryMapping?) {
+        if (!downloadedSchema.file().exists()) {
             logger.info("Downloading $downloadedSchema from $uri")
             val request = HttpGet(uri)
             repository?.authorizationHeader?.let { request.addHeader("Authorization", it) }
             request.toResponseBody().let {
-                downloadedSchema.ensureParentDirsCreated()
-                downloadedSchema.writeText(it)
-                downloadSchemaReferences(downloadFolder, downloadedSchema, uri)
+                downloadedSchema.file().ensureParentDirsCreated()
+                downloadedSchema.file().writeText(it)
             }
+            downloadSchemaReferences(uri, downloadedSchema)
         }
     }
 
-    private fun downloadSchemaReferences(
-        downloadFolder: File,
-        downloadedSchema: File,
-        uri: URI
-    ) {
-        val jsonSchema = jsonMapper.readTree(downloadedSchema)
-        val containsFullUri = jsonSchema.findParents("\$ref").map {
+    private fun downloadSchemaReferences(uri: URI, downloadedSchema: DownloadedSchema) {
+        val jsonSchema = jsonMapper.readTree(downloadedSchema.file())
+        val hasRefsReplaced = jsonSchema.findParents("\$ref").map {
             val ref = it.get("\$ref")
             val fullRefUri = ref.isFullUri()
             if (!ref.isLocalReference()) {
@@ -108,21 +103,17 @@ open class DownloadJsonSchemas : DefaultTask() {
                     ref.isFullUri() -> URI(ref.textValue())
                     else -> URI("$uri".replace(URI_FILENAME_REGEX, "/${ref.textValue()}")).normalize()
                 }
-                val refDownloadFolder = when {
-                    ref.isFullUri() -> File(downloadedSchema.parentFile, "refs")
-                    else -> downloadFolder
-                }
                 val refRepository = extension.repositoryMappings
-                    .filterValues { "$refUri".startsWith(it.basePath) }.values
+                    .filterValues { "$refUri".startsWith(it.baseUri) }.values
                     .firstOrNull()
-                downloadSchema(refUri, refDownloadFolder, refRepository)
-                if (ref.isFullUri()) {
+                downloadSchema(refUri, DownloadedSchema(downloadedSchema.baseFolder, refUri.path, true), refRepository)
+                if (ref.isFullUri() || !downloadedSchema.reference) {
                     (it as ObjectNode).replace("\$ref", TextNode(refUri.toRelativeUri()))
                 }
             }
-            fullRefUri
+            fullRefUri || !downloadedSchema.reference
         }.any { it }
-        if (containsFullUri) jsonMapper.writeValue(downloadedSchema, jsonSchema)
+        if (hasRefsReplaced) jsonMapper.writeValue(downloadedSchema.file(), jsonSchema)
     }
 
     private fun HttpGet.toResponseBody(): String {
@@ -151,7 +142,11 @@ open class DownloadJsonSchemas : DefaultTask() {
 
     private fun JsonNode.isLocalReference() = textValue().startsWith("#")
     private fun JsonNode.isFullUri() = textValue().matches(FULL_URI_REGEX)
-    private fun URI.toRelativeUri() = "refs${path}${fragment?.let { "#$it" } ?: ""}"
+    private fun URI.toRelativeUri() = "${path.removePrefix("/")}${fragment?.let { "#$it" } ?: ""}"
+
+    private data class DownloadedSchema(val baseFolder: File, val path: String, val reference: Boolean) {
+        fun file() = File(baseFolder, path)
+    }
 }
 
 
