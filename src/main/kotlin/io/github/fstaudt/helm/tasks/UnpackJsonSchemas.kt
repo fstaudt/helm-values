@@ -118,9 +118,3 @@ open class UnpackJsonSchemas : DefaultTask() {
         }
     }
 }
-
-
-
-
-
-

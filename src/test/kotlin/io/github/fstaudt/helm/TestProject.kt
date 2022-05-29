@@ -6,6 +6,8 @@ import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 
 const val WITH_BUILD_CACHE = "--build-cache"
+const val CHART_NAME = "helm-chart"
+const val CHART_VERSION = "0.1.0"
 
 typealias TestProject = File
 
@@ -48,8 +50,8 @@ fun TestProject.initHelmChart(customizeHelmChart: File.() -> Unit = {}): File {
     return File(this, "Chart.yaml").apply {
         writeText("""
             apiVersion: v2
-            name: helm-chart
-            version: 0.1.0
+            name: $CHART_NAME
+            version: $CHART_VERSION
             description: Test helm chart
             maintainers:
               - name: François Staudt

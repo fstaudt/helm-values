@@ -1,5 +1,7 @@
 package io.github.fstaudt.helm.model
 
+import java.io.Serializable
+
 /**
  * Mapping to an external JSON schema repository for validation of values in charts of a Helm repository
  * @param baseUri base URI to the repository
@@ -11,4 +13,4 @@ package io.github.fstaudt.helm.model
  *
  *                            examples: Basic dGVzdDp0ZXN0, Bearer xxx.xxxxxx.xxx
  */
-data class RepositoryMapping(val downloadFolder: String, val basePath: String, val authorizationHeader: String? = null)
+data class RepositoryMapping(val baseUri: String, val authorizationHeader: String? = null) : Serializable

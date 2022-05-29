@@ -148,6 +148,3 @@ open class DownloadJsonSchemas : DefaultTask() {
         fun file() = File(baseFolder, path)
     }
 }
-
-
-
