@@ -32,15 +32,15 @@ import java.io.File
 import java.net.URI
 
 @UntrackedTask(because = "depends on external JSON schema repositories")
-open class HelmDownloadJsonSchemas : DefaultTask() {
+open class DownloadJsonSchemas : DefaultTask() {
     companion object {
-        const val HELM_DOWNLOAD_JSON_SCHEMAS = "helmDownloadJsonSchemas"
+        const val DOWNLOAD_JSON_SCHEMAS = "downloadJsonSchemas"
         const val DOWNLOADS = "$HELM_VALUES/downloads"
         private val FULL_URI_REGEX = Regex("http(s)?://.*")
         private val URI_FILENAME_REGEX = Regex("/[^/]*$")
     }
 
-    private val logger: Logger = LoggerFactory.getLogger(HelmDownloadJsonSchemas::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(DownloadJsonSchemas::class.java)
 
     @OutputDirectory
     val downloadedSchemasFolder = File(project.buildDir, DOWNLOADS)
@@ -126,19 +126,27 @@ open class HelmDownloadJsonSchemas : DefaultTask() {
     }
 
     private fun HttpGet.toResponseBody(): String {
-        return client.execute(this).use {
-            if (it.code == 200)
-                EntityUtils.toString(it.entity)
-            else
-                """
+        return try {
+            client.execute(this).use {
+                if (it.code == 200)
+                    EntityUtils.toString(it.entity)
+                else
+                    errorSchemaFor("${it.code} - ${it.reasonPhrase}")
+            }
+        } catch (e: Exception) {
+            errorSchemaFor("${e.javaClass.simpleName} - ${e.localizedMessage}")
+        }
+    }
+
+    private fun HttpGet.errorSchemaFor(errorMessage: String): String {
+        return """
                     {
                       "${'$'}schema":"$SCHEMA_VERSION",
                       "${'$'}id":"$uri",
                       "type":"object",
-                      "${'$'}error":"${it.code} - ${it.reasonPhrase}"
+                      "${'$'}error":"$errorMessage"
                     }
                 """.trimIndent()
-        }
     }
 
     private fun JsonNode.isLocalReference() = textValue().startsWith("#")

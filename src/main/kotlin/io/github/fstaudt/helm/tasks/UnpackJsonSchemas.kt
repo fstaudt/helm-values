@@ -27,14 +27,14 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 @CacheableTask
-open class HelmUnpackJsonSchemas : DefaultTask() {
+open class UnpackJsonSchemas : DefaultTask() {
     companion object {
-        const val HELM_UNPACK_JSON_SCHEMAS = "helmUnpackJsonSchemas"
+        const val UNPACK_JSON_SCHEMAS = "unpackJsonSchemas"
         const val UNPACK = "$HELM_VALUES/unpack"
         const val SCHEMA_FILE = "values.schema.json"
     }
 
-    private val logger: Logger = LoggerFactory.getLogger(HelmUnpackJsonSchemas::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(UnpackJsonSchemas::class.java)
 
     @OutputDirectory
     val unpackSchemasFolder = File(project.buildDir, UNPACK)
@@ -88,7 +88,7 @@ open class HelmUnpackJsonSchemas : DefaultTask() {
                     }
                 }
             } catch (e: Exception) {
-                dependency.createErrorSchemaFileFor("${e.javaClass.name} - ${e.localizedMessage}")
+                dependency.createErrorSchemaFileFor("${e.javaClass.simpleName} - ${e.localizedMessage}")
             }
         } else {
             logger.warn("${dependency.name}:${dependency.version}: archive not found - skipping dependency.")

@@ -1,5 +1,6 @@
 package io.github.fstaudt.helm.tasks
 
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
@@ -8,8 +9,8 @@ import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
 import io.github.fstaudt.helm.initHelmResources
 import io.github.fstaudt.helm.runTask
-import io.github.fstaudt.helm.tasks.HelmUnpackJsonSchemas.Companion.HELM_UNPACK_JSON_SCHEMAS
-import io.github.fstaudt.helm.tasks.HelmUnpackJsonSchemas.Companion.UNPACK
+import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK
+import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK_JSON_SCHEMAS
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
@@ -19,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 
-class HelmUnpackJsonSchemasTest {
+class UnpackJsonSchemasTest {
     private lateinit var testProject: TestProject
 
     companion object {
@@ -44,7 +45,7 @@ class HelmUnpackJsonSchemasTest {
     }
 
     @Test
-    fun `helmUnpackJsonSchema should unpack JSON schemas from dependency archives`() {
+    fun `unpackJsonSchema should unpack JSON schemas from dependency archives`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -55,15 +56,15 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
     }
 
     @Test
-    fun `helmUnpackJsonSchema should retrieve JSON schemas from cache on second run`() {
+    fun `unpackJsonSchema should retrieve JSON schemas from cache on second run`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -74,21 +75,21 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(WITH_BUILD_CACHE, HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+        testProject.runTask(WITH_BUILD_CACHE, UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
         File("${testProject.buildDir}/$UNPACK").deleteRecursively()
-        testProject.runTask(WITH_BUILD_CACHE, HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
+        testProject.runTask(WITH_BUILD_CACHE, UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
     }
 
     @Test
-    fun `helmUnpackJsonSchema should use alias to unpack JSON schemas from dependency archives`() {
+    fun `unpackJsonSchema should use alias to unpack JSON schemas from dependency archives`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -100,15 +101,15 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/${EMBEDDED_SCHEMA}-alias/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
     }
 
     @Test
-    fun `helmUnpackJsonSchema should unpack sub-charts JSON schemas from dependency archives`() {
+    fun `unpackJsonSchema should unpack sub-charts JSON schemas from dependency archives`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -119,15 +120,15 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/${EMBEDDED_SUB_SCHEMA}/${EMBEDDED_SCHEMA}/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
     }
 
     @Test
-    fun `helmUnpackJsonSchema should generate JSON schema with error when archive is not found for dependency`() {
+    fun `unpackJsonSchema should generate JSON schema with error when archive is not found for dependency`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -138,8 +139,8 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/$MISSING_ARCHIVE/values.schema.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
@@ -151,7 +152,7 @@ class HelmUnpackJsonSchemasTest {
     }
 
     @Test
-    fun `helmUnpackJsonSchema should use alias to generate JSON schema with error when archive is not found for dependency`() {
+    fun `unpackJsonSchema should use alias to generate JSON schema with error when archive is not found for dependency`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -163,11 +164,11 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/${MISSING_ARCHIVE}-alias/values.schema.json").isFile
                 .hasContent().and(
-                    { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
+                    { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$MISSING_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
                     { it.node("\$error").isEqualTo("Archive not found") },
@@ -176,7 +177,7 @@ class HelmUnpackJsonSchemasTest {
     }
 
     @Test
-    fun `helmUnpackJsonSchema should generate JSON schema with error when archive is invalid`() {
+    fun `unpackJsonSchema should generate JSON schema with error when archive is invalid`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -187,20 +188,20 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/$INVALID_ARCHIVE/values.schema.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isEqualTo("java.io.IOException - Input is not in the .gz format") },
+                    { it.node("\$error").isString().startsWith("IOException - ") },
                 )
         }
     }
 
     @Test
-    fun `helmUnpackJsonSchema should use alias to generate JSON schema with error when archive is invalid`() {
+    fun `unpackJsonSchema should use alias to generate JSON schema with error when archive is invalid`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -212,20 +213,20 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$UNPACK/${INVALID_ARCHIVE}-alias/values.schema.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isEqualTo("java.io.IOException - Input is not in the .gz format") },
+                    { it.node("\$error").isString().startsWith("IOException - ") },
                 )
         }
     }
 
     @Test
-    fun `helmUnpackJsonSchema should create empty unpack directory when dependencies contain no JSON schema`() {
+    fun `unpackJsonSchema should create empty unpack directory when dependencies contain no JSON schema`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -236,17 +237,17 @@ class HelmUnpackJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThat(File("${testProject.buildDir}/$UNPACK")).isEmptyDirectory
         }
     }
 
     @Test
-    fun `helmUnpackJsonSchema should create empty unpack directory when chart has no dependencies`() {
+    fun `unpackJsonSchema should create empty unpack directory when chart has no dependencies`() {
         testProject.initHelmChart()
-        testProject.runTask(HELM_UNPACK_JSON_SCHEMAS).also {
-            assertThat(it.task(":$HELM_UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThat(File("${testProject.buildDir}/$UNPACK")).isEmptyDirectory
         }
     }

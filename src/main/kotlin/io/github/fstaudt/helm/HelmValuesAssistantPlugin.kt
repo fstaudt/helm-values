@@ -1,10 +1,10 @@
 package io.github.fstaudt.helm
 
 import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.EXTENSION
-import io.github.fstaudt.helm.tasks.HelmDownloadJsonSchemas
-import io.github.fstaudt.helm.tasks.HelmDownloadJsonSchemas.Companion.HELM_DOWNLOAD_JSON_SCHEMAS
-import io.github.fstaudt.helm.tasks.HelmUnpackJsonSchemas
-import io.github.fstaudt.helm.tasks.HelmUnpackJsonSchemas.Companion.HELM_UNPACK_JSON_SCHEMAS
+import io.github.fstaudt.helm.tasks.DownloadJsonSchemas
+import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
+import io.github.fstaudt.helm.tasks.UnpackJsonSchemas
+import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK_JSON_SCHEMAS
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.register
@@ -20,13 +20,13 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
         with(project) {
             val pluginExtension = extensions.create(EXTENSION, HelmValuesAssistantExtension::class.java)
             val helmChartFile = File(projectDir, "${pluginExtension.sourcesDirectory}/Chart.yaml")
-            tasks.register<HelmDownloadJsonSchemas>(HELM_DOWNLOAD_JSON_SCHEMAS) {
+            tasks.register<DownloadJsonSchemas>(DOWNLOAD_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Download JSON schemas of dependencies from external schema repositories"
                 extension = pluginExtension
                 chartFile = helmChartFile
             }
-            tasks.register<HelmUnpackJsonSchemas>(HELM_UNPACK_JSON_SCHEMAS) {
+            tasks.register<UnpackJsonSchemas>(UNPACK_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Unpack JSON schemas values.schema.json from chart dependencies"
                 extension = pluginExtension
