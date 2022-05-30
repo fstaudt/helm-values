@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 @CacheableTask
+@Suppress("NestedLambdaShadowedImplicitParameter")
 open class UnpackJsonSchemas : DefaultTask() {
     companion object {
         const val UNPACK_JSON_SCHEMAS = "unpackJsonSchemas"
@@ -66,7 +67,7 @@ open class UnpackJsonSchemas : DefaultTask() {
     }
 
     private fun unpackSchema(dependency: ChartDependency) {
-        val archive = File(chartsFolder,"${dependency.name}-${dependency.version}.tgz")
+        val archive = File(chartsFolder, "${dependency.name}-${dependency.version}.tgz")
         if (archive.exists()) {
             try {
                 archive.inputStream().use {

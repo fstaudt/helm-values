@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 
+@Suppress("NestedLambdaShadowedImplicitParameter")
 class UnpackJsonSchemasTest {
     private lateinit var testProject: TestProject
 
@@ -195,7 +196,7 @@ class UnpackJsonSchemasTest {
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isString().startsWith("IOException - ") },
+                    { it.node("\$error").isString.startsWith("IOException - ") },
                 )
         }
     }
@@ -220,7 +221,7 @@ class UnpackJsonSchemasTest {
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isString().startsWith("IOException - ") },
+                    { it.node("\$error").isString.startsWith("IOException - ") },
                 )
         }
     }

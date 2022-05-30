@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 
+@Suppress("NestedLambdaShadowedImplicitParameter")
 class GenerateJsonSchemaTest {
     private lateinit var testProject: TestProject
 
@@ -85,6 +86,8 @@ class GenerateJsonSchemaTest {
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
+                    { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME/$CHART_VERSION")},
+                    { it.node("description").isEqualTo("\\\\n")},
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
                 )
@@ -92,15 +95,15 @@ class GenerateJsonSchemaTest {
     }
 
     @Test
-    fun `generateJsonSchema should use alias to generate ref to external JSON schemas in helm-values JSON schema`() {
+    fun `generateJsonSchema should use alias as property names in helm-values JSON schema`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
-                - name: any
+                - name: $EXTERNAL_SCHEMA
                   version: 0.1.0
                   repository: "$APPS"
-                  alias: $EXTERNAL_SCHEMA
+                  alias: ${EXTERNAL_SCHEMA}-alias
                 """.trimIndent()
             )
         }
@@ -108,8 +111,11 @@ class GenerateJsonSchemaTest {
             assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
-                    { it.node("properties").isObject.doesNotContainKey("any") },
-                    { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
+                    { it.node("properties").isObject.doesNotContainKey(EXTERNAL_SCHEMA) },
+                    {
+                        it.node("properties.${EXTERNAL_SCHEMA}-alias.\$ref")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/0.1.0/$VALUES_SCHEMA_FILE")
+                    },
                 )
         }
     }
@@ -187,6 +193,32 @@ class GenerateJsonSchemaTest {
     }
 
     @Test
+    fun `generateJsonSchema should set property for dependency condition in helm-values`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: 0.1.0
+                  repository: "$APPS"
+                  condition: "$EXTERNAL_SCHEMA.enabled"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(GENERATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
+                    {
+                        it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:0.1.0)")
+                        it.node("description").isEqualTo("\\\\n")
+                        it.node("type").isEqualTo("boolean")
+                    },
+                )
+        }
+    }
+
+    @Test
     fun `generateJsonSchema should generate helm-global JSON schema with dependencies in mapped repositories`() {
         testProject.initHelmChart {
             appendText(
@@ -214,15 +246,15 @@ class GenerateJsonSchemaTest {
     }
 
     @Test
-    fun `generateJsonSchema should use alias to generate ref to external JSON schemas in helm-global JSON schema`() {
+    fun `generateJsonSchema should not use alias to generate ref to external JSON schemas in helm-global JSON schema`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
-                - name: any
+                - name: $EXTERNAL_SCHEMA
                   version: 0.1.0
                   repository: "$APPS"
-                  alias: $EXTERNAL_SCHEMA
+                  alias: ${EXTERNAL_SCHEMA}-alias
                 """.trimIndent()
             )
         }
@@ -231,8 +263,7 @@ class GenerateJsonSchemaTest {
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("allOf").isArray.hasSize(1) },
-                    { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
-                    { it.node("allOf[0].\$ref").isString.doesNotContain("any") },
+                    { it.node("allOf[0].\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/0.1.0/$GLOBAL_VALUES_SCHEMA_FILE") },
                 )
         }
     }
@@ -253,6 +284,7 @@ class GenerateJsonSchemaTest {
             assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
+                    { it.node("allOf").isArray.hasSize(1) },
                     { it.node("allOf[0].\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/0.1.0/$GLOBAL_VALUES_SCHEMA_FILE") },
                 )
         }
@@ -274,6 +306,7 @@ class GenerateJsonSchemaTest {
             assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
+                    { it.node("allOf").isArray.hasSize(1) },
                     {
                         it.node("allOf[0].\$ref")
                             .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/0.1.0/$GLOBAL_VALUES_SCHEMA_FILE")

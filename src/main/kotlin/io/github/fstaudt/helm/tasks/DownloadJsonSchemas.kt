@@ -32,6 +32,7 @@ import java.io.File
 import java.net.URI
 
 @UntrackedTask(because = "depends on external JSON schema repositories")
+@Suppress("NestedLambdaShadowedImplicitParameter")
 open class DownloadJsonSchemas : DefaultTask() {
     companion object {
         const val DOWNLOAD_JSON_SCHEMAS = "downloadJsonSchemas"
@@ -75,7 +76,7 @@ open class DownloadJsonSchemas : DefaultTask() {
     private fun downloadSchema(dependency: ChartDependency, fileName: String) {
         extension.repositoryMappings[dependency.repository]?.let {
             val uri = URI("${it.baseUri}/${dependency.name}/${dependency.version}/$fileName")
-            val downloadFolder = File(downloadedSchemasFolder, dependency.alias ?: dependency.name)
+            val downloadFolder = File(downloadedSchemasFolder, dependency.aliasOrName())
             downloadSchema(uri, DownloadedSchema(downloadFolder, fileName, false), it)
         }
     }

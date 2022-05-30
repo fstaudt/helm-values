@@ -20,12 +20,11 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.TaskAction
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URI
 
 @CacheableTask
+@Suppress("NestedLambdaShadowedImplicitParameter")
 open class GenerateJsonSchema : DefaultTask() {
     companion object {
         const val GENERATE_JSON_SCHEMA = "generateJsonSchema"
@@ -63,9 +62,16 @@ open class GenerateJsonSchema : DefaultTask() {
         jsonSchema.objectNode("properties").let { properties ->
             chart.dependencies.forEach { dependency ->
                 extension.repositoryMappings[dependency.repository]?.let {
-                    val name = dependency.alias ?: dependency.name
-                    val ref = "${it.baseUri}/${name}/${dependency.version}/$VALUES_SCHEMA_FILE".toRelativeUri()
-                    properties.set<ObjectNode>(name, ObjectNode(nodeFactory).put("\$ref", ref))
+                    val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/$VALUES_SCHEMA_FILE"
+                        .toRelativeUri()
+                    properties.set<ObjectNode>(dependency.aliasOrName(), ObjectNode(nodeFactory).put("\$ref", ref))
+                    dependency.condition
+                        ?.split('.')?.fold(jsonSchema) { node: ObjectNode, property: String ->
+                            node.objectNode("properties").objectNode(property)
+                        }
+                        ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
+                        ?.put("description", "\\n")
+                        ?.put("type", "boolean")
                 }
             }
         }
@@ -77,8 +83,8 @@ open class GenerateJsonSchema : DefaultTask() {
         jsonSchema.allOf().let { allOf ->
             chart.dependencies.forEach { dependency ->
                 extension.repositoryMappings[dependency.repository]?.let {
-                    val name = dependency.alias ?: dependency.name
-                    val ref = "${it.baseUri}/${name}/${dependency.version}/$GLOBAL_VALUES_SCHEMA_FILE".toRelativeUri()
+                    val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/$GLOBAL_VALUES_SCHEMA_FILE"
+                        .toRelativeUri()
                     allOf.add(ObjectNode(nodeFactory).put("\$ref", ref))
                 }
             }
@@ -91,6 +97,8 @@ open class GenerateJsonSchema : DefaultTask() {
         return ObjectNode(jsonMapper.nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "$baseUri/$name/$version/$fileName")
+            .put("title", "Configuration for chart ${extension.targetRepository}/$name/$version")
+            .put("description", "\\n")
     }
 
     private fun ObjectNode.allOf(): ArrayNode {
@@ -117,3 +125,4 @@ open class GenerateJsonSchema : DefaultTask() {
 
     private fun targetRepositoryMapping() = extension.repositoryMappings[extension.targetRepository]
 }
+

@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 @WireMockTest(httpPort = 1980)
+@Suppress("NestedLambdaShadowedImplicitParameter")
 class DownloadJsonSchemasTest {
     private lateinit var testProject: TestProject
     private lateinit var downloadFolder: File
