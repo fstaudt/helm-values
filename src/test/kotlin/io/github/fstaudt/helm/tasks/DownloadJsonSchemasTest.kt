@@ -375,14 +375,16 @@ class DownloadJsonSchemasTest {
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$baseUrl/helm-values.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isEqualTo("401 - Unauthorized") },
+                    { it.node("title").isEqualTo("Error schema for $baseUrl/helm-values.json") },
+                    { it.node("description").isString.contains("401 - Unauthorized") },
                 )
             assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$baseUrl/helm-global.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isEqualTo("404 - Not Found") },
+                    { it.node("title").isEqualTo("Error schema for $baseUrl/helm-global.json") },
+                    { it.node("description").isString.contains("404 - Not Found") },
                 )
         }
     }
@@ -418,14 +420,16 @@ class DownloadJsonSchemasTest {
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$baseUrl/helm-values.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isString.startsWith("HttpHostConnectException - ") },
+                    { it.node("title").isEqualTo("Error schema for $baseUrl/helm-values.json") },
+                    { it.node("description").isString.contains("HttpHostConnectException - ") },
                 )
             assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$baseUrl/helm-global.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isString.startsWith("HttpHostConnectException - ") },
+                    { it.node("title").isEqualTo("Error schema for $baseUrl/helm-global.json") },
+                    { it.node("description").isString.contains("HttpHostConnectException - ") },
                 )
         }
     }

@@ -32,7 +32,7 @@ import java.io.File
 import java.net.URI
 
 @UntrackedTask(because = "depends on external JSON schema repositories")
-@Suppress("NestedLambdaShadowedImplicitParameter")
+@Suppress("NestedLambdaShadowedImplicitParameter", "UnstableApiUsage")
 open class DownloadJsonSchemas : DefaultTask() {
     companion object {
         const val DOWNLOAD_JSON_SCHEMAS = "downloadJsonSchemas"
@@ -133,10 +133,11 @@ open class DownloadJsonSchemas : DefaultTask() {
     private fun HttpGet.errorSchemaFor(errorMessage: String): String {
         return """
                     {
-                      "${'$'}schema":"$SCHEMA_VERSION",
-                      "${'$'}id":"$uri",
-                      "type":"object",
-                      "${'$'}error":"$errorMessage"
+                      "${'$'}schema": "$SCHEMA_VERSION",
+                      "${'$'}id": "$uri",
+                      "type": "object",
+                      "title": "Error schema for $uri",
+                      "description":"An error occurred during download of $uri: $errorMessage"
                     }
                 """.trimIndent()
     }

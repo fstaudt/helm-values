@@ -147,7 +147,8 @@ class UnpackJsonSchemasTest {
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$MISSING_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isEqualTo("Archive not found") },
+                    { it.node("title").isEqualTo("Error schema for dependency $MISSING_ARCHIVE:0.1.0") },
+                    { it.node("description").isString.contains("Archive not found") },
                 )
         }
     }
@@ -172,7 +173,8 @@ class UnpackJsonSchemasTest {
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$MISSING_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isEqualTo("Archive not found") },
+                    { it.node("title").isEqualTo("Error schema for dependency $MISSING_ARCHIVE:0.1.0") },
+                    { it.node("description").isString.contains("Archive not found") },
                 )
         }
     }
@@ -196,7 +198,8 @@ class UnpackJsonSchemasTest {
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isString.startsWith("IOException - ") },
+                    { it.node("title").isEqualTo("Error schema for dependency $INVALID_ARCHIVE:0.1.0") },
+                    { it.node("description").isString.contains("IOException - ") },
                 )
         }
     }
@@ -221,7 +224,8 @@ class UnpackJsonSchemasTest {
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/0.1.0/values.schema.json") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("\$error").isString.startsWith("IOException - ") },
+                    { it.node("title").isEqualTo("Error schema for dependency $INVALID_ARCHIVE:0.1.0") },
+                    { it.node("description").isString.contains("IOException - ") },
                 )
         }
     }

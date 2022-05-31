@@ -109,10 +109,11 @@ open class UnpackJsonSchemas : DefaultTask() {
             it.writeText(
                 """
                     {
-                      "${'$'}schema":"$SCHEMA_VERSION",
-                      "${'$'}id":"$name/$version/$SCHEMA_FILE",
-                      "type":"object",
-                      "${'$'}error":"$errorMessage"
+                      "${'$'}schema": "$SCHEMA_VERSION",
+                      "${'$'}id": "$name/$version/$SCHEMA_FILE",
+                      "type": "object",
+                      "title": "Error schema for dependency $name:$version",
+                      "description": "An error occurred during unpack of $name-$version.tgz: $errorMessage"
                     }
                 """.trimIndent()
             )
