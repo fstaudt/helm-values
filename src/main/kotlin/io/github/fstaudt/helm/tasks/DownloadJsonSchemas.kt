@@ -3,6 +3,7 @@ package io.github.fstaudt.helm.tasks
 import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -42,7 +43,7 @@ open class DownloadJsonSchemas : DefaultTask() {
         private val URI_FILENAME_REGEX = Regex("/[^/]*$")
     }
 
-    private data class DownloadedSchema(val baseFolder: File, val path: String, val reference: Boolean) {
+    private data class DownloadedSchema(val baseFolder: File, val path: String, val isReference: Boolean) {
         fun file() = File(baseFolder, path)
     }
 
@@ -64,6 +65,7 @@ open class DownloadJsonSchemas : DefaultTask() {
     }
     private val jsonMapper = ObjectMapper().also {
         it.registerModule(KotlinModule.Builder().build())
+        it.enable(INDENT_OUTPUT)
     }
     private val client: CloseableHttpClient = HttpClientBuilder.create().useSystemProperties().build()
 
@@ -101,25 +103,34 @@ open class DownloadJsonSchemas : DefaultTask() {
 
     private fun downloadSchemaReferences(uri: URI, downloadedSchema: DownloadedSchema) {
         val jsonSchema = jsonMapper.readTree(downloadedSchema.file())
-        val hasRefsReplaced = jsonSchema.findParents("\$ref").map {
-            val ref = it.get("\$ref")
-            val fullRefUri = ref.isFullUri()
-            if (!ref.isLocalReference()) {
-                val refUri = when {
-                    ref.isFullUri() -> URI(ref.textValue())
-                    else -> URI("$uri".replace(URI_FILENAME_REGEX, "/${ref.textValue()}")).normalize()
-                }
-                val refRepository = extension.repositoryMappings
-                    .filterValues { "$refUri".startsWith(it.baseUri) }.values
-                    .firstOrNull()
-                downloadSchema(refUri, DownloadedSchema(downloadedSchema.baseFolder, refUri.path, true), refRepository)
-                if (ref.isFullUri() || !downloadedSchema.reference) {
-                    (it as ObjectNode).replace("\$ref", TextNode(refUri.toRelativeUri()))
+        val needsRewrite = jsonSchema.findValues("\$ref").any {
+            it.isFullUri() || (!downloadedSchema.isReference && !it.isSimpleFile())
+        }
+        jsonSchema.findParents("\$ref").map {
+            with(it.get("\$ref")) {
+                if (!isLocalReference()) {
+                    val refUri = when {
+                        isFullUri() -> URI(textValue())
+                        else -> URI("$uri".replace(URI_FILENAME_REGEX, "/${textValue()}")).normalize()
+                    }
+                    val refRepository = extension.repositoryMappings
+                        .filterValues { "$refUri".startsWith(it.baseUri) }.values
+                        .firstOrNull()
+                    val refDownloadedSchema = when {
+                        isSimpleFile() -> {
+                            val refPath = downloadedSchema.path.replace(URI_FILENAME_REGEX, "/${textValue()}")
+                            DownloadedSchema(downloadedSchema.baseFolder, refPath, downloadedSchema.isReference)
+                        }
+                        else -> DownloadedSchema(downloadedSchema.baseFolder, refUri.path, true)
+                    }
+                    downloadSchema(refUri, refDownloadedSchema, refRepository)
+                    if (isFullUri() || (!downloadedSchema.isReference && !isSimpleFile())) {
+                        (it as ObjectNode).replace("\$ref", TextNode(refUri.toDownloadedUri()))
+                    }
                 }
             }
-            fullRefUri || !downloadedSchema.reference
-        }.any { it }
-        if (hasRefsReplaced) jsonMapper.writeValue(downloadedSchema.file(), jsonSchema)
+        }
+        if (needsRewrite) jsonMapper.writeValue(downloadedSchema.file(), jsonSchema)
     }
 
     private fun HttpGet.toResponseBody(): String {
@@ -149,9 +160,11 @@ open class DownloadJsonSchemas : DefaultTask() {
 
     private fun JsonNode.isLocalReference() = textValue().startsWith("#")
     private fun JsonNode.isFullUri() = textValue().matches(FULL_URI_REGEX)
-    private fun URI.toRelativeUri() = "${path.removePrefix("/")}${fragment?.let { "#$it" } ?: ""}"
+    private fun JsonNode.isSimpleFile() = !textValue().contains("/")
+    private fun URI.toDownloadedUri() = "${path.removePrefix("/")}${fragment?.let { "#$it" } ?: ""}"
 
     private fun basic(username: String, password: String?): String {
         return "Basic ${Base64.encodeBase64String("$username:$password".toByteArray())}"
     }
 }
+

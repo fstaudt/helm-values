@@ -183,6 +183,32 @@ class DownloadJsonSchemasTest {
     }
 
     @Test
+    fun `downloadJsonSchema should download JSON schemas in same folder when $ref is relative in same folder`() {
+        stubForSchemaResource("$CHARTS_PATH/$EXTERNAL_SCHEMA/0.1.3/helm-values.json")
+        stubForSchemaResource("$CHARTS_PATH/$EXTERNAL_SCHEMA/0.1.3/helm-global.json")
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: 0.1.3
+                  repository: "$CHARTS_ID"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+                .hasContent().and(
+                    { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.3/helm-values.json") },
+                    { it.node("properties.global.\$ref").isEqualTo("helm-global.json") },
+                )
+            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
+                .hasContent().node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.3/helm-global.json")
+        }
+    }
+
+    @Test
     fun `downloadJsonSchema should download JSON schemas and update $ref in downloaded schema when $ref is relative with fragment`() {
         stubForSchemaResource("$CHARTS_PATH/$EXTERNAL_SCHEMA/0.1.1/helm-values.json")
         stubForSchemaResource("$CHARTS_PATH/$REF_SCHEMA/0.1.1/helm-global.json")
