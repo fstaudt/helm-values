@@ -11,11 +11,13 @@ import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJson
 import io.github.fstaudt.helm.buildDir
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
+import io.github.fstaudt.helm.runAndFail
 import io.github.fstaudt.helm.runTask
 import io.github.fstaudt.helm.tasks.GenerateJsonSchema.Companion.GENERATED
 import io.github.fstaudt.helm.tasks.GenerateJsonSchema.Companion.GENERATE_JSON_SCHEMA
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.testkit.runner.TaskOutcome.FAILED
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
 import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import org.junit.jupiter.api.AfterEach
@@ -86,8 +88,8 @@ class GenerateJsonSchemaTest {
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
-                    { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME/$CHART_VERSION")},
-                    { it.node("description").isEqualTo("\\\\n")},
+                    { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME/$CHART_VERSION") },
+                    { it.node("description").isEqualTo("\\\\n") },
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
                 )
@@ -336,6 +338,36 @@ class GenerateJsonSchemaTest {
                             .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/0.1.0/$GLOBAL_VALUES_SCHEMA_FILE")
                     },
                 )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchema should fail when target repository is not found in repository mappings`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValuesAssistant {
+                  repositoryMappings = mapOf(
+                    "$APPS" to RepositoryMapping("$BASE_URL/$APPS_PATH"),
+                  )
+                  targetRepository = "unknown"
+                }
+            """.trimIndent()
+            )
+        }
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: "$EXTERNAL_SCHEMA"
+                  version: "0.1.0"
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.runAndFail(GENERATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(FAILED)
+            assertThat(it.output).contains("targetRepository unknown not found in repository mappings.")
         }
     }
 

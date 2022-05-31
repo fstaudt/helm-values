@@ -11,7 +11,9 @@ import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.exceptions.RepositoryNotFoundException
 import io.github.fstaudt.helm.model.Chart
+import io.github.fstaudt.helm.model.RepositoryMapping
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
@@ -59,20 +61,14 @@ open class GenerateJsonSchema : DefaultTask() {
 
     private fun generateValuesSchemaFile(chart: Chart) {
         val jsonSchema = chart.toJsonSchema(VALUES_SCHEMA_FILE)
-        jsonSchema.objectNode("properties").let { properties ->
-            chart.dependencies.forEach { dependency ->
-                extension.repositoryMappings[dependency.repository]?.let {
-                    val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/$VALUES_SCHEMA_FILE"
-                        .toRelativeUri()
-                    properties.set<ObjectNode>(dependency.aliasOrName(), ObjectNode(nodeFactory).put("\$ref", ref))
-                    dependency.condition
-                        ?.split('.')?.fold(jsonSchema) { node: ObjectNode, property: String ->
-                            node.objectNode("properties").objectNode(property)
-                        }
-                        ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
-                        ?.put("description", "\\n")
-                        ?.put("type", "boolean")
-                }
+        chart.dependencies.forEach { dependency ->
+            extension.repositoryMappings[dependency.repository]?.let {
+                val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/$VALUES_SCHEMA_FILE".toRelativeUri()
+                jsonSchema.objectNode("properties").objectNode(dependency.aliasOrName()).put("\$ref", ref)
+                dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)
+                    ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
+                    ?.put("description", "\\n")
+                    ?.put("type", "boolean")
             }
         }
         jsonMapper.writeValue(File(generatedSchemaFolder, VALUES_SCHEMA_FILE), jsonSchema)
@@ -93,24 +89,23 @@ open class GenerateJsonSchema : DefaultTask() {
     }
 
     private fun Chart.toJsonSchema(fileName: String): ObjectNode {
-        val baseUri = targetRepositoryMapping()?.baseUri ?: ""
         return ObjectNode(jsonMapper.nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "$baseUri/$name/$version/$fileName")
+            .put("\$id", "${targetRepositoryMapping().baseUri}/$name/$version/$fileName")
             .put("title", "Configuration for chart ${extension.targetRepository}/$name/$version")
             .put("description", "\\n")
-    }
-
-    private fun ObjectNode.allOf(): ArrayNode {
-        return get("allOf") as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ObjectNode>("allOf", it) }
     }
 
     private fun ObjectNode.objectNode(propertyName: String): ObjectNode {
         return get(propertyName) as? ObjectNode ?: ObjectNode(nodeFactory).also { set<ObjectNode>(propertyName, it) }
     }
 
+    private fun ObjectNode.allOf(): ArrayNode {
+        return get("allOf") as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ObjectNode>("allOf", it) }
+    }
+
     private fun String.toRelativeUri(): String {
-        return targetRepositoryMapping()?.let {
+        return targetRepositoryMapping().let {
             val uri = URI(this)
             val targetUri = URI(it.baseUri)
             when {
@@ -123,6 +118,14 @@ open class GenerateJsonSchema : DefaultTask() {
         } ?: this
     }
 
-    private fun targetRepositoryMapping() = extension.repositoryMappings[extension.targetRepository]
-}
+    private fun String.toPropertiesObjectNodeIn(jsonSchema: ObjectNode): ObjectNode {
+        return split('.').fold(jsonSchema) { node: ObjectNode, property: String ->
+            node.objectNode("properties").objectNode(property)
+        }
+    }
 
+    private fun targetRepositoryMapping(): RepositoryMapping {
+        return extension.repositoryMappings[extension.targetRepository]
+            ?: throw RepositoryNotFoundException(extension.targetRepository)
+    }
+}

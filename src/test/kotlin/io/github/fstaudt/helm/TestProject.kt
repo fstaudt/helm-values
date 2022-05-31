@@ -67,6 +67,10 @@ fun TestProject.runTask(vararg task: String): BuildResult {
     return gradleRunner(*task).build()
 }
 
+fun TestProject.runAndFail(vararg task: String): BuildResult {
+    return gradleRunner(*task).buildAndFail()
+}
+
 private fun TestProject.gradleRunner(vararg task: String): GradleRunner {
     return GradleRunner.create()
             .withProjectDir(this)
