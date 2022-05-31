@@ -34,6 +34,9 @@ class DownloadJsonSchemasTest {
 
     companion object {
         const val REPOSITORY_URL = "http://localhost:1980"
+        const val REPOSITORY_USER = "user"
+        const val REPOSITORY_PASSWORD = "password"
+        const val REPOSITORY_AUTHORIZATION = "Basic dXNlcjpwYXNzd29yZA=="
         const val UNAVAILABLE_URL = "http://localhost:1981"
         const val CHARTS_ID = "@mycharts"
         const val CHARTS_PATH = "charts"
@@ -44,7 +47,6 @@ class DownloadJsonSchemasTest {
         const val PROTECTED_SCHEMA = "protected-json-schema"
         const val REF_SCHEMA = "ref-json-schema"
         const val THIRDPARTY_SCHEMA = "thirdparty-json-schema"
-        const val AUTHORIZATION = "Basic dXNlcjpwYXNzd29yZA=="
     }
 
     @BeforeEach
@@ -57,7 +59,7 @@ class DownloadJsonSchemasTest {
                 helmValuesAssistant {
                   repositoryMappings = mapOf(
                     "$CHARTS_ID" to RepositoryMapping("$REPOSITORY_URL/$CHARTS_PATH"),
-                    "$PROTECTED_ID" to RepositoryMapping("$REPOSITORY_URL/$PROTECTED_PATH", "$AUTHORIZATION")
+                    "$PROTECTED_ID" to RepositoryMapping("$REPOSITORY_URL/$PROTECTED_PATH", "$REPOSITORY_USER", "$REPOSITORY_PASSWORD")
                   )
                 }
             """.trimIndent()
@@ -447,7 +449,10 @@ class DownloadJsonSchemasTest {
         stubFor(get("/$filePath").willReturn(ok().withResponseBody(bodyFrom(filePath))))
     }
 
-    private fun stubForProtectedSchemaResource(filePath: String, authorizationHeader: String = AUTHORIZATION) {
+    private fun stubForProtectedSchemaResource(
+        filePath: String,
+        authorizationHeader: String = REPOSITORY_AUTHORIZATION
+    ) {
         stubFor(
             get("/$filePath")
                 .withHeader("Authorization", equalTo(authorizationHeader))

@@ -13,6 +13,7 @@ import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.RepositoryMapping
+import org.apache.commons.codec.binary.Base64
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
@@ -39,6 +40,10 @@ open class DownloadJsonSchemas : DefaultTask() {
         const val DOWNLOADS = "$HELM_VALUES/downloads"
         private val FULL_URI_REGEX = Regex("http(s)?://.*")
         private val URI_FILENAME_REGEX = Regex("/[^/]*$")
+    }
+
+    private data class DownloadedSchema(val baseFolder: File, val path: String, val reference: Boolean) {
+        fun file() = File(baseFolder, path)
     }
 
     private val logger: Logger = LoggerFactory.getLogger(DownloadJsonSchemas::class.java)
@@ -85,7 +90,7 @@ open class DownloadJsonSchemas : DefaultTask() {
         if (!downloadedSchema.file().exists()) {
             logger.info("Downloading $downloadedSchema from $uri")
             val request = HttpGet(uri)
-            repository?.authorizationHeader?.let { request.addHeader("Authorization", it) }
+            repository?.username?.let { request.addHeader("Authorization", basic(it, repository.password)) }
             request.toResponseBody().let {
                 downloadedSchema.file().ensureParentDirsCreated()
                 downloadedSchema.file().writeText(it)
@@ -146,7 +151,7 @@ open class DownloadJsonSchemas : DefaultTask() {
     private fun JsonNode.isFullUri() = textValue().matches(FULL_URI_REGEX)
     private fun URI.toRelativeUri() = "${path.removePrefix("/")}${fragment?.let { "#$it" } ?: ""}"
 
-    private data class DownloadedSchema(val baseFolder: File, val path: String, val reference: Boolean) {
-        fun file() = File(baseFolder, path)
+    private fun basic(username: String, password: String?): String {
+        return "Basic ${Base64.encodeBase64String("$username:$password".toByteArray())}"
     }
 }

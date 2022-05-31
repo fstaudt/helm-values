@@ -9,8 +9,11 @@ import java.io.Serializable
  *                 must include protocol and host, may include port and path and should not end with "/"
  *
  *                 examples: http://my.charts.repository:1080, https://my.charts.repository/apps
- * @param authorizationHeader optional authorization header for the repository
- *
- *                            examples: Basic dGVzdDp0ZXN0, Bearer xxx.xxxxxx.xxx
+ * @param username optional username for basic authentication on the repository
+ * @param password optional password for basic authentication on the repository
  */
-data class RepositoryMapping(val baseUri: String, val authorizationHeader: String? = null) : Serializable
+data class RepositoryMapping(
+    val baseUri: String,
+    val username: String? = null,
+    val password: String? = null,
+) : Serializable
