@@ -92,6 +92,7 @@ class GenerateJsonSchemaTest {
                     { it.node("description").isEqualTo("\\\\n") },
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
+                    { it.node("properties.global.\$ref").isEqualTo(GLOBAL_VALUES_SCHEMA_FILE) },
                 )
         }
     }

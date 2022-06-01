@@ -2,6 +2,7 @@ package io.github.fstaudt.helm.tasks
 
 import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -49,6 +50,7 @@ open class GenerateJsonSchema : DefaultTask() {
     }
     private val jsonMapper = ObjectMapper().also {
         it.registerModule(KotlinModule.Builder().build())
+        it.enable(INDENT_OUTPUT)
     }
     private val nodeFactory = jsonMapper.nodeFactory
 
@@ -61,6 +63,7 @@ open class GenerateJsonSchema : DefaultTask() {
 
     private fun generateValuesSchemaFile(chart: Chart) {
         val jsonSchema = chart.toJsonSchema(VALUES_SCHEMA_FILE)
+        jsonSchema.objectNode("properties").objectNode("global").put("\$ref", GLOBAL_VALUES_SCHEMA_FILE)
         chart.dependencies.forEach { dependency ->
             extension.repositoryMappings[dependency.repository]?.let {
                 val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/$VALUES_SCHEMA_FILE".toRelativeUri()
