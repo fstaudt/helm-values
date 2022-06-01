@@ -55,7 +55,7 @@ class GenerateJsonSchemaTest {
                     "$BUNDLES" to RepositoryMapping("$BASE_URL/$BUNDLES_PATH"),
                     "$INFRA" to RepositoryMapping("$INFRA_REPOSITORY_URL"),
                   )
-                  targetRepository = "$APPS"
+                  publicationRepository = "$APPS"
                 }
             """.trimIndent()
             )
@@ -93,6 +93,39 @@ class GenerateJsonSchemaTest {
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
                     { it.node("properties.global.\$ref").isEqualTo(GLOBAL_VALUES_SCHEMA_FILE) },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchema should use publishedVersion from extension when it is specified`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValuesAssistant {
+                  repositoryMappings = mapOf(
+                    "$APPS" to RepositoryMapping("$BASE_URL/$APPS_PATH"),
+                    "$BUNDLES" to RepositoryMapping("$BASE_URL/$BUNDLES_PATH"),
+                    "$INFRA" to RepositoryMapping("$INFRA_REPOSITORY_URL"),
+                  )
+                  publicationRepository = "$APPS"
+                  publishedVersion = "0.2.0"
+                }
+            """.trimIndent()
+            )
+        }
+        testProject.initHelmChart()
+        testProject.runTask(GENERATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0/$VALUES_SCHEMA_FILE") },
+                    { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME/0.2.0") },
+                )
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0/$GLOBAL_VALUES_SCHEMA_FILE") },
+                    { it.node("title").isEqualTo("Configuration of global values for chart $APPS/$CHART_NAME/0.2.0") },
                 )
         }
     }
@@ -242,6 +275,11 @@ class GenerateJsonSchemaTest {
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$BASE_CHART_URL/$GLOBAL_VALUES_SCHEMA_FILE") },
+                    {
+                        it.node("title")
+                            .isEqualTo("Configuration of global values for chart $APPS/$CHART_NAME/$CHART_VERSION")
+                    },
+                    { it.node("description").isEqualTo("\\\\n") },
                     { it.node("allOf").isArray.hasSize(1) },
                     { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
                 )
@@ -351,7 +389,7 @@ class GenerateJsonSchemaTest {
                   repositoryMappings = mapOf(
                     "$APPS" to RepositoryMapping("$BASE_URL/$APPS_PATH"),
                   )
-                  targetRepository = "unknown"
+                  publicationRepository = "unknown"
                 }
             """.trimIndent()
             )
@@ -368,7 +406,7 @@ class GenerateJsonSchemaTest {
         }
         testProject.runAndFail(GENERATE_JSON_SCHEMA).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(FAILED)
-            assertThat(it.output).contains("targetRepository unknown not found in repository mappings.")
+            assertThat(it.output).contains("publication repository unknown not found in repository mappings.")
         }
     }
 

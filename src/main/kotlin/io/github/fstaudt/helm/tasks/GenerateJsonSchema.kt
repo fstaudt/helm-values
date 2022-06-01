@@ -62,7 +62,7 @@ open class GenerateJsonSchema : DefaultTask() {
     }
 
     private fun generateValuesSchemaFile(chart: Chart) {
-        val jsonSchema = chart.toJsonSchema(VALUES_SCHEMA_FILE)
+        val jsonSchema = chart.toValuesJsonSchema()
         jsonSchema.objectNode("properties").objectNode("global").put("\$ref", GLOBAL_VALUES_SCHEMA_FILE)
         chart.dependencies.forEach { dependency ->
             extension.repositoryMappings[dependency.repository]?.let {
@@ -78,7 +78,7 @@ open class GenerateJsonSchema : DefaultTask() {
     }
 
     private fun generateGlobalValuesSchemaFile(chart: Chart) {
-        val jsonSchema = chart.toJsonSchema(GLOBAL_VALUES_SCHEMA_FILE)
+        val jsonSchema = chart.toGlobalValuesJsonSchema()
         jsonSchema.allOf().let { allOf ->
             chart.dependencies.forEach { dependency ->
                 extension.repositoryMappings[dependency.repository]?.let {
@@ -91,11 +91,21 @@ open class GenerateJsonSchema : DefaultTask() {
         jsonMapper.writeValue(File(generatedSchemaFolder, GLOBAL_VALUES_SCHEMA_FILE), jsonSchema)
     }
 
-    private fun Chart.toJsonSchema(fileName: String): ObjectNode {
+    private fun Chart.toValuesJsonSchema(): ObjectNode {
+        val version = extension.publishedVersion ?: version
         return ObjectNode(jsonMapper.nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "${targetRepositoryMapping().baseUri}/$name/$version/$fileName")
-            .put("title", "Configuration for chart ${extension.targetRepository}/$name/$version")
+            .put("\$id", "${publicationRepositoryMapping().baseUri}/$name/$version/$VALUES_SCHEMA_FILE")
+            .put("title", "Configuration for chart ${extension.publicationRepository}/$name/$version")
+            .put("description", "\\n")
+    }
+
+    private fun Chart.toGlobalValuesJsonSchema(): ObjectNode {
+        val version = extension.publishedVersion ?: version
+        return ObjectNode(jsonMapper.nodeFactory)
+            .put("\$schema", SCHEMA_VERSION)
+            .put("\$id", "${publicationRepositoryMapping().baseUri}/$name/$version/${GLOBAL_VALUES_SCHEMA_FILE}")
+            .put("title", "Configuration of global values for chart ${extension.publicationRepository}/$name/$version")
             .put("description", "\\n")
     }
 
@@ -108,7 +118,7 @@ open class GenerateJsonSchema : DefaultTask() {
     }
 
     private fun String.toRelativeUri(): String {
-        return targetRepositoryMapping().let {
+        return publicationRepositoryMapping().let {
             val uri = URI(this)
             val targetUri = URI(it.baseUri)
             when {
@@ -118,7 +128,7 @@ open class GenerateJsonSchema : DefaultTask() {
                     "../..${"/..".repeat(targetUri.path.count { it == '/' })}${uri.path}"
                 else -> this
             }
-        } ?: this
+        }
     }
 
     private fun String.toPropertiesObjectNodeIn(jsonSchema: ObjectNode): ObjectNode {
@@ -127,8 +137,8 @@ open class GenerateJsonSchema : DefaultTask() {
         }
     }
 
-    private fun targetRepositoryMapping(): RepositoryMapping {
-        return extension.repositoryMappings[extension.targetRepository]
-            ?: throw RepositoryNotFoundException(extension.targetRepository)
+    private fun publicationRepositoryMapping(): RepositoryMapping {
+        return extension.repositoryMappings[extension.publicationRepository]
+            ?: throw RepositoryNotFoundException(extension.publicationRepository)
     }
 }
