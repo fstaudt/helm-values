@@ -8,13 +8,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HelmValuesAssistantExtension
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.exceptions.RepositoryNotFoundException
 import io.github.fstaudt.helm.model.Chart
-import io.github.fstaudt.helm.model.RepositoryMapping
+import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
@@ -28,14 +26,14 @@ import java.net.URI
 
 @CacheableTask
 @Suppress("NestedLambdaShadowedImplicitParameter")
-open class GenerateJsonSchema : DefaultTask() {
+open class GenerateJsonSchemas : DefaultTask() {
     companion object {
-        const val GENERATE_JSON_SCHEMA = "generateJsonSchema"
+        const val GENERATE_JSON_SCHEMAS = "generateJsonSchemas"
         const val GENERATED = "$HELM_VALUES/generated"
     }
 
     @OutputDirectory
-    val generatedSchemaFolder = File(project.buildDir, GENERATED)
+    val generatedSchemaDir = File(project.buildDir, GENERATED)
 
     @Nested
     lateinit var extension: HelmValuesAssistantExtension
@@ -62,11 +60,13 @@ open class GenerateJsonSchema : DefaultTask() {
     }
 
     private fun generateValuesSchemaFile(chart: Chart) {
+        val repository = publicationRepository()
         val jsonSchema = chart.toValuesJsonSchema()
-        jsonSchema.objectNode("properties").objectNode("global").put("\$ref", GLOBAL_VALUES_SCHEMA_FILE)
+        jsonSchema.objectNode("properties").objectNode("global").put("\$ref", repository.globalValuesSchemaFile)
         chart.dependencies.forEach { dependency ->
             extension.repositoryMappings[dependency.repository]?.let {
-                val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/$VALUES_SCHEMA_FILE".toRelativeUri()
+                val ref =
+                    "${it.baseUri}/${dependency.name}/${dependency.version}/${it.valuesSchemaFile}".toRelativeUri()
                 jsonSchema.objectNode("properties").objectNode(dependency.aliasOrName()).put("\$ref", ref)
                 dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)
                     ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
@@ -74,37 +74,40 @@ open class GenerateJsonSchema : DefaultTask() {
                     ?.put("type", "boolean")
             }
         }
-        jsonMapper.writeValue(File(generatedSchemaFolder, VALUES_SCHEMA_FILE), jsonSchema)
+        jsonMapper.writeValue(File(generatedSchemaDir, repository.valuesSchemaFile), jsonSchema)
     }
 
     private fun generateGlobalValuesSchemaFile(chart: Chart) {
+        val repository = publicationRepository()
         val jsonSchema = chart.toGlobalValuesJsonSchema()
         jsonSchema.allOf().let { allOf ->
             chart.dependencies.forEach { dependency ->
                 extension.repositoryMappings[dependency.repository]?.let {
-                    val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/$GLOBAL_VALUES_SCHEMA_FILE"
+                    val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/${it.globalValuesSchemaFile}"
                         .toRelativeUri()
                     allOf.add(ObjectNode(nodeFactory).put("\$ref", ref))
                 }
             }
         }
-        jsonMapper.writeValue(File(generatedSchemaFolder, GLOBAL_VALUES_SCHEMA_FILE), jsonSchema)
+        jsonMapper.writeValue(File(generatedSchemaDir, repository.globalValuesSchemaFile), jsonSchema)
     }
 
     private fun Chart.toValuesJsonSchema(): ObjectNode {
+        val repository = publicationRepository()
         val version = extension.publishedVersion ?: version
         return ObjectNode(jsonMapper.nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "${publicationRepositoryMapping().baseUri}/$name/$version/$VALUES_SCHEMA_FILE")
+            .put("\$id", "${repository.baseUri}/$name/$version/${repository.valuesSchemaFile}")
             .put("title", "Configuration for chart ${extension.publicationRepository}/$name/$version")
             .put("description", "\\n")
     }
 
     private fun Chart.toGlobalValuesJsonSchema(): ObjectNode {
+        val repository = publicationRepository()
         val version = extension.publishedVersion ?: version
         return ObjectNode(jsonMapper.nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "${publicationRepositoryMapping().baseUri}/$name/$version/${GLOBAL_VALUES_SCHEMA_FILE}")
+            .put("\$id", "${repository.baseUri}/$name/$version/${repository.globalValuesSchemaFile}")
             .put("title", "Configuration of global values for chart ${extension.publicationRepository}/$name/$version")
             .put("description", "\\n")
     }
@@ -118,7 +121,7 @@ open class GenerateJsonSchema : DefaultTask() {
     }
 
     private fun String.toRelativeUri(): String {
-        return publicationRepositoryMapping().let {
+        return publicationRepository().let {
             val uri = URI(this)
             val targetUri = URI(it.baseUri)
             when {
@@ -137,7 +140,7 @@ open class GenerateJsonSchema : DefaultTask() {
         }
     }
 
-    private fun publicationRepositoryMapping(): RepositoryMapping {
+    private fun publicationRepository(): JsonSchemaRepository {
         return extension.repositoryMappings[extension.publicationRepository]
             ?: throw RepositoryNotFoundException(extension.publicationRepository)
     }

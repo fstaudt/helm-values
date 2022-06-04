@@ -38,14 +38,14 @@ open class UnpackJsonSchemas : DefaultTask() {
     private val logger: Logger = LoggerFactory.getLogger(UnpackJsonSchemas::class.java)
 
     @OutputDirectory
-    val unpackSchemasFolder = File(project.buildDir, UNPACK)
+    val unpackSchemasDir = File(project.buildDir, UNPACK)
 
     @Nested
     lateinit var extension: HelmValuesAssistantExtension
 
     @InputDirectory
     @PathSensitive(RELATIVE)
-    lateinit var chartsFolder: File
+    lateinit var chartsDir: File
 
     @InputFile
     @PathSensitive(RELATIVE)
@@ -58,8 +58,8 @@ open class UnpackJsonSchemas : DefaultTask() {
 
     @TaskAction
     fun download() {
-        unpackSchemasFolder.deleteRecursively()
-        unpackSchemasFolder.mkdirs()
+        unpackSchemasDir.deleteRecursively()
+        unpackSchemasDir.mkdirs()
         val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         chart.dependencies.forEach { dependency ->
             unpackSchema(dependency)
@@ -67,7 +67,7 @@ open class UnpackJsonSchemas : DefaultTask() {
     }
 
     private fun unpackSchema(dependency: ChartDependency) {
-        val archive = File(chartsFolder, "${dependency.name}-${dependency.version}.tgz")
+        val archive = File(chartsDir, "${dependency.name}-${dependency.version}.tgz")
         if (archive.exists()) {
             try {
                 archive.inputStream().use {
@@ -99,12 +99,12 @@ open class UnpackJsonSchemas : DefaultTask() {
     }
 
     private fun ChartDependency.toSchemaFileFor(entry: TarArchiveEntry): File {
-        val basePath = File("$unpackSchemasFolder/${alias ?: name}")
+        val basePath = File("$unpackSchemasDir/${alias ?: name}")
         return File(basePath, entry.name.removePrefix("${name}/").replace("charts/", ""))
     }
 
     private fun ChartDependency.createErrorSchemaFileFor(errorMessage: String) {
-        File("$unpackSchemasFolder/${alias ?: name}/$SCHEMA_FILE").also {
+        File("$unpackSchemasDir/${alias ?: name}/$SCHEMA_FILE").also {
             it.ensureParentDirsCreated()
             it.writeText(
                 """

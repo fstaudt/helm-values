@@ -2,19 +2,19 @@ package io.github.fstaudt.helm.tasks
 
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.buildDir
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
+import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.runAndFail
 import io.github.fstaudt.helm.runTask
-import io.github.fstaudt.helm.tasks.GenerateJsonSchema.Companion.GENERATED
-import io.github.fstaudt.helm.tasks.GenerateJsonSchema.Companion.GENERATE_JSON_SCHEMA
+import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATED
+import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FAILED
@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 @Suppress("NestedLambdaShadowedImplicitParameter")
-class GenerateJsonSchemaTest {
+class GenerateJsonSchemasTest {
     private lateinit var testProject: TestProject
 
     companion object {
@@ -51,9 +51,9 @@ class GenerateJsonSchemaTest {
                 """
                 helmValuesAssistant {
                   repositoryMappings = mapOf(
-                    "$APPS" to RepositoryMapping("$BASE_URL/$APPS_PATH"),
-                    "$BUNDLES" to RepositoryMapping("$BASE_URL/$BUNDLES_PATH"),
-                    "$INFRA" to RepositoryMapping("$INFRA_REPOSITORY_URL"),
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH"),
+                    "$BUNDLES" to JsonSchemaRepository("$BASE_URL/$BUNDLES_PATH"),
+                    "$INFRA" to JsonSchemaRepository("$INFRA_REPOSITORY_URL"),
                   )
                   publicationRepository = "$APPS"
                 }
@@ -82,8 +82,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
@@ -104,9 +104,9 @@ class GenerateJsonSchemaTest {
                 """
                 helmValuesAssistant {
                   repositoryMappings = mapOf(
-                    "$APPS" to RepositoryMapping("$BASE_URL/$APPS_PATH"),
-                    "$BUNDLES" to RepositoryMapping("$BASE_URL/$BUNDLES_PATH"),
-                    "$INFRA" to RepositoryMapping("$INFRA_REPOSITORY_URL"),
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH"),
+                    "$BUNDLES" to JsonSchemaRepository("$BASE_URL/$BUNDLES_PATH"),
+                    "$INFRA" to JsonSchemaRepository("$INFRA_REPOSITORY_URL"),
                   )
                   publicationRepository = "$APPS"
                   publishedVersion = "0.2.0"
@@ -115,8 +115,8 @@ class GenerateJsonSchemaTest {
             )
         }
         testProject.initHelmChart()
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0/$VALUES_SCHEMA_FILE") },
@@ -143,8 +143,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("properties").isObject.doesNotContainKey(EXTERNAL_SCHEMA) },
@@ -168,8 +168,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     {
@@ -192,8 +192,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     {
@@ -216,8 +216,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     {
@@ -241,8 +241,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
                     {
@@ -269,8 +269,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
@@ -299,8 +299,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("allOf").isArray.hasSize(1) },
@@ -321,8 +321,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("allOf").isArray.hasSize(1) },
@@ -343,8 +343,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("allOf").isArray.hasSize(1) },
@@ -368,8 +368,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     {
@@ -387,7 +387,7 @@ class GenerateJsonSchemaTest {
                 """
                 helmValuesAssistant {
                   repositoryMappings = mapOf(
-                    "$APPS" to RepositoryMapping("$BASE_URL/$APPS_PATH"),
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH"),
                   )
                   publicationRepository = "unknown"
                 }
@@ -404,8 +404,8 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runAndFail(GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(FAILED)
+        testProject.runAndFail(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains("publication repository unknown not found in repository mappings.")
         }
     }
@@ -422,16 +422,16 @@ class GenerateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(WITH_BUILD_CACHE, GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+        testProject.runTask(WITH_BUILD_CACHE, GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$GLOBAL_VALUES_SCHEMA_FILE")
         }
         File("${testProject.buildDir}/$GENERATED").deleteRecursively()
-        testProject.runTask(WITH_BUILD_CACHE, GENERATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMA")!!.outcome).isEqualTo(FROM_CACHE)
+        testProject.runTask(WITH_BUILD_CACHE, GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile

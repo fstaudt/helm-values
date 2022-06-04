@@ -13,7 +13,7 @@ import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
-import io.github.fstaudt.helm.model.RepositoryMapping
+import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.apache.commons.codec.binary.Base64
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
@@ -50,7 +50,7 @@ open class DownloadJsonSchemas : DefaultTask() {
     private val logger: Logger = LoggerFactory.getLogger(DownloadJsonSchemas::class.java)
 
     @OutputDirectory
-    val downloadedSchemasFolder = File(project.buildDir, DOWNLOADS)
+    val downloadedSchemasDir = File(project.buildDir, DOWNLOADS)
 
     @Nested
     lateinit var extension: HelmValuesAssistantExtension
@@ -71,8 +71,8 @@ open class DownloadJsonSchemas : DefaultTask() {
 
     @TaskAction
     fun download() {
-        downloadedSchemasFolder.deleteRecursively()
-        downloadedSchemasFolder.mkdirs()
+        downloadedSchemasDir.deleteRecursively()
+        downloadedSchemasDir.mkdirs()
         val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         chart.dependencies.forEach { dependency ->
             downloadSchema(dependency, "helm-values.json")
@@ -83,12 +83,12 @@ open class DownloadJsonSchemas : DefaultTask() {
     private fun downloadSchema(dependency: ChartDependency, fileName: String) {
         extension.repositoryMappings[dependency.repository]?.let {
             val uri = URI("${it.baseUri}/${dependency.name}/${dependency.version}/$fileName")
-            val downloadFolder = File(downloadedSchemasFolder, dependency.aliasOrName())
+            val downloadFolder = File(downloadedSchemasDir, dependency.aliasOrName())
             downloadSchema(uri, DownloadedSchema(downloadFolder, fileName, false), it)
         }
     }
 
-    private fun downloadSchema(uri: URI, downloadedSchema: DownloadedSchema, repository: RepositoryMapping?) {
+    private fun downloadSchema(uri: URI, downloadedSchema: DownloadedSchema, repository: JsonSchemaRepository?) {
         if (!downloadedSchema.file().exists()) {
             logger.info("Downloading $downloadedSchema from $uri")
             val request = HttpGet(uri)

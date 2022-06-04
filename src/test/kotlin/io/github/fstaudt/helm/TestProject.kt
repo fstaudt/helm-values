@@ -1,6 +1,6 @@
 package io.github.fstaudt.helm
 
-import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.HELM_SOURCES_DIRECTORY
+import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.HELM_SOURCES_DIR
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import java.io.File
@@ -32,7 +32,7 @@ private fun TestProject.initSettingsFile(): File {
 fun TestProject.initBuildFile(customizeBuildFile: File.() -> Unit = {}): File {
     return File(this, "build.gradle.kts").apply {
         writeText("""
-                import io.github.fstaudt.helm.model.RepositoryMapping;
+                import io.github.fstaudt.helm.model.JsonSchemaRepository;
                 
                 plugins {
                   id("io.github.fstaudt.helm-values-assistant")
@@ -42,7 +42,7 @@ fun TestProject.initBuildFile(customizeBuildFile: File.() -> Unit = {}): File {
     }
 }
 
-fun TestProject.initHelmResources(helmSourcesDirectory: String = HELM_SOURCES_DIRECTORY) {
+fun TestProject.initHelmResources(helmSourcesDirectory: String = HELM_SOURCES_DIR) {
     File("src/test/resources/helm-resources").copyRecursively(File(this, helmSourcesDirectory))
 }
 

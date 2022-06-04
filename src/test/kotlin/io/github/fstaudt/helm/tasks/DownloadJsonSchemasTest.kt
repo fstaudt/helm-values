@@ -58,8 +58,8 @@ class DownloadJsonSchemasTest {
                 """
                 helmValuesAssistant {
                   repositoryMappings = mapOf(
-                    "$CHARTS_ID" to RepositoryMapping("$REPOSITORY_URL/$CHARTS_PATH"),
-                    "$PROTECTED_ID" to RepositoryMapping("$REPOSITORY_URL/$PROTECTED_PATH", "$REPOSITORY_USER", "$REPOSITORY_PASSWORD")
+                    "$CHARTS_ID" to JsonSchemaRepository("$REPOSITORY_URL/$CHARTS_PATH"),
+                    "$PROTECTED_ID" to JsonSchemaRepository("$REPOSITORY_URL/$PROTECTED_PATH", "$REPOSITORY_USER", "$REPOSITORY_PASSWORD")
                   )
                 }
             """.trimIndent()
@@ -424,7 +424,7 @@ class DownloadJsonSchemasTest {
                 """
                 helmValuesAssistant {
                   repositoryMappings = mapOf(
-                    "$CHARTS_ID" to RepositoryMapping("$UNAVAILABLE_URL/$CHARTS_PATH"),
+                    "$CHARTS_ID" to JsonSchemaRepository("$UNAVAILABLE_URL/$CHARTS_PATH"),
                   )
                 }
             """.trimIndent()
