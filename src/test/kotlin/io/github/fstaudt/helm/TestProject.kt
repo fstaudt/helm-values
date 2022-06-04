@@ -25,7 +25,7 @@ fun testProject(parentFolder: File? = File("build/tmp")): TestProject {
 
 private fun TestProject.initSettingsFile(): File {
     return File(this, "settings.gradle.kts").apply {
-        writeText("rootProject.name = \"gradle-hugo-plugin-test\"")
+        writeText("rootProject.name = \"test-helm-chart\"")
     }
 }
 

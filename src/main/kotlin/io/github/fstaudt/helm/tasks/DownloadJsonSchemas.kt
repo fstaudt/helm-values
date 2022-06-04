@@ -14,7 +14,6 @@ import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
-import org.apache.commons.codec.binary.Base64
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
@@ -92,7 +91,7 @@ open class DownloadJsonSchemas : DefaultTask() {
         if (!downloadedSchema.file().exists()) {
             logger.info("Downloading $downloadedSchema from $uri")
             val request = HttpGet(uri)
-            repository?.username?.let { request.addHeader("Authorization", basic(it, repository.password)) }
+            repository?.basicAuthentication()?.let { request.addHeader("Authorization", it) }
             request.toResponseBody().let {
                 downloadedSchema.file().ensureParentDirsCreated()
                 downloadedSchema.file().writeText(it)
@@ -162,9 +161,5 @@ open class DownloadJsonSchemas : DefaultTask() {
     private fun JsonNode.isFullUri() = textValue().matches(FULL_URI_REGEX)
     private fun JsonNode.isSimpleFile() = !textValue().contains("/")
     private fun URI.toDownloadedUri() = "${path.removePrefix("/")}${fragment?.let { "#$it" } ?: ""}"
-
-    private fun basic(username: String, password: String?): String {
-        return "Basic ${Base64.encodeBase64String("$username:$password".toByteArray())}"
-    }
 }
 

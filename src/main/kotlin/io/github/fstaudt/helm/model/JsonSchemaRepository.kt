@@ -1,5 +1,6 @@
 package io.github.fstaudt.helm.model
 
+import org.apache.commons.codec.binary.Base64
 import java.io.Serializable
 
 /**
@@ -33,5 +34,9 @@ data class JsonSchemaRepository(
     companion object {
         const val VALUES_SCHEMA_FILE = "values.schema.json"
         const val GLOBAL_VALUES_SCHEMA_FILE = "global-values.schema.json"
+    }
+
+    fun basicAuthentication(): String? {
+        return username?.let { "Basic ${Base64.encodeBase64String("$username:$password".toByteArray())}" }
     }
 }

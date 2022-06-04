@@ -68,7 +68,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should generate helm-values JSON schema with dependencies in mapped repositories`() {
+    fun `generateJsonSchema should generate values JSON schema with dependencies in mapped repositories`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -98,7 +98,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use publishedVersion from extension when it is specified`() {
+    fun `generateJsonSchema should use publishedVersion from extension when it is defined`() {
         testProject.initBuildFile {
             appendText(
                 """
@@ -131,7 +131,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use alias as property names in helm-values JSON schema`() {
+    fun `generateJsonSchema should use alias as property names in values JSON schema`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -157,7 +157,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use relative ref to external JSON schemas in helm-values when repositories are same`() {
+    fun `generateJsonSchema should use relative ref to external JSON schemas in values when repositories are same`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -181,7 +181,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use relative ref to external JSON schemas in helm-values when repositories have same host`() {
+    fun `generateJsonSchema should use relative ref to external JSON schemas in values when repositories have same host`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -205,7 +205,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use full ref to external JSON schemas in helm-values when repositories are different`() {
+    fun `generateJsonSchema should use full ref to external JSON schemas in values when repositories are different`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -229,7 +229,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should set property for dependency condition in helm-values`() {
+    fun `generateJsonSchema should set property for dependency condition in values`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -255,7 +255,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should generate helm-global JSON schema with dependencies in mapped repositories`() {
+    fun `generateJsonSchema should generate global values JSON schema with dependencies in mapped repositories`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -287,7 +287,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should not use alias to generate ref to external JSON schemas in helm-global JSON schema`() {
+    fun `generateJsonSchema should not use alias to generate ref to external JSON schemas in global values JSON schema`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -310,7 +310,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use relative ref to external JSON schemas in helm-global when repositories are same`() {
+    fun `generateJsonSchema should use relative ref to external JSON schemas in global values when repositories are same`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -332,7 +332,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use relative ref to external JSON schemas in helm-global when repositories have same host`() {
+    fun `generateJsonSchema should use relative ref to external JSON schemas in global values when repositories have same host`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -357,7 +357,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use full ref to external JSON schemas in helm-global when repositories are different`() {
+    fun `generateJsonSchema should use full ref to external JSON schemas in global values when repositories are different`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -381,7 +381,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should fail when target repository is not found in repository mappings`() {
+    fun `generateJsonSchema should fail when publication repository is not found in repository mappings`() {
         testProject.initBuildFile {
             appendText(
                 """
@@ -406,7 +406,7 @@ class GenerateJsonSchemasTest {
         }
         testProject.runAndFail(GENERATE_JSON_SCHEMAS).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
-            assertThat(it.output).contains("publication repository unknown not found in repository mappings.")
+            assertThat(it.output).contains("Publication repository unknown not found in repository mappings.")
         }
     }
 

@@ -1,10 +1,13 @@
 package io.github.fstaudt.helm
 
 import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.EXTENSION
+import io.github.fstaudt.helm.http.NexusRawPublisher
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
+import io.github.fstaudt.helm.tasks.PublishJsonSchemas
+import io.github.fstaudt.helm.tasks.PublishJsonSchemas.Companion.PUBLISH_JSON_SCHEMAS
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK_JSON_SCHEMAS
 import org.gradle.api.Plugin
@@ -35,11 +38,19 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
                 chartFile = helmChartFile
                 chartsDir = File("${projectDir}/${pluginExtension.sourcesDir}/charts")
             }
-            tasks.register<GenerateJsonSchemas>(GENERATE_JSON_SCHEMAS) {
+            val generateJsonSchemas = tasks.register<GenerateJsonSchemas>(GENERATE_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Generate JSON schemas for publication to a repository of JSON schemas"
                 extension = pluginExtension
                 chartFile = helmChartFile
+            }
+            tasks.register<PublishJsonSchemas>(PUBLISH_JSON_SCHEMAS) {
+                group = HELM_VALUES
+                description = "Publish generated JSON schemas to a repository of JSON schemas"
+                extension = pluginExtension
+                chartFile = helmChartFile
+                publisher = NexusRawPublisher()
+                dependsOn(generateJsonSchemas)
             }
         }
     }

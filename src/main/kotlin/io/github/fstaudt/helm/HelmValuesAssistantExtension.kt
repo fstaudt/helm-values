@@ -1,10 +1,11 @@
 package io.github.fstaudt.helm
 
+import io.github.fstaudt.helm.exceptions.RepositoryMappingException
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
+import io.github.fstaudt.helm.tasks.PublishJsonSchemas.Companion.PUBLISH_JSON_SCHEMAS
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.options.Option
 
 open class HelmValuesAssistantExtension {
     companion object {
@@ -18,7 +19,6 @@ open class HelmValuesAssistantExtension {
      * Default to project base directory.
      */
     @Input
-    @Option(description = "Base directory for sources of Helm chart, containing at least Chart.yaml (default to project base directory)")
     var sourcesDir: String = HELM_SOURCES_DIR
 
     /**
@@ -30,18 +30,22 @@ open class HelmValuesAssistantExtension {
     var repositoryMappings: Map<String, JsonSchemaRepository> = emptyMap()
 
     /**
-     * repository for JSON schemas publication
+     * Key to JSON schemas repository in repositoryMappings for JSON schemas publication
      *
-     * mandatory for task [GENERATE_JSON_SCHEMAS]
+     * Mandatory for tasks [GENERATE_JSON_SCHEMAS] & [PUBLISH_JSON_SCHEMAS]
      */
     @Input
     @Optional
     var publicationRepository: String? = null
 
     /**
-     * Optional version for JSON schemas publication (overwrites default version in Chart.yaml)
+     * Version for JSON schemas publication (overwrites default version in Chart.yaml)
      */
     @Input
     @Optional
     var publishedVersion: String? = null
+
+    fun publicationRepository(): JsonSchemaRepository {
+        return repositoryMappings[publicationRepository] ?: throw RepositoryMappingException(publicationRepository)
+    }
 }
