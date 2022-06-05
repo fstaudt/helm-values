@@ -83,23 +83,28 @@ open class DownloadJsonSchemas : DefaultTask() {
     private fun downloadSchema(dependency: ChartDependency, repository: JsonSchemaRepository, fileName: String) {
         val uri = URI("${repository.baseUri}/${dependency.name}/${dependency.version}/$fileName")
         val downloadFolder = File(downloadedSchemasDir, dependency.aliasOrName())
-        downloadSchema(uri, DownloadedSchema(downloadFolder, fileName, false), repository)
+        downloadSchema(dependency, uri, DownloadedSchema(downloadFolder, fileName, false), repository)
     }
 
-    private fun downloadSchema(uri: URI, downloadedSchema: DownloadedSchema, repository: JsonSchemaRepository?) {
+    private fun downloadSchema(
+        dependency: ChartDependency,
+        uri: URI,
+        downloadedSchema: DownloadedSchema,
+        repository: JsonSchemaRepository?,
+    ) {
         if (!downloadedSchema.file().exists()) {
             logger.info("Downloading $downloadedSchema from $uri")
             val request = HttpGet(uri)
             repository?.basicAuthentication()?.let { request.addHeader("Authorization", it) }
-            request.toResponseBody().let {
+            request.toResponseBody(dependency).let {
                 downloadedSchema.file().ensureParentDirsCreated()
                 downloadedSchema.file().writeText(it)
             }
-            downloadSchemaReferences(uri, downloadedSchema)
+            downloadSchemaReferences(dependency, uri, downloadedSchema)
         }
     }
 
-    private fun downloadSchemaReferences(uri: URI, downloadedSchema: DownloadedSchema) {
+    private fun downloadSchemaReferences(dependency: ChartDependency, uri: URI, downloadedSchema: DownloadedSchema) {
         val jsonSchema = jsonMapper.readTree(downloadedSchema.file())
         val needsRewrite = jsonSchema.findValues("\$ref").any {
             it.isFullUri() || (!downloadedSchema.isReference && !it.isSimpleFile())
@@ -121,7 +126,7 @@ open class DownloadJsonSchemas : DefaultTask() {
                         }
                         else -> DownloadedSchema(downloadedSchema.baseFolder, refUri.path, true)
                     }
-                    downloadSchema(refUri, refDownloadedSchema, refRepository)
+                    downloadSchema(dependency, refUri, refDownloadedSchema, refRepository)
                     if (isFullUri() || (!downloadedSchema.isReference && !isSimpleFile())) {
                         (it as ObjectNode).replace("\$ref", TextNode(refUri.toDownloadedUri()))
                     }
@@ -131,29 +136,29 @@ open class DownloadJsonSchemas : DefaultTask() {
         if (needsRewrite) jsonMapper.writeValue(downloadedSchema.file(), jsonSchema)
     }
 
-    private fun HttpGet.toResponseBody(): String {
+    private fun HttpGet.toResponseBody(dependency: ChartDependency): String {
         return try {
             client.execute(this).use {
                 if (it.code == 200)
                     EntityUtils.toString(it.entity)
                 else
-                    errorSchemaFor("${it.code} - ${it.reasonPhrase}")
+                    errorSchemaFor(dependency, "${it.code} - ${it.reasonPhrase}")
             }
         } catch (e: Exception) {
-            errorSchemaFor("${e.javaClass.simpleName} - ${e.localizedMessage}")
+            errorSchemaFor(dependency, "${e.javaClass.simpleName} - ${e.localizedMessage}")
         }
     }
 
-    private fun HttpGet.errorSchemaFor(errorMessage: String): String {
+    private fun HttpGet.errorSchemaFor(dependency: ChartDependency, errorMessage: String): String {
         return """
-                    {
-                      "${'$'}schema": "$SCHEMA_VERSION",
-                      "${'$'}id": "$uri",
-                      "type": "object",
-                      "title": "Error schema for $uri",
-                      "description":"An error occurred during download of $uri: $errorMessage"
-                    }
-                """.trimIndent()
+            {
+              "${'$'}schema": "$SCHEMA_VERSION",
+              "${'$'}id": "$uri",
+              "type": "object",
+              "title": "Error schema for ${dependency.repository}/${dependency.name}:${dependency.version}",
+              "description":"An error occurred during download of $uri: $errorMessage"
+            }
+            """.trimIndent()
     }
 
     private fun JsonNode.isLocalReference() = textValue().startsWith("#")
