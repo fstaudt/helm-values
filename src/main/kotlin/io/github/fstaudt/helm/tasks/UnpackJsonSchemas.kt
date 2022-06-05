@@ -14,9 +14,11 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.IgnoreEmptyDirectories
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
@@ -31,25 +33,27 @@ import java.io.File
 open class UnpackJsonSchemas : DefaultTask() {
     companion object {
         const val UNPACK_JSON_SCHEMAS = "unpackJsonSchemas"
-        const val UNPACK = "$HELM_VALUES/unpack"
+        const val CHARTS_DIR = "charts"
+        const val UNPACK = "unpack"
         const val SCHEMA_FILE = "values.schema.json"
     }
 
     private val logger: Logger = LoggerFactory.getLogger(UnpackJsonSchemas::class.java)
 
-    @OutputDirectory
-    val unpackSchemasDir = File(project.buildDir, UNPACK)
-
     @Nested
     lateinit var extension: HelmValuesAssistantExtension
 
     @InputDirectory
+    @Optional
     @PathSensitive(RELATIVE)
-    lateinit var chartsDir: File
+    var chartsDir: File? = null
 
     @InputFile
     @PathSensitive(RELATIVE)
     lateinit var chartFile: File
+
+    @OutputDirectory
+    val unpackSchemasDir = File(project.buildDir, "$HELM_VALUES/$UNPACK")
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
         it.registerModule(KotlinModule.Builder().build())

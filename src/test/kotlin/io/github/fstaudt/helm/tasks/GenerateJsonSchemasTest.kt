@@ -30,17 +30,17 @@ class GenerateJsonSchemasTest {
     private lateinit var testProject: TestProject
 
     companion object {
-        const val BASE_URL = "http://charts"
-        const val APPS = "@apps"
-        const val APPS_PATH = "apps"
-        const val BUNDLES = "@bundles"
-        const val BUNDLES_PATH = "bundles"
-        const val INFRA = "@infra"
-        const val INFRA_REPOSITORY_URL = "http://infra.charts"
-        const val THIRDPARTY = "@thirdparty"
-        const val EXTERNAL_SCHEMA = "external-json-schema"
-        const val EMBEDDED_SCHEMA = "embedded-json-schema"
-        const val BASE_CHART_URL = "$BASE_URL/$APPS_PATH/$CHART_NAME/$CHART_VERSION"
+        private const val BASE_URL = "http://charts"
+        private const val APPS = "@apps"
+        private const val APPS_PATH = "apps"
+        private const val BUNDLES = "@bundles"
+        private const val BUNDLES_PATH = "bundles"
+        private const val INFRA = "@infra"
+        private const val INFRA_REPOSITORY_URL = "http://infra.charts"
+        private const val THIRDPARTY = "@thirdparty"
+        private const val EXTERNAL_SCHEMA = "external-json-schema"
+        private const val EMBEDDED_SCHEMA = "embedded-json-schema"
+        private const val BASE_CHART_URL = "$BASE_URL/$APPS_PATH/$CHART_NAME/$CHART_VERSION"
     }
 
     @BeforeEach
@@ -68,7 +68,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should generate values JSON schema with dependencies in mapped repositories`() {
+    fun `generateJsonSchemas should generate values JSON schema with dependencies in mapped repositories`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -98,7 +98,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use publishedVersion from extension when it is defined`() {
+    fun `generateJsonSchemas should use publishedVersion from extension when it is defined`() {
         testProject.initBuildFile {
             appendText(
                 """
@@ -131,7 +131,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use alias as property names in values JSON schema`() {
+    fun `generateJsonSchemas should use alias as property names in values JSON schema`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -157,7 +157,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use relative ref to external JSON schemas in values when repositories are same`() {
+    fun `generateJsonSchemas should use relative ref to external JSON schemas in values when repositories are same`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -181,7 +181,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use relative ref to external JSON schemas in values when repositories have same host`() {
+    fun `generateJsonSchemas should use relative ref to external JSON schemas in values when repositories have same host`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -205,7 +205,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use full ref to external JSON schemas in values when repositories are different`() {
+    fun `generateJsonSchemas should use full ref to external JSON schemas in values when repositories are different`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -229,7 +229,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should set property for dependency condition in values`() {
+    fun `generateJsonSchemas should set property for dependency condition in values`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -255,7 +255,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should generate global values JSON schema with dependencies in mapped repositories`() {
+    fun `generateJsonSchemas should generate global values JSON schema with dependencies in mapped repositories`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -287,7 +287,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should not use alias to generate ref to external JSON schemas in global values JSON schema`() {
+    fun `generateJsonSchemas should not use alias to generate ref to external JSON schemas in global values JSON schema`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -310,7 +310,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use relative ref to external JSON schemas in global values when repositories are same`() {
+    fun `generateJsonSchemas should use relative ref to external JSON schemas in global values when repositories are same`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -332,7 +332,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use relative ref to external JSON schemas in global values when repositories have same host`() {
+    fun `generateJsonSchemas should use relative ref to external JSON schemas in global values when repositories have same host`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -357,7 +357,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should use full ref to external JSON schemas in global values when repositories are different`() {
+    fun `generateJsonSchemas should use full ref to external JSON schemas in global values when repositories are different`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -381,7 +381,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should fail when publication repository is not found in repository mappings`() {
+    fun `generateJsonSchemas should fail when publication repository is not found in repository mappings`() {
         testProject.initBuildFile {
             appendText(
                 """
@@ -411,7 +411,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchema should retrieve JSON schemas from cache on second run`() {
+    fun `generateJsonSchemas should retrieve JSON schemas from cache on second run`() {
         testProject.initHelmChart {
             appendText(
                 """

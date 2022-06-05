@@ -10,7 +10,10 @@ import org.apache.hc.core5.http.ContentType.APPLICATION_JSON
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity
 import java.io.File
 
-class NexusRawPublisher : Publisher {
+/**
+ * JSON schema publisher for Nexus raw repositories
+ */
+class NexusRawJsonSchemaPublisher : JsonSchemaPublisher {
     private val client: CloseableHttpClient = HttpClientBuilder.create().useSystemProperties().build()
 
     override fun publish(repository: JsonSchemaRepository, chart: Chart, schemaFile: File) {

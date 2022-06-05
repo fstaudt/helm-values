@@ -1,7 +1,9 @@
 package io.github.fstaudt.helm
 
 import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.EXTENSION
-import io.github.fstaudt.helm.http.NexusRawPublisher
+import io.github.fstaudt.helm.http.NexusRawJsonSchemaPublisher
+import io.github.fstaudt.helm.tasks.AggregateJsonSchema
+import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas
@@ -9,6 +11,7 @@ import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_
 import io.github.fstaudt.helm.tasks.PublishJsonSchemas
 import io.github.fstaudt.helm.tasks.PublishJsonSchemas.Companion.PUBLISH_JSON_SCHEMAS
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas
+import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.CHARTS_DIR
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK_JSON_SCHEMAS
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -25,18 +28,25 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
         with(project) {
             val pluginExtension = extensions.create(EXTENSION, HelmValuesAssistantExtension::class.java)
             val helmChartFile = File(projectDir, "${pluginExtension.sourcesDir}/Chart.yaml")
-            tasks.register<DownloadJsonSchemas>(DOWNLOAD_JSON_SCHEMAS) {
+            val downloadJsonSchemas = tasks.register<DownloadJsonSchemas>(DOWNLOAD_JSON_SCHEMAS) {
                 group = HELM_VALUES
-                description = "Download JSON schemas of dependencies from external schema repositories"
+                description = "Download JSON schemas of dependencies from JSON schema repositories"
                 extension = pluginExtension
                 chartFile = helmChartFile
             }
-            tasks.register<UnpackJsonSchemas>(UNPACK_JSON_SCHEMAS) {
+            val unpackJsonSchemas = tasks.register<UnpackJsonSchemas>(UNPACK_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Unpack JSON schemas values.schema.json from chart dependencies"
                 extension = pluginExtension
                 chartFile = helmChartFile
-                chartsDir = File("${projectDir}/${pluginExtension.sourcesDir}/charts")
+                chartsDir = File("${projectDir}/${pluginExtension.sourcesDir}/$CHARTS_DIR").ifExists()
+            }
+            tasks.register<AggregateJsonSchema>(AGGREGATE_JSON_SCHEMA) {
+                group = HELM_VALUES
+                description = "Aggregate unpacked and downloaded JSON schemas for assistance on Helm values in your IDE"
+                extension = pluginExtension
+                chartFile = helmChartFile
+                dependsOn(downloadJsonSchemas, unpackJsonSchemas)
             }
             val generateJsonSchemas = tasks.register<GenerateJsonSchemas>(GENERATE_JSON_SCHEMAS) {
                 group = HELM_VALUES
@@ -49,9 +59,10 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
                 description = "Publish generated JSON schemas to a repository of JSON schemas"
                 extension = pluginExtension
                 chartFile = helmChartFile
-                publisher = NexusRawPublisher()
+                jsonSchemaPublisher = NexusRawJsonSchemaPublisher()
                 dependsOn(generateJsonSchemas)
             }
         }
     }
+    private fun File.ifExists(): File?  = if (exists()) this else null
 }

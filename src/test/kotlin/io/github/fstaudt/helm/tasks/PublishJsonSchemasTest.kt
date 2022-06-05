@@ -22,7 +22,6 @@ import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.GLOBAL_VALUES
 import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.runAndFail
 import io.github.fstaudt.helm.runTask
-import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATED
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
 import io.github.fstaudt.helm.tasks.PublishJsonSchemas.Companion.PUBLISH_JSON_SCHEMAS
@@ -38,23 +37,21 @@ import java.io.File
 @WireMockTest(httpPort = 1980)
 class PublishJsonSchemasTest {
     private lateinit var testProject: TestProject
-    private lateinit var downloadFolder: File
 
     companion object {
-        const val REPOSITORY_URL = "http://localhost:1980"
-        const val REPOSITORY_USER = "user"
-        const val REPOSITORY_PASSWORD = "password"
-        const val REPOSITORY_AUTHORIZATION = "Basic dXNlcjpwYXNzd29yZA=="
-        const val UNAVAILABLE_URL = "http://localhost:1981"
-        const val APPS = "@apps"
-        const val APPS_PATH = "apps"
-        const val BASE_CHART_PATH = "$APPS_PATH/$CHART_NAME/$CHART_VERSION"
+        private const val REPOSITORY_URL = "http://localhost:1980"
+        private const val REPOSITORY_USER = "user"
+        private const val REPOSITORY_PASSWORD = "password"
+        private const val REPOSITORY_AUTHORIZATION = "Basic dXNlcjpwYXNzd29yZA=="
+        private const val UNAVAILABLE_URL = "http://localhost:1981"
+        private const val APPS = "@apps"
+        private const val APPS_PATH = "apps"
+        private const val BASE_CHART_PATH = "$APPS_PATH/$CHART_NAME/$CHART_VERSION"
     }
 
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
-        downloadFolder = File("${testProject.buildDir}/$DOWNLOADS")
         testProject.initBuildFile {
             appendText(
                 """

@@ -9,6 +9,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.unauthorized
 import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
@@ -30,29 +31,29 @@ import java.io.File
 @Suppress("NestedLambdaShadowedImplicitParameter")
 class DownloadJsonSchemasTest {
     private lateinit var testProject: TestProject
-    private lateinit var downloadFolder: File
+    private lateinit var downloadDir: File
 
     companion object {
-        const val REPOSITORY_URL = "http://localhost:1980"
-        const val REPOSITORY_USER = "user"
-        const val REPOSITORY_PASSWORD = "password"
-        const val REPOSITORY_AUTHORIZATION = "Basic dXNlcjpwYXNzd29yZA=="
-        const val UNAVAILABLE_URL = "http://localhost:1981"
-        const val CHARTS_ID = "@mycharts"
-        const val CHARTS_PATH = "charts"
-        const val PROTECTED_ID = "@myProtectedCharts"
-        const val PROTECTED_PATH = "protected"
-        const val THIRDPARTY_PATH = "thirdparty"
-        const val EXTERNAL_SCHEMA = "external-json-schema"
-        const val PROTECTED_SCHEMA = "protected-json-schema"
-        const val REF_SCHEMA = "ref-json-schema"
-        const val THIRDPARTY_SCHEMA = "thirdparty-json-schema"
+        private const val REPOSITORY_URL = "http://localhost:1980"
+        private const val REPOSITORY_USER = "user"
+        private const val REPOSITORY_PASSWORD = "password"
+        private const val REPOSITORY_AUTHORIZATION = "Basic dXNlcjpwYXNzd29yZA=="
+        private const val UNAVAILABLE_URL = "http://localhost:1981"
+        private const val CHARTS_ID = "@mycharts"
+        private const val CHARTS_PATH = "charts"
+        private const val PROTECTED_ID = "@myProtectedCharts"
+        private const val PROTECTED_PATH = "protected"
+        private const val THIRDPARTY_PATH = "thirdparty"
+        private const val EXTERNAL_SCHEMA = "external-json-schema"
+        private const val PROTECTED_SCHEMA = "protected-json-schema"
+        private const val REF_SCHEMA = "ref-json-schema"
+        private const val THIRDPARTY_SCHEMA = "thirdparty-json-schema"
     }
 
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
-        downloadFolder = File("${testProject.buildDir}/$DOWNLOADS")
+        downloadDir = File("${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS")
         testProject.initBuildFile {
             appendText(
                 """
@@ -62,7 +63,7 @@ class DownloadJsonSchemasTest {
                     "$PROTECTED_ID" to JsonSchemaRepository("$REPOSITORY_URL/$PROTECTED_PATH", "$REPOSITORY_USER", "$REPOSITORY_PASSWORD")
                   )
                 }
-            """.trimIndent()
+                """.trimIndent()
             )
         }
     }
@@ -96,9 +97,9 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-values.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.0/helm-values.json")
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.0/helm-global.json")
         }
     }
@@ -120,9 +121,9 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/${EXTERNAL_SCHEMA}-alias/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}-alias/helm-values.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.0/helm-values.json")
-            assertThatJsonFile("$downloadFolder/${EXTERNAL_SCHEMA}-alias/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}-alias/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.0/helm-global.json")
         }
     }
@@ -143,9 +144,9 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$PROTECTED_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$PROTECTED_SCHEMA/helm-values.json").isFile
                 .hasContent().node("\$id").isEqualTo("$PROTECTED_SCHEMA/0.1.0/helm-values.json")
-            assertThatJsonFile("$downloadFolder/$PROTECTED_SCHEMA/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$PROTECTED_SCHEMA/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$PROTECTED_SCHEMA/0.1.0/helm-global.json")
         }
     }
@@ -167,17 +168,17 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.1/helm-values.json") },
                     { it.node("properties.ref.\$ref").isEqualTo("$CHARTS_PATH/$REF_SCHEMA/0.1.0/helm-values.json") },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_SCHEMA/0.1.0/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_SCHEMA/0.1.0/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$REF_SCHEMA/0.1.0/helm-values.json") },
                     { it.node("properties.global.\$ref").isEqualTo("helm-global.json") },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_SCHEMA/0.1.0/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_SCHEMA/0.1.0/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$REF_SCHEMA/0.1.0/helm-global.json")
         }
     }
@@ -198,12 +199,12 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.3/helm-values.json") },
                     { it.node("properties.global.\$ref").isEqualTo("helm-global.json") },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.3/helm-global.json")
         }
     }
@@ -224,7 +225,7 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.1/helm-values.json") },
                     {
@@ -232,7 +233,7 @@ class DownloadJsonSchemasTest {
                             .isEqualTo("$CHARTS_PATH/$REF_SCHEMA/0.1.1/helm-global.json#/objects/refs")
                     },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_SCHEMA/0.1.1/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_SCHEMA/0.1.1/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$REF_SCHEMA/0.1.1/helm-global.json")
         }
     }
@@ -253,7 +254,7 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.1/helm-global.json") },
                     {
@@ -261,7 +262,7 @@ class DownloadJsonSchemasTest {
                             .isEqualTo("$PROTECTED_PATH/$PROTECTED_SCHEMA/0.1.1/helm-global.json#/objects/configMaps")
                     },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/$PROTECTED_PATH/$PROTECTED_SCHEMA/0.1.1/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$PROTECTED_PATH/$PROTECTED_SCHEMA/0.1.1/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$PROTECTED_SCHEMA/0.1.1/helm-global.json")
         }
     }
@@ -282,12 +283,12 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.2/helm-global.json") },
                     { it.node("\$ref").isEqualTo("$THIRDPARTY_PATH/$THIRDPARTY_SCHEMA/0.1.0/helm-global.json") },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/$THIRDPARTY_PATH/$THIRDPARTY_SCHEMA/0.1.0/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$THIRDPARTY_PATH/$THIRDPARTY_SCHEMA/0.1.0/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$THIRDPARTY_SCHEMA/0.1.0/helm-global.json")
         }
     }
@@ -310,7 +311,7 @@ class DownloadJsonSchemasTest {
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
 
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.2/helm-values.json") },
                     {
@@ -318,12 +319,12 @@ class DownloadJsonSchemasTest {
                             .isEqualTo("$PROTECTED_PATH/$PROTECTED_SCHEMA/0.1.1/helm-values.json")
                     },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/$PROTECTED_PATH/$PROTECTED_SCHEMA/0.1.1/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$PROTECTED_PATH/$PROTECTED_SCHEMA/0.1.1/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$PROTECTED_SCHEMA/0.1.1/helm-values.json") },
                     { it.node("properties.global.\$ref").isEqualTo("helm-global.json") }
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/$PROTECTED_PATH/$PROTECTED_SCHEMA/0.1.1/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$PROTECTED_PATH/$PROTECTED_SCHEMA/0.1.1/helm-global.json").isFile
                 .hasContent().node("\$id").isEqualTo("$PROTECTED_SCHEMA/0.1.1/helm-global.json")
         }
     }
@@ -345,7 +346,7 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.2/helm-values.json") },
                     {
@@ -353,7 +354,7 @@ class DownloadJsonSchemasTest {
                             .isEqualTo("$THIRDPARTY_PATH/$THIRDPARTY_SCHEMA/0.1.0/helm-values.json#/objects/refs")
                     }
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/$THIRDPARTY_PATH/$THIRDPARTY_SCHEMA/0.1.0/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$THIRDPARTY_PATH/$THIRDPARTY_SCHEMA/0.1.0/helm-values.json").isFile
                 .hasContent().node("\$id").isEqualTo("$THIRDPARTY_SCHEMA/0.1.0/helm-values.json")
         }
     }
@@ -373,7 +374,7 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$EXTERNAL_SCHEMA/0.1.3/helm-global.json") },
                     { it.node("properties.configMaps.\$ref").isEqualTo("#/objects/configMaps") },
@@ -398,7 +399,7 @@ class DownloadJsonSchemasTest {
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also { build ->
             assertThat(build.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             val baseUrl = "$REPOSITORY_URL/$CHARTS_PATH/$EXTERNAL_SCHEMA/0.1.0"
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$baseUrl/helm-values.json") },
@@ -406,7 +407,7 @@ class DownloadJsonSchemasTest {
                     { it.node("title").isEqualTo("Error schema for $baseUrl/helm-values.json") },
                     { it.node("description").isString.contains("401 - Unauthorized") },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$baseUrl/helm-global.json") },
@@ -443,7 +444,7 @@ class DownloadJsonSchemasTest {
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also { build ->
             assertThat(build.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             val baseUrl = "$UNAVAILABLE_URL/$CHARTS_PATH/$EXTERNAL_SCHEMA/0.1.0"
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-values.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-values.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$baseUrl/helm-values.json") },
@@ -451,7 +452,7 @@ class DownloadJsonSchemasTest {
                     { it.node("title").isEqualTo("Error schema for $baseUrl/helm-values.json") },
                     { it.node("description").isString.contains("HttpHostConnectException - ") },
                 )
-            assertThatJsonFile("$downloadFolder/$EXTERNAL_SCHEMA/helm-global.json").isFile
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/helm-global.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$baseUrl/helm-global.json") },
@@ -467,7 +468,7 @@ class DownloadJsonSchemasTest {
         testProject.initHelmChart()
         testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(File("${testProject.buildDir}/$DOWNLOADS")).isEmptyDirectory
+            assertThat(File("${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS")).isEmptyDirectory
         }
     }
 

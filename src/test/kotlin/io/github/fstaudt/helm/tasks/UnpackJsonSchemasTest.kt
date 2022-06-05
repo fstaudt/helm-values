@@ -1,5 +1,7 @@
 package io.github.fstaudt.helm.tasks
 
+import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.HELM_SOURCES_DIR
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
@@ -9,6 +11,7 @@ import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
 import io.github.fstaudt.helm.initHelmResources
 import io.github.fstaudt.helm.runTask
+import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.CHARTS_DIR
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK_JSON_SCHEMAS
 import io.github.fstaudt.helm.testProject
@@ -23,19 +26,21 @@ import java.io.File
 @Suppress("NestedLambdaShadowedImplicitParameter")
 class UnpackJsonSchemasTest {
     private lateinit var testProject: TestProject
+    private lateinit var unpackDir: File
 
     companion object {
-        const val THIRDPARTY_ID = "@thirdparty"
-        const val EMBEDDED_SCHEMA = "embedded-json-schema"
-        const val EMBEDDED_SUB_SCHEMA = "embedded-sub-json-schema"
-        const val INVALID_ARCHIVE = "invalid-archive"
-        const val MISSING_ARCHIVE = "missing-archive"
-        const val NO_SCHEMA = "no-json-schema"
+        private const val THIRDPARTY_ID = "@thirdparty"
+        private const val EMBEDDED_SCHEMA = "embedded-json-schema"
+        private const val EMBEDDED_SUB_SCHEMA = "embedded-sub-json-schema"
+        private const val INVALID_ARCHIVE = "invalid-archive"
+        private const val MISSING_ARCHIVE = "missing-archive"
+        private const val NO_SCHEMA = "no-json-schema"
     }
 
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
+        unpackDir = File(testProject.buildDir, "$HELM_VALUES/$UNPACK")
         testProject.initHelmResources()
         testProject.initBuildFile()
     }
@@ -59,7 +64,7 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
     }
@@ -78,13 +83,13 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
-        File("${testProject.buildDir}/$UNPACK").deleteRecursively()
+        File("$unpackDir").deleteRecursively()
         testProject.runTask(WITH_BUILD_CACHE, UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/$EMBEDDED_SCHEMA/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
     }
@@ -104,7 +109,7 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/${EMBEDDED_SCHEMA}-alias/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/${EMBEDDED_SCHEMA}-alias/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
     }
@@ -123,7 +128,7 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/${EMBEDDED_SUB_SCHEMA}/${EMBEDDED_SCHEMA}/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/${EMBEDDED_SUB_SCHEMA}/${EMBEDDED_SCHEMA}/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
         }
     }
@@ -142,7 +147,7 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/$MISSING_ARCHIVE/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/$MISSING_ARCHIVE/values.schema.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$MISSING_ARCHIVE/0.1.0/values.schema.json") },
@@ -168,7 +173,7 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/${MISSING_ARCHIVE}-alias/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/${MISSING_ARCHIVE}-alias/values.schema.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$MISSING_ARCHIVE/0.1.0/values.schema.json") },
@@ -193,7 +198,7 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/$INVALID_ARCHIVE/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/$INVALID_ARCHIVE/values.schema.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/0.1.0/values.schema.json") },
@@ -219,7 +224,7 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$UNPACK/${INVALID_ARCHIVE}-alias/values.schema.json").isFile
+            assertThatJsonFile("$unpackDir/${INVALID_ARCHIVE}-alias/values.schema.json").isFile
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo("https://json-schema.org/draft/2020-12/schema") },
                     { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/0.1.0/values.schema.json") },
@@ -244,16 +249,17 @@ class UnpackJsonSchemasTest {
         }
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(File("${testProject.buildDir}/$UNPACK")).isEmptyDirectory
+            assertThat(File("$unpackDir")).isEmptyDirectory
         }
     }
 
     @Test
     fun `unpackJsonSchema should create empty unpack directory when chart has no dependencies`() {
         testProject.initHelmChart()
+        File(testProject, "$HELM_SOURCES_DIR/$CHARTS_DIR").deleteRecursively()
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(File("${testProject.buildDir}/$UNPACK")).isEmptyDirectory
+            assertThat(File("$unpackDir")).isEmptyDirectory()
         }
     }
 }

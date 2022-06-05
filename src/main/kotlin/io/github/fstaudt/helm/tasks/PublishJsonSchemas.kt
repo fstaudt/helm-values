@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HelmValuesAssistantExtension
-import io.github.fstaudt.helm.http.Publisher
+import io.github.fstaudt.helm.http.JsonSchemaPublisher
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATED
 import org.gradle.api.DefaultTask
@@ -25,31 +25,31 @@ open class PublishJsonSchemas : DefaultTask() {
         const val PUBLISH_JSON_SCHEMAS = "publishJsonSchemas"
     }
 
-    @InputDirectory
-    @PathSensitive(RELATIVE)
-    val generatedSchemaDir = File(project.buildDir, GENERATED)
+    @Nested
+    lateinit var extension: HelmValuesAssistantExtension
 
     @InputFile
     @PathSensitive(RELATIVE)
     lateinit var chartFile: File
 
+    @InputDirectory
+    @PathSensitive(RELATIVE)
+    val generatedSchemaDir = File(project.buildDir, GENERATED)
+
     @Internal
-    lateinit var publisher: Publisher
+    lateinit var jsonSchemaPublisher: JsonSchemaPublisher
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
         it.registerModule(KotlinModule.Builder().build())
         it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-    @Nested
-    lateinit var extension: HelmValuesAssistantExtension
-
     @TaskAction
     fun publish() {
         val repository = extension.publicationRepository()
         val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         extension.publishedVersion?.let { chart.version = it }
-        publisher.publish(repository, chart, File(generatedSchemaDir, repository.valuesSchemaFile))
-        publisher.publish(repository, chart, File(generatedSchemaDir, repository.globalValuesSchemaFile))
+        jsonSchemaPublisher.publish(repository, chart, File(generatedSchemaDir, repository.valuesSchemaFile))
+        jsonSchemaPublisher.publish(repository, chart, File(generatedSchemaDir, repository.globalValuesSchemaFile))
     }
 }

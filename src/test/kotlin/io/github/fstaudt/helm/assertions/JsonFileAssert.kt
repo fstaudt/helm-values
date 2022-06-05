@@ -15,6 +15,7 @@ class JsonFileAssert(actual: File) : AbstractFileAssert<JsonFileAssert>(actual, 
 
     companion object {
         fun assertThatJsonFile(path: String) = JsonFileAssert(File(path))
+        fun assertThatJsonFile(file: File) = JsonFileAssert(file)
     }
 
     fun hasContent(charset: Charset = Charset.defaultCharset()): JsonAssert {

@@ -24,14 +24,11 @@ import java.net.URI
 
 @CacheableTask
 @Suppress("NestedLambdaShadowedImplicitParameter")
-open class GenerateJsonSchemas : DefaultTask() {
+open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
     companion object {
         const val GENERATE_JSON_SCHEMAS = "generateJsonSchemas"
         const val GENERATED = "$HELM_VALUES/generated"
     }
-
-    @OutputDirectory
-    val generatedSchemaDir = File(project.buildDir, GENERATED)
 
     @Nested
     lateinit var extension: HelmValuesAssistantExtension
@@ -40,15 +37,8 @@ open class GenerateJsonSchemas : DefaultTask() {
     @PathSensitive(RELATIVE)
     lateinit var chartFile: File
 
-    private val yamlMapper = ObjectMapper(YAMLFactory()).also {
-        it.registerModule(KotlinModule.Builder().build())
-        it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-    }
-    private val jsonMapper = ObjectMapper().also {
-        it.registerModule(KotlinModule.Builder().build())
-        it.enable(INDENT_OUTPUT)
-    }
-    private val nodeFactory = jsonMapper.nodeFactory
+    @OutputDirectory
+    val generatedSchemaDir = File(project.buildDir, GENERATED)
 
     @TaskAction
     fun generate() {
@@ -93,7 +83,7 @@ open class GenerateJsonSchemas : DefaultTask() {
     private fun Chart.toValuesJsonSchema(): ObjectNode {
         val repository = extension.publicationRepository()
         val version = extension.publishedVersion ?: version
-        return ObjectNode(jsonMapper.nodeFactory)
+        return ObjectNode(nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${repository.baseUri}/$name/$version/${repository.valuesSchemaFile}")
             .put("title", "Configuration for chart ${extension.publicationRepository}/$name/$version")
@@ -103,19 +93,11 @@ open class GenerateJsonSchemas : DefaultTask() {
     private fun Chart.toGlobalValuesJsonSchema(): ObjectNode {
         val repository = extension.publicationRepository()
         val version = extension.publishedVersion ?: version
-        return ObjectNode(jsonMapper.nodeFactory)
+        return ObjectNode(nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${repository.baseUri}/$name/$version/${repository.globalValuesSchemaFile}")
             .put("title", "Configuration of global values for chart ${extension.publicationRepository}/$name/$version")
             .put("description", "\\n")
-    }
-
-    private fun ObjectNode.objectNode(propertyName: String): ObjectNode {
-        return get(propertyName) as? ObjectNode ?: ObjectNode(nodeFactory).also { set<ObjectNode>(propertyName, it) }
-    }
-
-    private fun ObjectNode.allOf(): ArrayNode {
-        return get("allOf") as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ObjectNode>("allOf", it) }
     }
 
     private fun String.toRelativeUri(): String {
@@ -129,12 +111,6 @@ open class GenerateJsonSchemas : DefaultTask() {
                     "../..${"/..".repeat(publicationUri.path.count { it == '/' })}${uri.path}"
                 else -> this
             }
-        }
-    }
-
-    private fun String.toPropertiesObjectNodeIn(jsonSchema: ObjectNode): ObjectNode {
-        return split('.').fold(jsonSchema) { node: ObjectNode, property: String ->
-            node.objectNode("properties").objectNode(property)
         }
     }
 }

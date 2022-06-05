@@ -13,6 +13,7 @@ import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
+import io.github.fstaudt.helm.model.DownloadedSchema
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
@@ -37,19 +38,10 @@ import java.net.URI
 open class DownloadJsonSchemas : DefaultTask() {
     companion object {
         const val DOWNLOAD_JSON_SCHEMAS = "downloadJsonSchemas"
-        const val DOWNLOADS = "$HELM_VALUES/downloads"
+        const val DOWNLOADS = "downloads"
         private val FULL_URI_REGEX = Regex("http(s)?://.*")
         private val URI_FILENAME_REGEX = Regex("/[^/]*$")
     }
-
-    private data class DownloadedSchema(val baseFolder: File, val path: String, val isReference: Boolean) {
-        fun file() = File(baseFolder, path)
-    }
-
-    private val logger: Logger = LoggerFactory.getLogger(DownloadJsonSchemas::class.java)
-
-    @OutputDirectory
-    val downloadedSchemasDir = File(project.buildDir, DOWNLOADS)
 
     @Nested
     lateinit var extension: HelmValuesAssistantExtension
@@ -57,6 +49,11 @@ open class DownloadJsonSchemas : DefaultTask() {
     @InputFile
     @PathSensitive(RELATIVE)
     lateinit var chartFile: File
+
+    @OutputDirectory
+    val downloadedSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS")
+
+    private val logger: Logger = LoggerFactory.getLogger(DownloadJsonSchemas::class.java)
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
         it.registerModule(KotlinModule.Builder().build())
