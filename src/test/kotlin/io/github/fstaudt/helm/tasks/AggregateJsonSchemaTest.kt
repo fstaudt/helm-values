@@ -44,6 +44,7 @@ class AggregateJsonSchemaTest {
         private const val EXTERNAL_SCHEMA = "external-json-schema"
         private const val EXTERNAL_VERSION = "0.2.0"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
+        private const val EMBEDDED_SUB_SCHEMA = "embedded-sub-json-schema"
         private const val NO_SCHEMA = "no-json-schema"
     }
 
@@ -172,6 +173,32 @@ class AggregateJsonSchemaTest {
                     {
                         it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$UNPACK/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
                     }
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should aggregate unpacked JSON schemas from sub-chart`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EMBEDDED_SUB_SCHEMA
+                  version: "0.1.0"
+                  repository: "$THIRDPARTY"
+                """.trimIndent()
+            )
+        }
+        testProject.initHelmResources(chartName = EMBEDDED_SUB_SCHEMA)
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).exists()
+                .hasContent().node("properties").and(
+                    {
+                        it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.\$ref")
+                            .isEqualTo("$UNPACK/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                    },
+                    { it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA").isObject.doesNotContainKey("properties") },
                 )
         }
     }

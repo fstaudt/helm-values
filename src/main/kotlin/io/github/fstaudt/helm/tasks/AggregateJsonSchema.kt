@@ -48,12 +48,7 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
         val jsonSchema = chart.toAggregatedValuesJsonSchema()
         val properties = jsonSchema.objectNode("properties")
         val globalProperties = properties.objectNode("global")
-        unpackSchemasDir.listFiles()?.forEach {
-            if (it.isDirectory && it.containsFile(HELM_SCHEMA_FILE)) {
-                val ref = "$UNPACK/${it.name}/$HELM_SCHEMA_FILE"
-                properties.objectNode(it.name).put("\$ref", ref)
-            }
-        }
+        properties.setUnpackedDependencyRefsFrom(unpackSchemasDir, UNPACK)
         chart.dependencies.forEach { dependency ->
             extension.repositoryMappings[dependency.repository]?.let { repository ->
                 val ref = "$DOWNLOADS/${dependency.aliasOrName()}/${repository.valuesSchemaFile}"
@@ -77,5 +72,19 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
             .put("description", EMPTY)
     }
 
+    private fun ObjectNode.setUnpackedDependencyRefsFrom(unpackSchemasDir: File, refPrefix: String) {
+        unpackSchemasDir.listFiles()?.forEach {
+            with(objectNode(it.name)) {
+                if (it.containsFile(HELM_SCHEMA_FILE)) {
+                    put("\$ref", "$refPrefix/${it.name}/$HELM_SCHEMA_FILE")
+                }
+                if (it.hasSubDirectories()) {
+                    objectNode("properties").setUnpackedDependencyRefsFrom(it, "$refPrefix/${it.name}")
+                }
+            }
+        }
+    }
+
+    private fun File.hasSubDirectories() = listFiles(FileFilter { it.isDirectory })?.any() ?: false
     private fun File.containsFile(fileName: String) = listFiles(FileFilter { it.name == fileName })?.any() ?: false
 }
