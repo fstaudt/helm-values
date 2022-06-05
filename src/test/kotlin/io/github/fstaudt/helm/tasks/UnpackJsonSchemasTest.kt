@@ -17,6 +17,7 @@ import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK_JSON_SCHE
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
+import org.gradle.testkit.runner.TaskOutcome.NO_SOURCE
 import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -29,7 +30,7 @@ class UnpackJsonSchemasTest {
     private lateinit var unpackDir: File
 
     companion object {
-        private const val THIRDPARTY_ID = "@thirdparty"
+        private const val THIRDPARTY = "@thirdparty"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
         private const val EMBEDDED_SUB_SCHEMA = "embedded-sub-json-schema"
         private const val INVALID_ARCHIVE = "invalid-archive"
@@ -51,14 +52,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should unpack JSON schemas from dependency archives`() {
+    fun `unpackJsonSchemas should unpack JSON schemas from dependency archives`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $EMBEDDED_SCHEMA
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                 """.trimIndent()
             )
         }
@@ -70,14 +71,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should retrieve JSON schemas from cache on second run`() {
+    fun `unpackJsonSchemas should retrieve JSON schemas from cache on second run`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $EMBEDDED_SCHEMA
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                 """.trimIndent()
             )
         }
@@ -95,14 +96,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should use alias to unpack JSON schemas from dependency archives`() {
+    fun `unpackJsonSchemas should use alias to unpack JSON schemas from dependency archives`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $EMBEDDED_SCHEMA
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                   alias: ${EMBEDDED_SCHEMA}-alias
                 """.trimIndent()
             )
@@ -115,14 +116,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should unpack sub-charts JSON schemas from dependency archives`() {
+    fun `unpackJsonSchemas should unpack sub-charts JSON schemas from dependency archives`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $EMBEDDED_SUB_SCHEMA
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                 """.trimIndent()
             )
         }
@@ -134,14 +135,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should generate JSON schema with error when archive is not found for dependency`() {
+    fun `unpackJsonSchemas should generate JSON schema with error when archive is not found for dependency`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $MISSING_ARCHIVE
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                 """.trimIndent()
             )
         }
@@ -159,14 +160,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should use alias to generate JSON schema with error when archive is not found for dependency`() {
+    fun `unpackJsonSchemas should use alias to generate JSON schema with error when archive is not found for dependency`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $MISSING_ARCHIVE
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                   alias: ${MISSING_ARCHIVE}-alias
                 """.trimIndent()
             )
@@ -185,14 +186,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should generate JSON schema with error when archive is invalid`() {
+    fun `unpackJsonSchemas should generate JSON schema with error when archive is invalid`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $INVALID_ARCHIVE
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                 """.trimIndent()
             )
         }
@@ -210,14 +211,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should use alias to generate JSON schema with error when archive is invalid`() {
+    fun `unpackJsonSchemas should use alias to generate JSON schema with error when archive is invalid`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $INVALID_ARCHIVE
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                   alias: ${INVALID_ARCHIVE}-alias
                 """.trimIndent()
             )
@@ -236,14 +237,14 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should create empty unpack directory when dependencies contain no JSON schema`() {
+    fun `unpackJsonSchemas should create empty unpack directory when dependencies contain no JSON schema`() {
         testProject.initHelmChart {
             appendText(
                 """
                 dependencies:
                 - name: $NO_SCHEMA
                   version: 0.1.0
-                  repository: "$THIRDPARTY_ID"
+                  repository: "$THIRDPARTY"
                 """.trimIndent()
             )
         }
@@ -254,12 +255,20 @@ class UnpackJsonSchemasTest {
     }
 
     @Test
-    fun `unpackJsonSchema should create empty unpack directory when chart has no dependencies`() {
+    fun `unpackJsonSchemas should create empty unpack directory when chart has no dependencies`() {
         testProject.initHelmChart()
         File(testProject, "$HELM_SOURCES_DIR/$CHARTS_DIR").deleteRecursively()
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThat(File("$unpackDir")).isEmptyDirectory()
+        }
+    }
+
+    @Test
+    fun `downloadJsonSchemas should be skipped when there is no chart in Helm sources directory`() {
+        File(testProject, "Chart.yaml").delete()
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(NO_SOURCE)
         }
     }
 }

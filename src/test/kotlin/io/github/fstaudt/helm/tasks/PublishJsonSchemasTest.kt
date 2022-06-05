@@ -28,6 +28,7 @@ import io.github.fstaudt.helm.tasks.PublishJsonSchemas.Companion.PUBLISH_JSON_SC
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FAILED
+import org.gradle.testkit.runner.TaskOutcome.NO_SOURCE
 import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -225,6 +226,14 @@ class PublishJsonSchemasTest {
         testProject.runAndFail(PUBLISH_JSON_SCHEMAS).also {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains("Publication of $CHART_NAME/$CHART_VERSION/$VALUES_SCHEMA_FILE failed with HTTP code 0.")
+        }
+    }
+
+    @Test
+    fun `publishJsonSchemas should be skipped when there is no chart in Helm sources directory`() {
+        File(testProject, "Chart.yaml").delete()
+        testProject.runTask(PUBLISH_JSON_SCHEMAS).also {
+            assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(NO_SOURCE)
         }
     }
 

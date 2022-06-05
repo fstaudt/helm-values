@@ -10,6 +10,7 @@ import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJson
 import io.github.fstaudt.helm.buildDir
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
+import io.github.fstaudt.helm.initHelmResources
 import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.runTask
@@ -17,10 +18,13 @@ import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.AGGREGATED_SCH
 import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
+import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.UNPACK_JSON_SCHEMAS
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
+import org.gradle.testkit.runner.TaskOutcome.NO_SOURCE
 import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -39,6 +43,7 @@ class AggregateJsonSchemaTest {
         private const val THIRDPARTY = "@thirdparty"
         private const val EXTERNAL_SCHEMA = "external-json-schema"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
+        private const val NO_SCHEMA = "no-json-schema"
     }
 
     @BeforeEach
@@ -97,12 +102,13 @@ class AggregateJsonSchemaTest {
                 - name: $EXTERNAL_SCHEMA
                   version: 0.1.0
                   repository: "$APPS"
-                - name: $EMBEDDED_SCHEMA
+                - name: $NO_SCHEMA
                   version: "0.1.0"
                   repository: "$THIRDPARTY"
                 """.trimIndent()
             )
         }
+        testProject.initHelmResources(chartName = NO_SCHEMA)
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).exists()
@@ -112,7 +118,7 @@ class AggregateJsonSchemaTest {
                             .isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
                         it.node("global.allOf").isArray.hasSize(1)
                         it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
-                        it.isObject.doesNotContainKey(EMBEDDED_SCHEMA)
+                        it.isObject.doesNotContainKey(NO_SCHEMA)
                     }
                 )
         }
@@ -142,6 +148,88 @@ class AggregateJsonSchemaTest {
                             .isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA-alias/$VALUES_SCHEMA_FILE")
                     }
                 )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should aggregate unpacked JSON schemas`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: "0.1.0"
+                  repository: "$THIRDPARTY"
+                """.trimIndent()
+            )
+        }
+        testProject.initHelmResources(chartName = EMBEDDED_SCHEMA)
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).exists()
+                .hasContent().node("properties").and(
+                    {
+                        it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$UNPACK/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                    }
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should use alias to aggregate unpacked JSON schemas`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: "0.1.0"
+                  repository: "$THIRDPARTY"
+                  alias: $EMBEDDED_SCHEMA-alias
+                """.trimIndent()
+            )
+        }
+        testProject.initHelmResources(chartName = EMBEDDED_SCHEMA)
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).exists()
+                .hasContent().node("properties").and(
+                    {
+                        it.node("$EMBEDDED_SCHEMA-alias.\$ref")
+                            .isEqualTo("$UNPACK/$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE")
+                    }
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should give precedence to downloaded JSON schema over unpacked JSON schema`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: 0.1.0
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initHelmResources(chartName = EMBEDDED_SCHEMA)
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).exists()
+                .hasContent().node("properties").and(
+                    {
+                        it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$DOWNLOADS/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
+                    }
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should be skipped when there is no chart in Helm sources directory`() {
+        File(testProject, "Chart.yaml").delete()
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(NO_SOURCE)
         }
     }
 }

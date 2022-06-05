@@ -1,9 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "ref-json-schema/0.1.0/helm-values.json",
-  "properties": {
-    "global": {
-      "$ref": "helm-global.json"
-    }
-  }
-}

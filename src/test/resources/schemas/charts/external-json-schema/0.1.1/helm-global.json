@@ -1,9 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "external-json-schema/0.1.1/helm-global.json",
-  "properties": {
-    "configMaps": {
-      "$ref": "../../../protected/protected-json-schema/0.1.1/helm-global.json#/objects/configMaps"
-    }
-  }
-}

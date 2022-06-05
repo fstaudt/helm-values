@@ -25,6 +25,7 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
+import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
@@ -47,8 +48,9 @@ open class DownloadJsonSchemas : DefaultTask() {
     lateinit var extension: HelmValuesAssistantExtension
 
     @InputFile
+    @SkipWhenEmpty
     @PathSensitive(RELATIVE)
-    lateinit var chartFile: File
+    var chartFile: File? = null
 
     @OutputDirectory
     val downloadedSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS")
@@ -69,19 +71,19 @@ open class DownloadJsonSchemas : DefaultTask() {
     fun download() {
         downloadedSchemasDir.deleteRecursively()
         downloadedSchemasDir.mkdirs()
-        val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
-        chart.dependencies.forEach { dependency ->
-            downloadSchema(dependency, "helm-values.json")
-            downloadSchema(dependency, "helm-global.json")
+        val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        chart?.dependencies?.forEach { dependency ->
+            extension.repositoryMappings[dependency.repository]?.let {
+                downloadSchema(dependency, it, it.valuesSchemaFile)
+                downloadSchema(dependency, it, it.globalValuesSchemaFile)
+            }
         }
     }
 
-    private fun downloadSchema(dependency: ChartDependency, fileName: String) {
-        extension.repositoryMappings[dependency.repository]?.let {
-            val uri = URI("${it.baseUri}/${dependency.name}/${dependency.version}/$fileName")
-            val downloadFolder = File(downloadedSchemasDir, dependency.aliasOrName())
-            downloadSchema(uri, DownloadedSchema(downloadFolder, fileName, false), it)
-        }
+    private fun downloadSchema(dependency: ChartDependency, repository: JsonSchemaRepository, fileName: String) {
+        val uri = URI("${repository.baseUri}/${dependency.name}/${dependency.version}/$fileName")
+        val downloadFolder = File(downloadedSchemasDir, dependency.aliasOrName())
+        downloadSchema(uri, DownloadedSchema(downloadFolder, fileName, false), repository)
     }
 
     private fun downloadSchema(uri: URI, downloadedSchema: DownloadedSchema, repository: JsonSchemaRepository?) {

@@ -14,7 +14,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.IgnoreEmptyDirectories
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
@@ -22,6 +21,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
+import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
 import org.slf4j.Logger
@@ -35,7 +35,7 @@ open class UnpackJsonSchemas : DefaultTask() {
         const val UNPACK_JSON_SCHEMAS = "unpackJsonSchemas"
         const val CHARTS_DIR = "charts"
         const val UNPACK = "unpack"
-        const val SCHEMA_FILE = "values.schema.json"
+        const val HELM_SCHEMA_FILE = "values.schema.json"
     }
 
     private val logger: Logger = LoggerFactory.getLogger(UnpackJsonSchemas::class.java)
@@ -49,8 +49,9 @@ open class UnpackJsonSchemas : DefaultTask() {
     var chartsDir: File? = null
 
     @InputFile
+    @SkipWhenEmpty
     @PathSensitive(RELATIVE)
-    lateinit var chartFile: File
+    var chartFile: File? = null
 
     @OutputDirectory
     val unpackSchemasDir = File(project.buildDir, "$HELM_VALUES/$UNPACK")
@@ -64,7 +65,7 @@ open class UnpackJsonSchemas : DefaultTask() {
     fun download() {
         unpackSchemasDir.deleteRecursively()
         unpackSchemasDir.mkdirs()
-        val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         chart.dependencies.forEach { dependency ->
             unpackSchema(dependency)
         }
@@ -79,7 +80,7 @@ open class UnpackJsonSchemas : DefaultTask() {
                         TarArchiveInputStream(it).use {
                             var entry: TarArchiveEntry? = it.nextTarEntry
                             logger.info("entry ${entry?.name}: $entry")
-                            while (entry != null && !entry.name.endsWith("/$SCHEMA_FILE")) {
+                            while (entry != null && !entry.name.endsWith("/$HELM_SCHEMA_FILE")) {
                                 logger.info("entry ${entry.name}: $entry")
                                 entry = it.nextTarEntry
                             }
@@ -108,13 +109,13 @@ open class UnpackJsonSchemas : DefaultTask() {
     }
 
     private fun ChartDependency.createErrorSchemaFileFor(errorMessage: String) {
-        File("$unpackSchemasDir/${alias ?: name}/$SCHEMA_FILE").also {
+        File("$unpackSchemasDir/${alias ?: name}/$HELM_SCHEMA_FILE").also {
             it.ensureParentDirsCreated()
             it.writeText(
                 """
                     {
                       "${'$'}schema": "$SCHEMA_VERSION",
-                      "${'$'}id": "$name/$version/$SCHEMA_FILE",
+                      "${'$'}id": "$name/$version/$HELM_SCHEMA_FILE",
                       "type": "object",
                       "title": "Error schema for dependency $name:$version",
                       "description": "An error occurred during unpack of $name-$version.tgz: $errorMessage"

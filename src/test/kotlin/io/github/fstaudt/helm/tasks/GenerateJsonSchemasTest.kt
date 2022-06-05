@@ -17,8 +17,10 @@ import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATED
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.TaskOutcome.FAILED
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
+import org.gradle.testkit.runner.TaskOutcome.NO_SOURCE
 import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -89,7 +91,7 @@ class GenerateJsonSchemasTest {
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
                     { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME/$CHART_VERSION") },
-                    { it.node("description").isEqualTo("\\\\n") },
+                    { it.node("description").isEqualTo("\\n\\\\n ") },
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
                     { it.node("properties.global.\$ref").isEqualTo(GLOBAL_VALUES_SCHEMA_FILE) },
@@ -247,7 +249,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
                     {
                         it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:0.1.0)")
-                        it.node("description").isEqualTo("\\\\n")
+                        it.node("description").isEqualTo("\\n\\\\n ")
                         it.node("type").isEqualTo("boolean")
                     },
                 )
@@ -279,7 +281,7 @@ class GenerateJsonSchemasTest {
                         it.node("title")
                             .isEqualTo("Configuration of global values for chart $APPS/$CHART_NAME/$CHART_VERSION")
                     },
-                    { it.node("description").isEqualTo("\\\\n") },
+                    { it.node("description").isEqualTo("\\n\\\\n ") },
                     { it.node("allOf").isArray.hasSize(1) },
                     { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
                 )
@@ -436,6 +438,14 @@ class GenerateJsonSchemasTest {
                 .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$GLOBAL_VALUES_SCHEMA_FILE")
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should be skipped when there is no chart in Helm sources directory`() {
+        File(testProject, "Chart.yaml").delete()
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(NO_SOURCE)
         }
     }
 }

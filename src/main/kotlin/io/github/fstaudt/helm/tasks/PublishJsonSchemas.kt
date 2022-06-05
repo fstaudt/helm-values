@@ -15,6 +15,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
+import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
 import java.io.File
@@ -29,8 +30,9 @@ open class PublishJsonSchemas : DefaultTask() {
     lateinit var extension: HelmValuesAssistantExtension
 
     @InputFile
+    @SkipWhenEmpty
     @PathSensitive(RELATIVE)
-    lateinit var chartFile: File
+    var chartFile: File? = null
 
     @InputDirectory
     @PathSensitive(RELATIVE)
@@ -47,7 +49,7 @@ open class PublishJsonSchemas : DefaultTask() {
     @TaskAction
     fun publish() {
         val repository = extension.publicationRepository()
-        val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         extension.publishedVersion?.let { chart.version = it }
         jsonSchemaPublisher.publish(repository, chart, File(generatedSchemaDir, repository.valuesSchemaFile))
         jsonSchemaPublisher.publish(repository, chart, File(generatedSchemaDir, repository.globalValuesSchemaFile))

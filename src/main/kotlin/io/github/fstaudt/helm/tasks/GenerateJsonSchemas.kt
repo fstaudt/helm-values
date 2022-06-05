@@ -1,23 +1,17 @@
 package io.github.fstaudt.helm.tasks
 
-import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HelmValuesAssistantExtension
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
-import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
+import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.net.URI
@@ -34,15 +28,16 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
     lateinit var extension: HelmValuesAssistantExtension
 
     @InputFile
+    @SkipWhenEmpty
     @PathSensitive(RELATIVE)
-    lateinit var chartFile: File
+    var chartFile: File? = null
 
     @OutputDirectory
     val generatedSchemaDir = File(project.buildDir, GENERATED)
 
     @TaskAction
     fun generate() {
-        val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         generateValuesSchemaFile(chart)
         generateGlobalValuesSchemaFile(chart)
     }
@@ -58,7 +53,7 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
                 jsonSchema.objectNode("properties").objectNode(dependency.aliasOrName()).put("\$ref", ref)
                 dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)
                     ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
-                    ?.put("description", "\\n")
+                    ?.put("description", EMPTY)
                     ?.put("type", "boolean")
             }
         }
@@ -87,7 +82,7 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${repository.baseUri}/$name/$version/${repository.valuesSchemaFile}")
             .put("title", "Configuration for chart ${extension.publicationRepository}/$name/$version")
-            .put("description", "\\n")
+            .put("description", EMPTY)
     }
 
     private fun Chart.toGlobalValuesJsonSchema(): ObjectNode {
@@ -97,7 +92,7 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${repository.baseUri}/$name/$version/${repository.globalValuesSchemaFile}")
             .put("title", "Configuration of global values for chart ${extension.publicationRepository}/$name/$version")
-            .put("description", "\\n")
+            .put("description", EMPTY)
     }
 
     private fun String.toRelativeUri(): String {

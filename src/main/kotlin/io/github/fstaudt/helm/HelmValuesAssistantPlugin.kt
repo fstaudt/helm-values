@@ -27,7 +27,7 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             val pluginExtension = extensions.create(EXTENSION, HelmValuesAssistantExtension::class.java)
-            val helmChartFile = File(projectDir, "${pluginExtension.sourcesDir}/Chart.yaml")
+            val helmChartFile = File(projectDir, "${pluginExtension.sourcesDir}/Chart.yaml").ifExists()
             val downloadJsonSchemas = tasks.register<DownloadJsonSchemas>(DOWNLOAD_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Download JSON schemas of dependencies from JSON schema repositories"
@@ -64,5 +64,6 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
             }
         }
     }
-    private fun File.ifExists(): File?  = if (exists()) this else null
+
+    private fun File.ifExists(): File? = if (exists()) this else null
 }
