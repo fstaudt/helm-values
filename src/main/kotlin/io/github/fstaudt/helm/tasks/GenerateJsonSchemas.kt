@@ -51,11 +51,11 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
                 val ref =
                     "${it.baseUri}/${dependency.name}/${dependency.version}/${it.valuesSchemaFile}".toRelativeUri()
                 jsonSchema.objectNode("properties").objectNode(dependency.aliasOrName()).put("\$ref", ref)
-                dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)
-                    ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
-                    ?.put("description", EMPTY)
-                    ?.put("type", "boolean")
             }
+            dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)
+                ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
+                ?.put("description", EMPTY)
+                ?.put("type", "boolean")
         }
         jsonMapper.writeValue(File(generatedSchemaDir, repository.valuesSchemaFile), jsonSchema)
     }

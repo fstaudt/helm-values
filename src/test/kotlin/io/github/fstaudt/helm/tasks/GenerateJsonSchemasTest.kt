@@ -17,7 +17,6 @@ import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATED
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.TaskOutcome.FAILED
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
 import org.gradle.testkit.runner.TaskOutcome.NO_SOURCE
@@ -41,7 +40,9 @@ class GenerateJsonSchemasTest {
         private const val INFRA_REPOSITORY_URL = "http://infra.charts"
         private const val THIRDPARTY = "@thirdparty"
         private const val EXTERNAL_SCHEMA = "external-json-schema"
+        private const val EXTERNAL_VERSION = "0.2.0"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
+        private const val EMBEDDED_VERSION = "0.3.0"
         private const val BASE_CHART_URL = "$BASE_URL/$APPS_PATH/$CHART_NAME/$CHART_VERSION"
     }
 
@@ -237,7 +238,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                   condition: "$EXTERNAL_SCHEMA.enabled"
                 """.trimIndent()
@@ -248,7 +249,63 @@ class GenerateJsonSchemasTest {
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
                     {
-                        it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:0.1.0)")
+                        it.node("title")
+                            .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+                        it.node("description").isEqualTo("\\n\\\\n ")
+                        it.node("type").isEqualTo("boolean")
+                    },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should set property for dependency condition for third-party dependencies`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$THIRDPARTY"
+                  condition: "$EXTERNAL_SCHEMA.enabled"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
+                    {
+                        it.node("title")
+                            .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+                        it.node("description").isEqualTo("\\n\\\\n ")
+                        it.node("type").isEqualTo("boolean")
+                    },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should use alias to document property for dependency condition`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                  alias: $EXTERNAL_SCHEMA-alias
+                  condition: "$EXTERNAL_SCHEMA-alias.enabled"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("properties.$EXTERNAL_SCHEMA-alias.properties.enabled").and(
+                    {
+                        it.node("title")
+                            .isEqualTo("Enable $EXTERNAL_SCHEMA-alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
                         it.node("description").isEqualTo("\\n\\\\n ")
                         it.node("type").isEqualTo("boolean")
                     },

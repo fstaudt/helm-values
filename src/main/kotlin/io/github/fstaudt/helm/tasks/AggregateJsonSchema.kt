@@ -61,6 +61,10 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
                 val globalRef = "$DOWNLOADS/${dependency.aliasOrName()}/${repository.globalValuesSchemaFile}"
                 globalProperties.allOf().add(ObjectNode(nodeFactory).put("\$ref", globalRef))
             }
+            dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)
+                ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
+                ?.put("description", EMPTY)
+                ?.put("type", "boolean")
         }
         jsonMapper.writeValue(aggregatedSchemaFile, jsonSchema)
     }

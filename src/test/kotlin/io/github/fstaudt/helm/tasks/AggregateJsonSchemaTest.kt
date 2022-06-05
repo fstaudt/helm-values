@@ -42,6 +42,7 @@ class AggregateJsonSchemaTest {
         private const val APPS_PATH = "apps"
         private const val THIRDPARTY = "@thirdparty"
         private const val EXTERNAL_SCHEMA = "external-json-schema"
+        private const val EXTERNAL_VERSION = "0.2.0"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
         private const val NO_SCHEMA = "no-json-schema"
     }
@@ -221,6 +222,88 @@ class AggregateJsonSchemaTest {
                     {
                         it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$DOWNLOADS/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
                     }
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should set property for dependency condition in values`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                  condition: "$EXTERNAL_SCHEMA.enabled"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile
+                .hasContent().node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
+                    {
+                        it.node("title")
+                            .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+                        it.node("description").isEqualTo("\\n\\\\n ")
+                        it.node("type").isEqualTo("boolean")
+                    },
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should set property for dependency condition for third-party dependencies`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$THIRDPARTY"
+                  condition: "$EXTERNAL_SCHEMA.enabled"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile
+                .hasContent().node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
+                    {
+                        it.node("title")
+                            .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+                        it.node("description").isEqualTo("\\n\\\\n ")
+                        it.node("type").isEqualTo("boolean")
+                    },
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should use alias to document property for dependency condition`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                  alias: $EXTERNAL_SCHEMA-alias
+                  condition: "$EXTERNAL_SCHEMA-alias.enabled"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile
+                .hasContent().node("properties.$EXTERNAL_SCHEMA-alias.properties.enabled").and(
+                    {
+                        it.node("title")
+                            .isEqualTo("Enable $EXTERNAL_SCHEMA-alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+                        it.node("description").isEqualTo("\\n\\\\n ")
+                        it.node("type").isEqualTo("boolean")
+                    },
                 )
         }
     }
