@@ -142,20 +142,20 @@ open class DownloadJsonSchemas : DefaultTask() {
                 if (it.code == 200)
                     EntityUtils.toString(it.entity)
                 else
-                    errorSchemaFor(dependency, "${it.code} - ${it.reasonPhrase}")
+                    fallbackSchemaFor(dependency, "${it.code} - ${it.reasonPhrase}")
             }
         } catch (e: Exception) {
-            errorSchemaFor(dependency, "${e.javaClass.simpleName} - ${e.localizedMessage}")
+            fallbackSchemaFor(dependency, "${e.javaClass.simpleName} - ${e.localizedMessage}")
         }
     }
 
-    private fun HttpGet.errorSchemaFor(dependency: ChartDependency, errorMessage: String): String {
+    private fun HttpGet.fallbackSchemaFor(dependency: ChartDependency, errorMessage: String): String {
         return """
             {
               "${'$'}schema": "$SCHEMA_VERSION",
               "${'$'}id": "$uri",
               "type": "object",
-              "title": "Error schema for ${dependency.repository}/${dependency.name}:${dependency.version}",
+              "title": "Fallback schema for ${dependency.repository}/${dependency.name}:${dependency.version}",
               "description":"An error occurred during download of $uri: $errorMessage"
             }
             """.trimIndent()

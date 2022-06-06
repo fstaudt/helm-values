@@ -46,8 +46,10 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
     fun aggregate() {
         val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         val jsonSchema = chart.toAggregatedValuesJsonSchema()
+        jsonSchema.put("additionalProperties", false)
         val properties = jsonSchema.objectNode("properties")
         val globalProperties = properties.objectNode("global")
+        globalProperties.put("additionalProperties", false)
         properties.setUnpackedDependencyRefsFrom(unpackSchemasDir, UNPACK)
         chart.dependencies.forEach { dependency ->
             extension.repositoryMappings[dependency.repository]?.let { repository ->

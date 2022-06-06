@@ -384,7 +384,7 @@ class DownloadJsonSchemasTest {
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("title").isEqualTo("Error schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
+                    { it.node("title").isEqualTo("Fallback schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
                     { it.node("description").isString.contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
                     { it.node("description").isString.contains("401 - Unauthorized") },
                 )
@@ -393,7 +393,7 @@ class DownloadJsonSchemasTest {
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("title").isEqualTo("Error schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
+                    { it.node("title").isEqualTo("Fallback schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
                     { it.node("description").isString.contains("$baseUrl/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH") },
                     { it.node("description").isString.contains("404 - Not Found") },
                 )
@@ -421,7 +421,7 @@ class DownloadJsonSchemasTest {
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("title").isEqualTo("Error schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
+                    { it.node("title").isEqualTo("Fallback schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
                     { it.node("description").isString.contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
                     { it.node("description").isString.contains("HttpHostConnectException - ") },
                 )
@@ -430,7 +430,7 @@ class DownloadJsonSchemasTest {
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH") },
                     { it.node("type").isEqualTo("object") },
-                    { it.node("title").isEqualTo("Error schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
+                    { it.node("title").isEqualTo("Fallback schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
                     { it.node("description").isString.contains("$baseUrl/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH") },
                     { it.node("description").isString.contains("HttpHostConnectException - ") },
                 )

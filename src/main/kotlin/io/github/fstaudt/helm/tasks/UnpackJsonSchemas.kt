@@ -94,12 +94,12 @@ open class UnpackJsonSchemas : DefaultTask() {
                     }
                 }
             } catch (e: Exception) {
-                dependency.errorSchemaFor("${e.javaClass.simpleName} - ${e.localizedMessage}")
+                dependency.fallbackSchemaFor("${e.javaClass.simpleName} - ${e.localizedMessage}")
             }
         } else {
             logger.warn("${dependency.name}:${dependency.version}: archive not found - skipping dependency.")
             logger.warn("Please run `helm dependency update ${extension.sourcesDir}` to download dependencies in charts folder.")
-            dependency.errorSchemaFor("Archive not found")
+            dependency.fallbackSchemaFor("Archive not found")
         }
     }
 
@@ -108,7 +108,7 @@ open class UnpackJsonSchemas : DefaultTask() {
         return File(basePath, entry.name.removePrefix("${name}/").replace("charts/", ""))
     }
 
-    private fun ChartDependency.errorSchemaFor(errorMessage: String) {
+    private fun ChartDependency.fallbackSchemaFor(errorMessage: String) {
         File("$unpackSchemasDir/${alias ?: name}/$HELM_SCHEMA_FILE").also {
             it.ensureParentDirsCreated()
             it.writeText(
@@ -117,7 +117,7 @@ open class UnpackJsonSchemas : DefaultTask() {
                       "${'$'}schema": "$SCHEMA_VERSION",
                       "${'$'}id": "$name/$version/$HELM_SCHEMA_FILE",
                       "type": "object",
-                      "title": "Error schema for $name:$version",
+                      "title": "Fallback schema for $name:$version",
                       "description": "An error occurred during unpack of $name-$version.tgz: $errorMessage"
                     }
                 """.trimIndent()

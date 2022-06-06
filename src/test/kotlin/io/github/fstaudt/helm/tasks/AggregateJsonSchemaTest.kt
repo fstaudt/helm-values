@@ -127,6 +127,34 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
+    fun `aggregateJsonSchema should disable additional properties`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: 0.1.0
+                  repository: "$APPS"
+                - name: $NO_SCHEMA
+                  version: "0.1.0"
+                  repository: "$THIRDPARTY"
+                """.trimIndent()
+            )
+        }
+        testProject.initHelmResources(chartName = NO_SCHEMA)
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).exists()
+                .hasContent().and(
+                    {
+                        it.node("additionalProperties").isBoolean.isFalse
+                        it.node("properties.global.additionalProperties").isBoolean.isFalse
+                    }
+                )
+        }
+    }
+
+    @Test
     fun `aggregateJsonSchema should use alias to aggregate downloaded JSON schemas`() {
         testProject.initHelmChart {
             appendText(

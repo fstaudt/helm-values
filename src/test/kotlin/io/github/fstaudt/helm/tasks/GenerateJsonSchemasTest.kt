@@ -77,10 +77,10 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: "$EXTERNAL_SCHEMA"
-                  version: "0.1.0"
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                 - name: "$EMBEDDED_SCHEMA"
-                  version: "0.1.0"
+                  version: $EMBEDDED_VERSION
                   repository: "$THIRDPARTY"
                 """.trimIndent()
             )
@@ -140,7 +140,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                   alias: ${EXTERNAL_SCHEMA}-alias
                 """.trimIndent()
@@ -153,8 +153,31 @@ class GenerateJsonSchemasTest {
                     { it.node("properties").isObject.doesNotContainKey(EXTERNAL_SCHEMA) },
                     {
                         it.node("properties.${EXTERNAL_SCHEMA}-alias.\$ref")
-                            .isEqualTo("../../$EXTERNAL_SCHEMA/0.1.0/$VALUES_SCHEMA_FILE")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
                     },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should disable additional properties in values JSON schema`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: 0.1.0
+                  repository: "$APPS"
+                  alias: ${EXTERNAL_SCHEMA}-alias
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("additionalProperties").isBoolean.isFalse },
+                    { it.node("properties.global.additionalProperties").isBoolean.isFalse }
                 )
         }
     }
@@ -166,7 +189,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: "$EXTERNAL_SCHEMA"
-                  version: "0.1.0"
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                 """.trimIndent()
             )
@@ -177,7 +200,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     {
                         it.node("properties.$EXTERNAL_SCHEMA.\$ref")
-                            .isEqualTo("../../$EXTERNAL_SCHEMA/0.1.0/$VALUES_SCHEMA_FILE")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
                     },
                 )
         }
@@ -190,7 +213,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: "$EXTERNAL_SCHEMA"
-                  version: "0.1.0"
+                  version: "$EXTERNAL_VERSION"
                   repository: "$BUNDLES"
                 """.trimIndent()
             )
@@ -201,7 +224,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     {
                         it.node("properties.$EXTERNAL_SCHEMA.\$ref")
-                            .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/0.1.0/$VALUES_SCHEMA_FILE")
+                            .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
                     },
                 )
         }
@@ -213,8 +236,8 @@ class GenerateJsonSchemasTest {
             appendText(
                 """
                 dependencies:
-                - name: "$EXTERNAL_SCHEMA"
-                  version: "0.1.0"
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
                   repository: "$INFRA"
                 """.trimIndent()
             )
@@ -225,7 +248,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     {
                         it.node("properties.$EXTERNAL_SCHEMA.\$ref")
-                            .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/0.1.0/$VALUES_SCHEMA_FILE")
+                            .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
                     },
                 )
         }
@@ -320,7 +343,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                 - name: "$EMBEDDED_SCHEMA"
                   version: "0.1.0"
@@ -352,7 +375,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                   alias: ${EXTERNAL_SCHEMA}-alias
                 """.trimIndent()
@@ -363,7 +386,10 @@ class GenerateJsonSchemasTest {
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("allOf").isArray.hasSize(1) },
-                    { it.node("allOf[0].\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/0.1.0/$GLOBAL_VALUES_SCHEMA_FILE") },
+                    {
+                        it.node("allOf[0].\$ref")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
+                    },
                 )
         }
     }
@@ -375,7 +401,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                 """.trimIndent()
             )
@@ -385,7 +411,10 @@ class GenerateJsonSchemasTest {
             assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("allOf").isArray.hasSize(1) },
-                    { it.node("allOf[0].\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/0.1.0/$GLOBAL_VALUES_SCHEMA_FILE") },
+                    {
+                        it.node("allOf[0].\$ref")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
+                    },
                 )
         }
     }
@@ -397,7 +426,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$BUNDLES"
                 """.trimIndent()
             )
@@ -409,7 +438,7 @@ class GenerateJsonSchemasTest {
                     { it.node("allOf").isArray.hasSize(1) },
                     {
                         it.node("allOf[0].\$ref")
-                            .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/0.1.0/$GLOBAL_VALUES_SCHEMA_FILE")
+                            .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
                     },
                 )
         }
@@ -422,7 +451,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$INFRA"
                 """.trimIndent()
             )
@@ -433,7 +462,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     {
                         it.node("allOf[0].\$ref")
-                            .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/0.1.0/$GLOBAL_VALUES_SCHEMA_FILE")
+                            .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
                     },
                 )
         }
@@ -458,7 +487,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: "$EXTERNAL_SCHEMA"
-                  version: "0.1.0"
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                 """.trimIndent()
             )
@@ -476,7 +505,7 @@ class GenerateJsonSchemasTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$INFRA"
                 """.trimIndent()
             )

@@ -45,7 +45,10 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
     private fun generateValuesSchemaFile(chart: Chart) {
         val repository = extension.publicationRepository()
         val jsonSchema = chart.toValuesJsonSchema()
-        jsonSchema.objectNode("properties").objectNode("global").put("\$ref", repository.globalValuesSchemaFile)
+        jsonSchema.objectNode("properties").objectNode("global")
+            .put("\$ref", repository.globalValuesSchemaFile)
+            .put("additionalProperties", false)
+        jsonSchema.put("additionalProperties", false)
         chart.dependencies.forEach { dependency ->
             extension.repositoryMappings[dependency.repository]?.let {
                 val ref =
