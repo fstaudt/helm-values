@@ -22,12 +22,16 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
     companion object {
         const val HELM_VALUES = "helm-values-assistant"
         const val SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
+        const val VALUES_SCHEMA_FILE = "values.schema.json"
+        const val GLOBAL_VALUES_SCHEMA_FILE = "global-values.schema.json"
+        const val PATCH_VALUES_SCHEMA_FILE = "patch-values.schema.json"
+        const val PATCH_GLOBAL_VALUES_SCHEMA_FILE = "patch-global-values.schema.json"
     }
 
     override fun apply(project: Project) {
         with(project) {
             val pluginExtension = extensions.create(EXTENSION, HelmValuesAssistantExtension::class.java)
-            val helmChartFile = File(projectDir, "${pluginExtension.sourcesDir}/Chart.yaml").ifExists()
+            val helmChartFile = File(projectDir, "${pluginExtension.sourcesDir}/Chart.yaml").takeIf { it.exists() }
             val downloadJsonSchemas = tasks.register<DownloadJsonSchemas>(DOWNLOAD_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Download JSON schemas of dependencies from JSON schema repositories"
@@ -39,7 +43,7 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
                 description = "Unpack JSON schemas values.schema.json from chart dependencies"
                 extension = pluginExtension
                 chartFile = helmChartFile
-                chartsDir = File("${projectDir}/${pluginExtension.sourcesDir}/$CHARTS_DIR").ifExists()
+                chartsDir = File("${projectDir}/${pluginExtension.sourcesDir}/$CHARTS_DIR").takeIf { it.exists() }
             }
             tasks.register<AggregateJsonSchema>(AGGREGATE_JSON_SCHEMA) {
                 group = HELM_VALUES
@@ -64,6 +68,4 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
             }
         }
     }
-
-    private fun File.ifExists(): File? = if (exists()) this else null
 }

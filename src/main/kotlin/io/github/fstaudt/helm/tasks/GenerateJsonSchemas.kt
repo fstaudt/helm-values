@@ -1,8 +1,11 @@
 package io.github.fstaudt.helm.tasks
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.HelmValuesAssistantExtension
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import org.gradle.api.tasks.CacheableTask
@@ -60,7 +63,11 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
                 ?.put("description", EMPTY)
                 ?.put("type", "boolean")
         }
-        jsonMapper.writeValue(File(generatedSchemaDir, repository.valuesSchemaFile), jsonSchema)
+        val patchedJsonSchema = File(project.projectDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }?.let {
+            val additionalValues = jsonMapper.readTree(it)
+            JsonPatch.fromJson(additionalValues).apply(jsonSchema) as ObjectNode
+        } ?: jsonSchema
+        jsonMapper.writeValue(File(generatedSchemaDir, repository.valuesSchemaFile), patchedJsonSchema)
     }
 
     private fun generateGlobalValuesSchemaFile(chart: Chart) {
@@ -75,7 +82,11 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
                 }
             }
         }
-        jsonMapper.writeValue(File(generatedSchemaDir, repository.globalValuesSchemaFile), jsonSchema)
+        val patchedJsonSchema = File(project.projectDir, PATCH_GLOBAL_VALUES_SCHEMA_FILE).takeIf { it.exists() }?.let {
+            val additionalValues = jsonMapper.readTree(it)
+            JsonPatch.fromJson(additionalValues).apply(jsonSchema) as ObjectNode
+        } ?: jsonSchema
+        jsonMapper.writeValue(File(generatedSchemaDir, repository.globalValuesSchemaFile), patchedJsonSchema)
     }
 
     private fun Chart.toValuesJsonSchema(): ObjectNode {

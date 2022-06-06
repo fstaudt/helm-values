@@ -2,8 +2,11 @@ package io.github.fstaudt.helm.tasks
 
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
@@ -11,8 +14,6 @@ import io.github.fstaudt.helm.buildDir
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
 import io.github.fstaudt.helm.initHelmResources
-import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.runTask
 import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
@@ -102,7 +103,7 @@ class AggregateJsonSchemaTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                 - name: $NO_SCHEMA
                   version: "0.1.0"
@@ -133,7 +134,7 @@ class AggregateJsonSchemaTest {
                 """
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
-                  version: 0.1.0
+                  version: $EXTERNAL_VERSION
                   repository: "$APPS"
                 - name: $NO_SCHEMA
                   version: "0.1.0"
@@ -150,6 +151,38 @@ class AggregateJsonSchemaTest {
                         it.node("additionalProperties").isBoolean.isFalse
                         it.node("properties.global.additionalProperties").isBoolean.isFalse
                     }
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with values schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_VALUES_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" },
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+
+            assertThatJsonFile(aggregatedSchemaFile).exists()
+                .hasContent().and(
+                    { it.node("title").isEqualTo("overridden value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
                 )
         }
     }

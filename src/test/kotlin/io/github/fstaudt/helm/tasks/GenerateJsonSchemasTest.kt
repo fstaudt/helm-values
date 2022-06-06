@@ -2,15 +2,17 @@ package io.github.fstaudt.helm.tasks
 
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.buildDir
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
-import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.runAndFail
 import io.github.fstaudt.helm.runTask
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATED
@@ -464,6 +466,68 @@ class GenerateJsonSchemasTest {
                         it.node("allOf[0].\$ref")
                             .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
                     },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should update generated values schema with values schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_VALUES_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" },
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("title").isEqualTo("overridden value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should update generated global values schema with global values schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_GLOBAL_VALUES_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" },
+              { "op": "add", "path": "/allOf/0/title", "value": "additional value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("title").isEqualTo("overridden value") },
+                    { it.node("allOf[0].title").isEqualTo("additional value") },
+                    { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
                 )
         }
     }

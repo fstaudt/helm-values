@@ -1,5 +1,7 @@
 package io.github.fstaudt.helm.model
 
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
 import org.apache.commons.codec.binary.Base64
 import java.io.Serializable
 
@@ -31,11 +33,6 @@ data class JsonSchemaRepository(
     val valuesSchemaFile: String = VALUES_SCHEMA_FILE,
     val globalValuesSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
 ) : Serializable {
-    companion object {
-        const val VALUES_SCHEMA_FILE = "values.schema.json"
-        const val GLOBAL_VALUES_SCHEMA_FILE = "global-values.schema.json"
-    }
-
     fun basicAuthentication(): String? {
         return username?.let { "Basic ${Base64.encodeBase64String("$username:$password".toByteArray())}" }
     }

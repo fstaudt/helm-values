@@ -42,6 +42,7 @@ dependencies {
     api("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     api("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3")
+    api("com.github.java-json-tools:json-patch:1.13")
     testImplementation(gradleTestKit())
     testImplementation("org.assertj:assertj-core:3.22.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")

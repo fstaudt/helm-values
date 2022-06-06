@@ -1,8 +1,10 @@
 package io.github.fstaudt.helm.tasks
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.HelmValuesAssistantExtension
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
@@ -63,7 +65,11 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
                 ?.put("description", EMPTY)
                 ?.put("type", "boolean")
         }
-        jsonMapper.writeValue(aggregatedSchemaFile, jsonSchema)
+        val patchedJsonSchema = File(project.projectDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }?.let {
+            val additionalValues = jsonMapper.readTree(it)
+            JsonPatch.fromJson(additionalValues).apply(jsonSchema) as ObjectNode
+        } ?: jsonSchema
+        jsonMapper.writeValue(aggregatedSchemaFile, patchedJsonSchema)
     }
 
     private fun Chart.toAggregatedValuesJsonSchema(): ObjectNode {
