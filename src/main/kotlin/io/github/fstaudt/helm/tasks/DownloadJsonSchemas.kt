@@ -8,9 +8,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import io.github.fstaudt.helm.HelmValuesAssistantExtension
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.HelmValuesExtension
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.DownloadedSchema
@@ -45,7 +45,7 @@ open class DownloadJsonSchemas : DefaultTask() {
     }
 
     @Nested
-    lateinit var extension: HelmValuesAssistantExtension
+    lateinit var extension: HelmValuesExtension
 
     @InputFile
     @SkipWhenEmpty

@@ -1,8 +1,8 @@
 package io.github.fstaudt.helm.tasks
 
-import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.HELM_SOURCES_DIR
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.HelmValuesExtension.Companion.HELM_SOURCES_DIR
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile

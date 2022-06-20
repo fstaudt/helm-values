@@ -2,10 +2,10 @@ package io.github.fstaudt.helm.tasks
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.fge.jsonpatch.JsonPatch
-import io.github.fstaudt.helm.HelmValuesAssistantExtension
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.HelmValuesExtension
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.HELM_SCHEMA_FILE
@@ -30,7 +30,7 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
     }
 
     @Nested
-    lateinit var extension: HelmValuesAssistantExtension
+    lateinit var extension: HelmValuesExtension
 
     @InputFile
     @SkipWhenEmpty

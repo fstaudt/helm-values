@@ -11,19 +11,19 @@ repositories {
     mavenCentral()
 }
 val pluginVersion = "$version"
-val pluginName = "helm-values-assistant"
+val pluginName = "helm-values"
 gradlePlugin {
     plugins {
         register(pluginName) {
             id = "io.github.fstaudt.$pluginName"
-            implementationClass = "$group.HelmValuesAssistantPlugin"
+            implementationClass = "$group.HelmValuesPlugin"
         }
     }
 }
 
 pluginBundle {
-    website = "https://github.com/fstaudt/helm-values-assistant-gradle-plugin"
-    vcsUrl = "https://github.com/fstaudt/helm-values-assistant-gradle-plugin"
+    website = "https://github.com/fstaudt/helm-values-gradle-plugin"
+    vcsUrl = "https://github.com/fstaudt/helm-values-gradle-plugin"
     description = "Generate JSON schema for complex Helm charts with Gradle!"
     (plugins) {
         pluginName {

@@ -2,11 +2,11 @@ package io.github.fstaudt.helm.tasks
 
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
@@ -56,7 +56,7 @@ class AggregateJsonSchemaTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )

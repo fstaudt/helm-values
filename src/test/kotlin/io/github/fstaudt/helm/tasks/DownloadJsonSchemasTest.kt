@@ -9,10 +9,10 @@ import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.unauthorized
 import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.REPOSITORY_AUTHORIZATION
 import io.github.fstaudt.helm.REPOSITORY_PASSWORD
 import io.github.fstaudt.helm.REPOSITORY_PORT
@@ -73,7 +73,7 @@ class DownloadJsonSchemasTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$CHARTS" to JsonSchemaRepository("$REPOSITORY_URL/$CHARTS_PATH"),
                     "$PROTECTED" to JsonSchemaRepository("$REPOSITORY_URL/$PROTECTED_PATH", "$REPOSITORY_USER", "$REPOSITORY_PASSWORD")
@@ -405,7 +405,7 @@ class DownloadJsonSchemasTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$CHARTS" to JsonSchemaRepository("$UNAVAILABLE_URL/$CHARTS_PATH"),
                   )

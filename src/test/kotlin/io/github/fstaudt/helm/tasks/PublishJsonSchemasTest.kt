@@ -13,8 +13,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.verify
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.buildDir
@@ -56,7 +56,7 @@ class PublishJsonSchemasTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
@@ -104,7 +104,7 @@ class PublishJsonSchemasTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH", "$REPOSITORY_USER", "$REPOSITORY_PASSWORD"),
                   )
@@ -127,7 +127,7 @@ class PublishJsonSchemasTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
@@ -151,7 +151,7 @@ class PublishJsonSchemasTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
@@ -171,7 +171,7 @@ class PublishJsonSchemasTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
@@ -214,7 +214,7 @@ class PublishJsonSchemasTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValuesAssistant {
+                helmValues {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$UNAVAILABLE_URL"),
                   )

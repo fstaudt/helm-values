@@ -1,6 +1,6 @@
 package io.github.fstaudt.helm
 
-import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.HELM_SOURCES_DIR
+import io.github.fstaudt.helm.HelmValuesExtension.Companion.HELM_SOURCES_DIR
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.CHARTS_DIR
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -42,7 +42,7 @@ fun TestProject.initBuildFile(customizeBuildFile: File.() -> Unit = {}): File {
                 import io.github.fstaudt.helm.model.JsonSchemaRepository;
                 
                 plugins {
-                  id("io.github.fstaudt.helm-values-assistant")
+                  id("io.github.fstaudt.helm-values")
                 }
             """.trimIndent()
         )

@@ -7,9 +7,9 @@ import io.github.fstaudt.helm.tasks.PublishJsonSchemas.Companion.PUBLISH_JSON_SC
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 
-open class HelmValuesAssistantExtension {
+open class HelmValuesExtension {
     companion object {
-        const val EXTENSION = "helmValuesAssistant"
+        const val EXTENSION = "helmValues"
         const val HELM_SOURCES_DIR = "."
     }
 

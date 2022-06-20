@@ -1,6 +1,6 @@
 package io.github.fstaudt.helm
 
-import io.github.fstaudt.helm.HelmValuesAssistantExtension.Companion.EXTENSION
+import io.github.fstaudt.helm.HelmValuesExtension.Companion.EXTENSION
 import io.github.fstaudt.helm.http.NexusRawJsonSchemaPublisher
 import io.github.fstaudt.helm.tasks.AggregateJsonSchema
 import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
@@ -18,9 +18,9 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.register
 import java.io.File
 
-class HelmValuesAssistantPlugin : Plugin<Project> {
+class HelmValuesPlugin : Plugin<Project> {
     companion object {
-        const val HELM_VALUES = "helm-values-assistant"
+        const val HELM_VALUES = "helm-values"
         const val SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
         const val VALUES_SCHEMA_FILE = "values.schema.json"
         const val GLOBAL_VALUES_SCHEMA_FILE = "global-values.schema.json"
@@ -30,7 +30,7 @@ class HelmValuesAssistantPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         with(project) {
-            val pluginExtension = extensions.create(EXTENSION, HelmValuesAssistantExtension::class.java)
+            val pluginExtension = extensions.create(EXTENSION, HelmValuesExtension::class.java)
             val helmChartFile = File(projectDir, "${pluginExtension.sourcesDir}/Chart.yaml").takeIf { it.exists() }
             val downloadJsonSchemas = tasks.register<DownloadJsonSchemas>(DOWNLOAD_JSON_SCHEMAS) {
                 group = HELM_VALUES

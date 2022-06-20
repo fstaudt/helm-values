@@ -1,7 +1,7 @@
 package io.github.fstaudt.helm.model
 
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.VALUES_SCHEMA_FILE
 import org.apache.commons.codec.binary.Base64
 import java.io.Serializable
 

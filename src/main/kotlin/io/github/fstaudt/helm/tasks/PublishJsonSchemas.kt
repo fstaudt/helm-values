@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PRO
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import io.github.fstaudt.helm.HelmValuesAssistantExtension
+import io.github.fstaudt.helm.HelmValuesExtension
 import io.github.fstaudt.helm.http.JsonSchemaPublisher
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATED
@@ -27,7 +27,7 @@ open class PublishJsonSchemas : DefaultTask() {
     }
 
     @Nested
-    lateinit var extension: HelmValuesAssistantExtension
+    lateinit var extension: HelmValuesExtension
 
     @InputFile
     @SkipWhenEmpty

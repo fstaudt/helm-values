@@ -1,1 +1,1 @@
-rootProject.name = "helm-values-assistant-gradle-plugin"
+rootProject.name = "helm-values-gradle-plugin"

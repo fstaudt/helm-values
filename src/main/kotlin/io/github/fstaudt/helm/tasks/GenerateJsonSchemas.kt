@@ -2,11 +2,11 @@ package io.github.fstaudt.helm.tasks
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.fge.jsonpatch.JsonPatch
-import io.github.fstaudt.helm.HelmValuesAssistantExtension
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesAssistantPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.HelmValuesExtension
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
@@ -28,7 +28,7 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
     }
 
     @Nested
-    lateinit var extension: HelmValuesAssistantExtension
+    lateinit var extension: HelmValuesExtension
 
     @InputFile
     @SkipWhenEmpty
