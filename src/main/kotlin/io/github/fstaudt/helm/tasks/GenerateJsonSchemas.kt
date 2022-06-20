@@ -9,6 +9,7 @@ import io.github.fstaudt.helm.model.Chart
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
@@ -34,6 +35,16 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
     @SkipWhenEmpty
     @PathSensitive(RELATIVE)
     var chartFile: File? = null
+
+    @InputFile
+    @Optional
+    @PathSensitive(RELATIVE)
+    var patchValuesFile: File? = File(project.projectDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }
+
+    @InputFile
+    @Optional
+    @PathSensitive(RELATIVE)
+    var patchGlobalValuesFile: File? = File(project.projectDir, PATCH_GLOBAL_VALUES_SCHEMA_FILE).takeIf { it.exists() }
 
     @OutputDirectory
     val generatedSchemaDir = File(project.buildDir, GENERATED)
@@ -63,7 +74,7 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
                 ?.put("description", EMPTY)
                 ?.put("type", "boolean")
         }
-        val patchedJsonSchema = File(project.projectDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }?.let {
+        val patchedJsonSchema = patchValuesFile?.let {
             val additionalValues = jsonMapper.readTree(it)
             JsonPatch.fromJson(additionalValues).apply(jsonSchema) as ObjectNode
         } ?: jsonSchema
@@ -82,7 +93,7 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
                 }
             }
         }
-        val patchedJsonSchema = File(project.projectDir, PATCH_GLOBAL_VALUES_SCHEMA_FILE).takeIf { it.exists() }?.let {
+        val patchedJsonSchema = patchGlobalValuesFile?.let {
             val additionalValues = jsonMapper.readTree(it)
             JsonPatch.fromJson(additionalValues).apply(jsonSchema) as ObjectNode
         } ?: jsonSchema
