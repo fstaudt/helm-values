@@ -24,7 +24,7 @@ gradlePlugin {
 pluginBundle {
     website = "https://github.com/fstaudt/helm-values-gradle-plugin"
     vcsUrl = "https://github.com/fstaudt/helm-values-gradle-plugin"
-    description = "Generate JSON schemas for complex Helm charts with Gradle!"
+    description = "Generate JSON schemas to validate values of complex Helm charts with Gradle!"
     (plugins) {
         pluginName {
             displayName = "Helm values assistant"
