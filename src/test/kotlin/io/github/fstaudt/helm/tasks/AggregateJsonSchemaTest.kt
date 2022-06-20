@@ -4,7 +4,6 @@ import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
@@ -17,6 +16,7 @@ import io.github.fstaudt.helm.initHelmResources
 import io.github.fstaudt.helm.runTask
 import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
+import io.github.fstaudt.helm.tasks.AggregateJsonSchema.Companion.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
 import io.github.fstaudt.helm.tasks.UnpackJsonSchemas.Companion.HELM_SCHEMA_FILE
@@ -167,7 +167,7 @@ class AggregateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        File(testProject, PATCH_VALUES_SCHEMA_FILE).writeText(
+        File(testProject, PATCH_AGGREGATED_SCHEMA_FILE).writeText(
             """
             [
               { "op": "replace", "path": "/title", "value": "overridden value" },

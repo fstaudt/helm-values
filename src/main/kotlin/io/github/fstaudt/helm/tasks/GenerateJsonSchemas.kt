@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.HelmValuesExtension
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import org.gradle.api.tasks.CacheableTask
@@ -25,6 +23,8 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
     companion object {
         const val GENERATE_JSON_SCHEMAS = "generateJsonSchemas"
         const val GENERATED = "$HELM_VALUES/generated"
+        const val PATCH_VALUES_SCHEMA_FILE = "patch-values.schema.json"
+        const val PATCH_GLOBAL_VALUES_SCHEMA_FILE = "patch-global-values.schema.json"
     }
 
     @Nested

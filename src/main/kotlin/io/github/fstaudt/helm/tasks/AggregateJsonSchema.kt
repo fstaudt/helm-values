@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.HelmValuesExtension
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
@@ -27,6 +26,7 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
     companion object {
         const val AGGREGATE_JSON_SCHEMA = "aggregateJsonSchema"
         const val AGGREGATED_SCHEMA_FILE = "aggregated-values.schema.json"
+        const val PATCH_AGGREGATED_SCHEMA_FILE = "patch-aggregated-values.schema.json"
     }
 
     @Nested
@@ -65,7 +65,7 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
                 ?.put("description", EMPTY)
                 ?.put("type", "boolean")
         }
-        val patchedJsonSchema = File(project.projectDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }?.let {
+        val patchedJsonSchema = File(project.projectDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }?.let {
             val additionalValues = jsonMapper.readTree(it)
             JsonPatch.fromJson(additionalValues).apply(jsonSchema) as ObjectNode
         } ?: jsonSchema

@@ -3,8 +3,6 @@ package io.github.fstaudt.helm.tasks
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HelmValuesPlugin.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.HelmValuesPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
@@ -17,6 +15,8 @@ import io.github.fstaudt.helm.runAndFail
 import io.github.fstaudt.helm.runTask
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATED
 import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
+import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.PATCH_GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.tasks.GenerateJsonSchemas.Companion.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.testProject
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FAILED
