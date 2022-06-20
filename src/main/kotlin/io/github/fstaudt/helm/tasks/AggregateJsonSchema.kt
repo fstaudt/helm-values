@@ -13,6 +13,7 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
@@ -36,6 +37,11 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
     @SkipWhenEmpty
     @PathSensitive(RELATIVE)
     var chartFile: File? = null
+
+    @InputFile
+    @Optional
+    @PathSensitive(RELATIVE)
+    var patchFile: File? = File(project.projectDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }
 
     @InputDirectory
     @PathSensitive(RELATIVE)
@@ -65,7 +71,7 @@ open class AggregateJsonSchema : JsonSchemaGenerationTask() {
                 ?.put("description", EMPTY)
                 ?.put("type", "boolean")
         }
-        val patchedJsonSchema = File(project.projectDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }?.let {
+        val patchedJsonSchema = patchFile?.let {
             val additionalValues = jsonMapper.readTree(it)
             JsonPatch.fromJson(additionalValues).apply(jsonSchema) as ObjectNode
         } ?: jsonSchema

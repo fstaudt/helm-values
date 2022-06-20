@@ -156,7 +156,7 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should update aggregated values schema with values schema patch`() {
+    fun `aggregateJsonSchema should update aggregated values schema with aggregated schema patch`() {
         testProject.initHelmChart {
             appendText(
                 """
