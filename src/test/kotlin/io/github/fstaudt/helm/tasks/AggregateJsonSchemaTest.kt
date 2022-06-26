@@ -10,6 +10,7 @@ import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.buildDir
+import io.github.fstaudt.helm.clearHelmChart
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
 import io.github.fstaudt.helm.initHelmResources
@@ -93,6 +94,31 @@ class AggregateJsonSchemaTest {
                     { it.node("title").isEqualTo("Configuration for chart $CHART_NAME/$CHART_VERSION") },
                     { it.node("description").isEqualTo("\\n\\\\n ") },
                 )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should get chart configuration in sourcesDir`() {
+        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        testProject.clearHelmChart()
+        testProject.initHelmChart(sourcesDir)
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "sources"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+            """.trimIndent()
+            )
+        }
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$AGGREGATED_SCHEMA_FILE").isFile
+                .hasContent().node("\$id").isEqualTo("$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
         }
     }
 
@@ -398,7 +424,7 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should be skipped when there is no chart in Helm sources directory`() {
-        File(testProject, "Chart.yaml").delete()
+        testProject.clearHelmChart()
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(NO_SOURCE)
         }

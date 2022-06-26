@@ -7,6 +7,7 @@ import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.buildDir
+import io.github.fstaudt.helm.clearHelmChart
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
 import io.github.fstaudt.helm.initHelmResources
@@ -54,6 +55,37 @@ class UnpackJsonSchemasTest {
     @Test
     fun `unpackJsonSchemas should unpack JSON schemas from dependency archives`() {
         testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: 0.1.0
+                  repository: "$THIRDPARTY"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(UNPACK_JSON_SCHEMAS).also {
+            assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("$unpackDir/$EMBEDDED_SCHEMA/values.schema.json").isFile
+                .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
+        }
+    }
+
+    @Test
+    fun `unpackJsonSchemas should get chart dependencies in sourcesDir`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "sources"
+                }
+            """.trimIndent()
+            )
+        }
+        File(testProject, "charts").deleteRecursively()
+        testProject.initHelmResources("sources")
+        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        testProject.initHelmChart(sourcesDir) {
             appendText(
                 """
                 dependencies:
@@ -266,7 +298,7 @@ class UnpackJsonSchemasTest {
 
     @Test
     fun `downloadJsonSchemas should be skipped when there is no chart in Helm sources directory`() {
-        File(testProject, "Chart.yaml").delete()
+        testProject.clearHelmChart()
         testProject.runTask(UNPACK_JSON_SCHEMAS).also {
             assertThat(it.task(":$UNPACK_JSON_SCHEMAS")!!.outcome).isEqualTo(NO_SOURCE)
         }

@@ -63,8 +63,8 @@ fun TestProject.initHelmResources(
         .copyTo(File(this, "$helmSourcesDirectory/$CHARTS_DIR/$chartName-$chartVersion.tgz"))
 }
 
-fun TestProject.initHelmChart(customizeHelmChart: File.() -> Unit = {}): File {
-    return File(this, "Chart.yaml").apply {
+fun TestProject.initHelmChart(sourcesDir: File = this, customizeHelmChart: File.() -> Unit = {}): File {
+    return File(sourcesDir, "Chart.yaml").apply {
         writeText(
             """
             apiVersion: v2
@@ -80,6 +80,13 @@ fun TestProject.initHelmChart(customizeHelmChart: File.() -> Unit = {}): File {
         )
         customizeHelmChart()
     }
+}
+
+fun TestProject.clearHelmChart(sourcesDir: File = this) {
+    File(sourcesDir, "Chart.yaml").delete()
+}
+fun TestProject.initHelmChart(customizeHelmChart: File.() -> Unit = {}): File {
+    return initHelmChart(this, customizeHelmChart)
 }
 
 fun TestProject.runTask(vararg task: String): BuildResult {

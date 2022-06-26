@@ -18,6 +18,7 @@ import io.github.fstaudt.helm.HelmValuesPlugin.Companion.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.buildDir
+import io.github.fstaudt.helm.clearHelmChart
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
 import io.github.fstaudt.helm.runAndFail
@@ -90,6 +91,33 @@ class PublishJsonSchemasTest {
 
     @Test
     fun `publishJsonSchemas should publish generated JSON schemas of chart on JSON schema repository`() {
+        stubForSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
+        stubForSchemaPublication("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
+        testProject.runTask(WITH_BUILD_CACHE, PUBLISH_JSON_SCHEMAS).also {
+            assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            verifySchemaPublicationOf("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
+            verifySchemaPublicationOf("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
+        }
+    }
+
+    @Test
+    fun `publishJsonSchemas should get chart configuration in sourcesDir`() {
+        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "sources"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+            """.trimIndent()
+            )
+        }
+        testProject.clearHelmChart()
+        testProject.initHelmChart(sourcesDir)
         stubForSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
         stubForSchemaPublication("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         testProject.runTask(WITH_BUILD_CACHE, PUBLISH_JSON_SCHEMAS).also {
@@ -231,7 +259,7 @@ class PublishJsonSchemasTest {
 
     @Test
     fun `publishJsonSchemas should be skipped when there is no chart in Helm sources directory`() {
-        File(testProject, "Chart.yaml").delete()
+        testProject.clearHelmChart()
         testProject.runTask(PUBLISH_JSON_SCHEMAS).also {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(NO_SOURCE)
         }

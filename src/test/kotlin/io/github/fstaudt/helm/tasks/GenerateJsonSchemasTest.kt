@@ -9,6 +9,7 @@ import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.buildDir
+import io.github.fstaudt.helm.clearHelmChart
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
 import io.github.fstaudt.helm.runAndFail
@@ -99,6 +100,30 @@ class GenerateJsonSchemasTest {
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
                     { it.node("properties.global.\$ref").isEqualTo(GLOBAL_VALUES_SCHEMA_FILE) },
                 )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should get chart configuration in sourcesDir`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "sources"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH")
+                  )
+                  publicationRepository = "$APPS"
+                }
+            """.trimIndent()
+            )
+        }
+        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        testProject.initHelmChart(sourcesDir)
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
         }
     }
 
@@ -593,7 +618,7 @@ class GenerateJsonSchemasTest {
 
     @Test
     fun `generateJsonSchemas should be skipped when there is no chart in Helm sources directory`() {
-        File(testProject, "Chart.yaml").delete()
+        testProject.clearHelmChart()
         testProject.runTask(GENERATE_JSON_SCHEMAS).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(NO_SOURCE)
         }

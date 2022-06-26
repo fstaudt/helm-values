@@ -22,6 +22,7 @@ import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.buildDir
+import io.github.fstaudt.helm.clearHelmChart
 import io.github.fstaudt.helm.initBuildFile
 import io.github.fstaudt.helm.initHelmChart
 import io.github.fstaudt.helm.runTask
@@ -118,6 +119,44 @@ class DownloadJsonSchemasTest {
                 - name: unknown-json-schema
                   version: 0.1.0
                   repository: "@unknown"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("\$id").isEqualTo(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        }
+    }
+
+    @Test
+    fun `downloadJsonSchemas should get chart configuration in sourcesDir`() {
+        stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
+        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "sources"
+                  repositoryMappings = mapOf(
+                    "$CHARTS" to JsonSchemaRepository("$REPOSITORY_URL/$CHARTS_PATH"),
+                    "$PROTECTED" to JsonSchemaRepository("$REPOSITORY_URL/$PROTECTED_PATH", "$REPOSITORY_USER", "$REPOSITORY_PASSWORD")
+                  )
+                }
+                """.trimIndent()
+            )
+        }
+        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        testProject.clearHelmChart()
+        testProject.initHelmChart(sourcesDir) {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$CHARTS"
                 """.trimIndent()
             )
         }
@@ -448,7 +487,7 @@ class DownloadJsonSchemasTest {
 
     @Test
     fun `downloadJsonSchemas should be skipped when there is no chart in Helm sources directory`() {
-        File(testProject, "Chart.yaml").delete()
+        testProject.clearHelmChart()
         testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(NO_SOURCE)
         }
