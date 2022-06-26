@@ -1,3 +1,7 @@
+## 0.1.2 - 2022-06-26
+
+- :bug: tasks should get Chart.yaml in provided sources directory when it is specified
+
 ## 0.1.1 - 2022-06-20
 
 - :bug: aggregateJsonSchema should treat aggregated patch file as input when it exists

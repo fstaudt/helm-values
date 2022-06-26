@@ -1,5 +1,8 @@
 # helm-values gradle plugin
 
+<a href="https://plugins.gradle.org/plugin/io.github.fstaudt.helm-values">
+<img alt="https://plugins.gradle.org/plugin/io.github.fstaudt.helm-values" src="https://img.shields.io/badge/Gradle plugins portal-io.github.fstaudt.helm--values-blue.svg?style=flat-square"></a>
+
 Generate JSON schemas to help writing values for Helm charts.
 
 The plugin provides several tasks to generate [JSON schemas](https://json-schema.org/) for a Helm chart.\
