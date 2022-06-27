@@ -20,7 +20,7 @@ jobs:
           java-version: 11
           cache: gradle
       - name: "Run Tests"
-        run: chmod +x gradlew && ./gradlew check
+        run: chmod +x gradlew && ./gradlew validatePlugins
       - name: "Get version from tag"
         id: version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
