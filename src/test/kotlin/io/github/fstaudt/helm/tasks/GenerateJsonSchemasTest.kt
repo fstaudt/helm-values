@@ -396,6 +396,25 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
+    fun `generateJsonSchemas should generate empty global values JSON schema when there are no dependencies`() {
+        testProject.initHelmChart()
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$GENERATED/$GLOBAL_VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
+                    { it.node("\$id").isEqualTo("$BASE_CHART_URL/$GLOBAL_VALUES_SCHEMA_FILE") },
+                    {
+                        it.node("title")
+                            .isEqualTo("Configuration of global values for chart $APPS/$CHART_NAME/$CHART_VERSION")
+                    },
+                    { it.node("description").isEqualTo("\\n\\\\n ") },
+                    { it.isObject.doesNotContainKey("allOf") },
+                )
+        }
+    }
+
+    @Test
     fun `generateJsonSchemas should not use alias to generate ref to external JSON schemas in global values JSON schema`() {
         testProject.initHelmChart {
             appendText(

@@ -84,12 +84,14 @@ open class GenerateJsonSchemas : JsonSchemaGenerationTask() {
     private fun generateGlobalValuesSchemaFile(chart: Chart) {
         val repository = extension.publicationRepository()
         val jsonSchema = chart.toGlobalValuesJsonSchema()
-        jsonSchema.allOf().let { allOf ->
-            chart.dependencies.forEach { dependency ->
-                extension.repositoryMappings[dependency.repository]?.let {
-                    val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/${it.globalValuesSchemaFile}"
-                        .toRelativeUri()
-                    allOf.add(ObjectNode(nodeFactory).put("\$ref", ref))
+        if (chart.dependencies.any { extension.repositoryMappings.containsKey(it.repository) }) {
+            jsonSchema.allOf().let { allOf ->
+                chart.dependencies.forEach { dependency ->
+                    extension.repositoryMappings[dependency.repository]?.let {
+                        val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/${it.globalValuesSchemaFile}"
+                            .toRelativeUri()
+                        allOf.add(ObjectNode(nodeFactory).put("\$ref", ref))
+                    }
                 }
             }
         }
