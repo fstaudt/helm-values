@@ -1,3 +1,7 @@
+## 0.1.3 - 2022-06-27
+
+- :bug: generated global JSON schema should be empty when chart has no dependencies
+
 ## 0.1.2 - 2022-06-26
 
 - :bug: tasks should get Chart.yaml in provided sources directory when it is specified
