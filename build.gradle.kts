@@ -3,7 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_1_8
 plugins {
     `java-gradle-plugin`
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "0.21.0"
+    id("com.gradle.plugin-publish") version "1.0.0"
     `maven-publish`
 }
 
@@ -16,7 +16,10 @@ gradlePlugin {
     plugins {
         register(pluginName) {
             id = "io.github.fstaudt.$pluginName"
+            displayName = "Helm values assistant"
+            description = "Generate JSON schemas to validate values of complex Helm charts with Gradle!"
             implementationClass = "$group.HelmValuesPlugin"
+            version = pluginVersion
         }
     }
 }
@@ -24,14 +27,7 @@ gradlePlugin {
 pluginBundle {
     website = "https://github.com/fstaudt/helm-values-gradle-plugin"
     vcsUrl = "https://github.com/fstaudt/helm-values-gradle-plugin"
-    description = "Generate JSON schemas to validate values of complex Helm charts with Gradle!"
-    (plugins) {
-        pluginName {
-            displayName = "Helm values assistant"
-            tags = listOf("helm", "chart", "kubernetes", "json", "schema")
-            version = pluginVersion
-        }
-    }
+    tags = listOf("helm", "chart", "kubernetes", "json", "schema")
 }
 
 dependencies {
