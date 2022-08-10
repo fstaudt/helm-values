@@ -46,14 +46,14 @@ to [Configure JSON schemas repositories](#configure-json-schemas-repositories).
 
 ## Tasks
 
-### unpackJsonSchemas
+### extractJsonSchemas
 
-Unpack JSON schemas `values.schema.json` from chart dependencies (including sub-charts in dependencies).
+Extract JSON schemas `values.schema.json` from chart dependencies (including sub-charts in dependencies).
 
 Task requires package of all dependencies available in `charts` directory.\
 It can only be executed after `helm dependency update` has been successfully executed.
 
-If dependency is not available in `charts` directory or if unpack fails, task generates a fallback empty schema with the
+If dependency is not available in `charts` directory or if extraction fails, task generates a fallback empty schema with the
 error in schema description.
 
 This task is a dependency of task [aggregateJsonSchema](#aggregatejsonschema).
@@ -75,9 +75,9 @@ This task is a dependency of task [aggregateJsonSchema](#aggregatejsonschema).
 
 ### aggregateJsonSchema
 
-Aggregate unpacked and downloaded JSON schemas for assistance on Helm values in your IDE.
+Aggregate extracted and downloaded JSON schemas for assistance on Helm values in your IDE.
 
-Downloaded JSON schema `values.schema.json` has precedence on unpacked JSON schema `values.schema.json`.
+Downloaded JSON schema `values.schema.json` has precedence on extracted JSON schema `values.schema.json`.
 
 Optional file `patch-aggregated-values.schema.json` can be created in the root folder of the project
 to [patch aggregated JSON schema](https://jsonpatch.com/).
