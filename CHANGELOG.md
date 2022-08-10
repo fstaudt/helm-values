@@ -1,3 +1,7 @@
+## 0.2.0 - 2022-08-10
+
+- :rocket: extract business logic in shared library
+
 ## 0.1.3 - 2022-06-27
 
 - :bug: generated global JSON schema should be empty when chart has no dependencies
