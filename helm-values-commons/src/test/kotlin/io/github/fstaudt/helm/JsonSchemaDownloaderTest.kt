@@ -302,6 +302,24 @@ internal class JsonSchemaDownloaderTest {
     }
 
     @Test
+    fun `downloadJsonSchemas should keep invalid $ref`() {
+        stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH,
+            """
+            "properties": {
+              "refs": {
+                "${'$'}ref": "../\"invalid/$HELM_SCHEMA_FILE"
+              }
+            }
+            """.trimIndent()
+        )
+        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        downloader.download(chart)
+        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+            .hasContent().node("properties.refs.\$ref").isEqualTo("../\\\"invalid/$HELM_SCHEMA_FILE")
+    }
+
+    @Test
     fun `download should generate JSON schema with error when JSON schema can't be downloaded from repository`() {
         stubFor(get("/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").willReturn(WireMock.unauthorized()))
         stubFor(get("/$CHARTS_PATH/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH").willReturn(WireMock.notFound()))

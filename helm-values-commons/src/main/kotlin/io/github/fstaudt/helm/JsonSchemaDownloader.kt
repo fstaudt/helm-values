@@ -50,9 +50,13 @@ class JsonSchemaDownloader(
     }
 
     private fun downloadSchema(dependency: ChartDependency, repository: JsonSchemaRepository, fileName: String) {
-        val uri = URI("${repository.baseUri}/${dependency.name}/${dependency.version}/$fileName")
-        val downloadFolder = File(downloadSchemasDir, dependency.aliasOrName())
-        downloadSchema(dependency, uri, DownloadedSchema(downloadFolder, fileName, false), repository)
+        try {
+            val uri = URI("${repository.baseUri}/${dependency.name}/${dependency.version}/$fileName")
+            val downloadFolder = File(downloadSchemasDir, dependency.aliasOrName())
+            downloadSchema(dependency, uri, DownloadedSchema(downloadFolder, fileName, false), repository)
+        } catch (e: Exception) {
+            logger.warn("Failed to download schema for ref \"$fileName\"", e)
+        }
     }
 
     private fun downloadSchema(
