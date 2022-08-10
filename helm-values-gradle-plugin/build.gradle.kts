@@ -21,8 +21,8 @@ gradlePlugin {
 }
 
 pluginBundle {
-    website = "https://github.com/fstaudt/helm-values-gradle-plugin"
-    vcsUrl = "https://github.com/fstaudt/helm-values-gradle-plugin"
+    website = "https://github.com/fstaudt/helm-values"
+    vcsUrl = "https://github.com/fstaudt/helm-values"
     tags = listOf("helm", "chart", "kubernetes", "json", "schema")
 }
 
