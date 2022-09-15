@@ -18,12 +18,14 @@ class JsonSchemaAggregator(
     private val downloadSchemasDir: File,
     private val extractSchemasDir: File,
 ) {
-    private val jsonMapper = ObjectMapper().also {
-        it.registerModule(KotlinModule.Builder().build())
-        it.enable(SerializationFeature.INDENT_OUTPUT)
-    }
+    companion object {
+        private val jsonMapper = ObjectMapper().also {
+            it.registerModule(KotlinModule.Builder().build())
+            it.enable(SerializationFeature.INDENT_OUTPUT)
+        }
 
-    private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
+        private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
+    }
 
     fun aggregate(chart: Chart, jsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = chart.toAggregatedValuesJsonSchema()

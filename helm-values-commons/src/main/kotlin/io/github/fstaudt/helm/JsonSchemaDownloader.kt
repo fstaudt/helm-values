@@ -28,15 +28,13 @@ class JsonSchemaDownloader(
     companion object {
         private val FULL_URI_REGEX = Regex("http(s)?://.*")
         private val URI_FILENAME_REGEX = Regex("[^/]+$")
+        private val logger: Logger = LoggerFactory.getLogger(JsonSchemaDownloader::class.java)
+        private val jsonMapper = ObjectMapper().also {
+            it.registerModule(KotlinModule.Builder().build())
+            it.enable(SerializationFeature.INDENT_OUTPUT)
+        }
+        private val client: CloseableHttpClient = HttpClientBuilder.create().useSystemProperties().build()
     }
-
-    private val logger: Logger = LoggerFactory.getLogger(JsonSchemaDownloader::class.java)
-
-    private val jsonMapper = ObjectMapper().also {
-        it.registerModule(KotlinModule.Builder().build())
-        it.enable(SerializationFeature.INDENT_OUTPUT)
-    }
-    private val client: CloseableHttpClient = HttpClientBuilder.create().useSystemProperties().build()
 
     fun download(chart: Chart) {
         downloadSchemasDir.deleteRecursively()

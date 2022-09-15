@@ -13,7 +13,9 @@ class JsonSchemaExtractor(
     private val chartsDir: File?,
     private val extractSchemasDir: File,
 ) {
-    private val logger: Logger = LoggerFactory.getLogger(JsonSchemaExtractor::class.java)
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(JsonSchemaExtractor::class.java)
+    }
 
     fun extract(chart: Chart) {
         extractSchemasDir.deleteRecursively()

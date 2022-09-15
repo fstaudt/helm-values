@@ -18,12 +18,14 @@ class JsonSchemaGenerator(
     private val publicationRepository: JsonSchemaRepository,
 ) {
 
-    private val jsonMapper = ObjectMapper().also {
-        it.registerModule(KotlinModule.Builder().build())
-        it.enable(SerializationFeature.INDENT_OUTPUT)
-    }
+    companion object {
+        private val jsonMapper = ObjectMapper().also {
+            it.registerModule(KotlinModule.Builder().build())
+            it.enable(SerializationFeature.INDENT_OUTPUT)
+        }
 
-    private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
+        private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
+    }
 
     fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = chart.toValuesJsonSchema()
