@@ -22,12 +22,12 @@ import java.net.URI
 @Suppress("NestedLambdaShadowedImplicitParameter")
 class JsonSchemaDownloader(
     private val repositoryMappings: Map<String, JsonSchemaRepository>,
-    private val downloadSchemasDir: File
+    private val downloadSchemasDir: File,
 ) {
 
     companion object {
         private val FULL_URI_REGEX = Regex("http(s)?://.*")
-        private val URI_FILENAME_REGEX = Regex("/[^/]*$")
+        private val URI_FILENAME_REGEX = Regex("[^/]+$")
     }
 
     private val logger: Logger = LoggerFactory.getLogger(JsonSchemaDownloader::class.java)
@@ -102,12 +102,12 @@ class JsonSchemaDownloader(
 
     private fun JsonNode.referenceUri(uri: URI) = when {
         isFullUri() -> URI(textValue())
-        else -> URI("$uri".replace(URI_FILENAME_REGEX, "/${textValue()}")).normalize()
+        else -> URI("$uri".replace(URI_FILENAME_REGEX, textValue())).normalize()
     }
 
     private fun JsonNode.refDownloadedSchema(refUri: URI, downloadedSchema: DownloadedSchema) = when {
         isSimpleFile() -> {
-            val refPath = downloadedSchema.path.replace(URI_FILENAME_REGEX, "/${textValue()}")
+            val refPath = downloadedSchema.path.replace(URI_FILENAME_REGEX, textValue())
             DownloadedSchema(downloadedSchema.baseFolder, refPath, downloadedSchema.isReference)
         }
         else -> DownloadedSchema(downloadedSchema.baseFolder, refUri.path, true)

@@ -37,6 +37,8 @@ internal class JsonSchemaDownloaderTest {
         private const val EXTERNAL_VERSION = "0.2.0"
         private const val EXTERNAL_VALUES_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE"
         private const val EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE"
+        private const val RELATIVE_JSON_SCHEMA = "relative.schema.json"
+        private const val RELATIVE_JSON_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$RELATIVE_JSON_SCHEMA"
         private const val PROTECTED_SCHEMA = "protected-json-schema"
         private const val PROTECTED_VERSION = "0.3.0"
         private const val PROTECTED_VALUES_SCHEMA_PATH = "$PROTECTED_SCHEMA/$PROTECTED_VERSION/$VALUES_SCHEMA_FILE"
@@ -157,20 +159,21 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "global": {
-                "${'$'}ref": "$GLOBAL_VALUES_SCHEMA_FILE"
+                "${'$'}ref": "$RELATIVE_JSON_SCHEMA"
                 }
               }
             """.trimIndent())
+        stubForSchema(RELATIVE_JSON_SCHEMA_PATH)
         stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}/$VALUES_SCHEMA_FILE").isFile
             .hasContent().and(
                 { it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH) },
-                { it.node("properties.global.\$ref").isEqualTo(GLOBAL_VALUES_SCHEMA_FILE) },
+                { it.node("properties.global.\$ref").isEqualTo(RELATIVE_JSON_SCHEMA) },
             )
-        assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-            .hasContent().node("\$id").isEqualTo(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}/$RELATIVE_JSON_SCHEMA").isFile
+            .hasContent().node("\$id").isEqualTo(RELATIVE_JSON_SCHEMA_PATH)
     }
 
     @Test
