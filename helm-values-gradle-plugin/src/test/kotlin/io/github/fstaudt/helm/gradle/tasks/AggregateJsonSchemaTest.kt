@@ -1,6 +1,11 @@
 package io.github.fstaudt.helm.gradle.tasks
 
+import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.CHART_VERSION
@@ -14,14 +19,9 @@ import io.github.fstaudt.helm.gradle.initBuildFile
 import io.github.fstaudt.helm.gradle.initHelmChart
 import io.github.fstaudt.helm.gradle.initHelmResources
 import io.github.fstaudt.helm.gradle.runTask
-import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema.Companion.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
-import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema.Companion.PATCH_AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
 import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
-import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.EXTRACT
 import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.EXTRACT_JSON_SCHEMAS
-import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.testProject
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
@@ -129,8 +129,8 @@ class AggregateJsonSchemaTest {
             .hasContent().node("properties").and(
                 {
                     it.node("global.allOf").isArray.hasSize(1)
-                    it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
-                    it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
+                    it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
+                    it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
                     it.isObject.doesNotContainKey(NO_SCHEMA)
                 }
             )
@@ -154,7 +154,7 @@ class AggregateJsonSchemaTest {
             assertThatJsonFile(aggregatedSchemaFile).exists()
                 .hasContent().node("properties").and(
                     {
-                        it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                        it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
                     }
                 )
         }

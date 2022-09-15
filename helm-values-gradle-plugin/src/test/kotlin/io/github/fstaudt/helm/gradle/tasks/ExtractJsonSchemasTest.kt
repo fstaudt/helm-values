@@ -1,5 +1,6 @@
 package io.github.fstaudt.helm.gradle.tasks
 
+import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.TestProject
 import io.github.fstaudt.helm.gradle.WITH_BUILD_CACHE
@@ -10,7 +11,6 @@ import io.github.fstaudt.helm.gradle.initBuildFile
 import io.github.fstaudt.helm.gradle.initHelmChart
 import io.github.fstaudt.helm.gradle.initHelmResources
 import io.github.fstaudt.helm.gradle.runTask
-import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.EXTRACT
 import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.EXTRACT_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.testProject
 import org.assertj.core.api.Assertions.assertThat
@@ -34,7 +34,7 @@ class ExtractJsonSchemasTest {
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
-        extractSchemasDir = File(testProject.buildDir, "$HELM_VALUES/$EXTRACT")
+        extractSchemasDir = File(testProject.buildDir, "$HELM_VALUES/$EXTRACT_DIR")
         testProject.initHelmResources()
         testProject.initBuildFile()
     }

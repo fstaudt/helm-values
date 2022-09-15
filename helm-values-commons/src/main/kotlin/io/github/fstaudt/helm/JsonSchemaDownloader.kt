@@ -26,6 +26,7 @@ class JsonSchemaDownloader(
 ) {
 
     companion object {
+        const val DOWNLOADS_DIR = "downloads"
         private val FULL_URI_REGEX = Regex("http(s)?://.*")
         private val URI_FILENAME_REGEX = Regex("[^/]+$")
         private val logger: Logger = LoggerFactory.getLogger(JsonSchemaDownloader::class.java)

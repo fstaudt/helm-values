@@ -14,6 +14,7 @@ class JsonSchemaExtractor(
     private val extractSchemasDir: File,
 ) {
     companion object {
+        const val EXTRACT_DIR = "extract"
         private val logger: Logger = LoggerFactory.getLogger(JsonSchemaExtractor::class.java)
     }
 
@@ -59,7 +60,7 @@ class JsonSchemaExtractor(
 
     private fun ChartDependency.toSchemaFileFor(entry: TarArchiveEntry): File {
         val basePath = File("$extractSchemasDir/${alias ?: name}")
-        return File(basePath, entry.name.removePrefix("${name}/").replace("charts/", ""))
+        return File(basePath, entry.name.removePrefix("${name}/").replace("$HELM_CHARTS_DIR/", ""))
     }
 
     private fun ChartDependency.fallbackSchemaFor(errorMessage: String) {

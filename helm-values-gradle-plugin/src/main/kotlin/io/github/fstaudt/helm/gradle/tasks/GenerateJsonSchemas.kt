@@ -7,6 +7,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.JsonSchemaGenerator
+import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
+import io.github.fstaudt.helm.PATCH_GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.model.Chart
@@ -28,9 +31,6 @@ import java.io.File
 open class GenerateJsonSchemas : DefaultTask() {
     companion object {
         const val GENERATE_JSON_SCHEMAS = "generateJsonSchemas"
-        const val GENERATED = "$HELM_VALUES/generated"
-        const val PATCH_VALUES_SCHEMA_FILE = "patch-values.schema.json"
-        const val PATCH_GLOBAL_VALUES_SCHEMA_FILE = "patch-global-values.schema.json"
     }
 
     @Nested
@@ -52,7 +52,7 @@ open class GenerateJsonSchemas : DefaultTask() {
     var patchGlobalValuesFile: File? = File(project.projectDir, PATCH_GLOBAL_VALUES_SCHEMA_FILE).takeIf { it.exists() }
 
     @OutputDirectory
-    val generatedSchemaDir = File(project.buildDir, GENERATED)
+    val generatedSchemaDir = File(project.buildDir, "$HELM_VALUES/$GENERATION_DIR")
 
     @Internal
     protected val yamlMapper = ObjectMapper(YAMLFactory()).also {

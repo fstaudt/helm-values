@@ -1,7 +1,8 @@
 package io.github.fstaudt.helm.gradle
 
+import io.github.fstaudt.helm.HELM_CHARTS_DIR
+import io.github.fstaudt.helm.HELM_CHARTS_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.HELM_SOURCES_DIR
-import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.CHARTS_DIR
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import java.io.File
@@ -55,11 +56,11 @@ fun TestProject.initHelmResources(
     helmSourcesDirectory: String = HELM_SOURCES_DIR,
 ) {
     File("src/test/resources/helm-resources/charts/$chartName-$chartVersion.tgz")
-        .copyTo(File(this, "$helmSourcesDirectory/$CHARTS_DIR/$chartName-$chartVersion.tgz"))
+        .copyTo(File(this, "$helmSourcesDirectory/$HELM_CHARTS_DIR/$chartName-$chartVersion.tgz"))
 }
 
 fun TestProject.initHelmChart(sourcesDir: File = this, customizeHelmChart: File.() -> Unit = {}): File {
-    return File(sourcesDir, "Chart.yaml").apply {
+    return File(sourcesDir, HELM_CHARTS_FILE).apply {
         writeText(
             """
             apiVersion: v2
@@ -78,7 +79,7 @@ fun TestProject.initHelmChart(sourcesDir: File = this, customizeHelmChart: File.
 }
 
 fun TestProject.clearHelmChart(sourcesDir: File = this) {
-    File(sourcesDir, "Chart.yaml").delete()
+    File(sourcesDir, HELM_CHARTS_FILE).delete()
 }
 
 fun TestProject.initHelmChart(customizeHelmChart: File.() -> Unit = {}): File {

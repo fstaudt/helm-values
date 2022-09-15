@@ -2,6 +2,8 @@ package io.github.fstaudt.helm
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -58,17 +60,19 @@ internal class JsonSchemaAggregatorTest {
 
     @Test
     fun `aggregate should aggregate downloaded JSON schemas for dependencies in mapped repositories`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
-            ChartDependency(NO_SCHEMA, "0.1.0", THIRDPARTY),
-        ))
+        val chart = Chart(
+            "v2", CHART_NAME, CHART_VERSION, listOf(
+                ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
+                ChartDependency(NO_SCHEMA, "0.1.0", THIRDPARTY),
+            )
+        )
         testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json).node("properties").and(
             {
-                it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
+                it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
                 it.node("global.allOf").isArray.hasSize(1)
-                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
+                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
                 it.isObject.doesNotContainKey(NO_SCHEMA)
             }
         )
@@ -76,10 +80,12 @@ internal class JsonSchemaAggregatorTest {
 
     @Test
     fun `aggregate should disable additional properties`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
-            ChartDependency(NO_SCHEMA, "0.1.0", THIRDPARTY),
-        ))
+        val chart = Chart(
+            "v2", CHART_NAME, CHART_VERSION, listOf(
+                ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
+                ChartDependency(NO_SCHEMA, "0.1.0", THIRDPARTY),
+            )
+        )
         testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json,
@@ -93,12 +99,14 @@ internal class JsonSchemaAggregatorTest {
     @Test
     fun `aggregate should update aggregated values schema with aggregated schema patch`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)))
-        val jsonPatch = jsonPatch("""
+        val jsonPatch = jsonPatch(
+            """
             [
               { "op": "replace", "path": "/title", "value": "overridden value" },
               { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional value" }
             ]
-            """)
+            """
+        )
         testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
         val json = aggregator.aggregate(chart, jsonPatch)
         assertThatJson(json,
@@ -112,15 +120,17 @@ internal class JsonSchemaAggregatorTest {
 
     @Test
     fun `aggregate should use alias to aggregate downloaded JSON schemas`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
-        ))
+        val chart = Chart(
+            "v2", CHART_NAME, CHART_VERSION, listOf(
+                ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
+            )
+        )
         testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json).node("properties").and(
             {
-                it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA-alias/$GLOBAL_VALUES_SCHEMA_FILE")
-                it.node("$EXTERNAL_SCHEMA-alias.\$ref").isEqualTo("$DOWNLOADS/$EXTERNAL_SCHEMA-alias/$VALUES_SCHEMA_FILE")
+                it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA-alias/$GLOBAL_VALUES_SCHEMA_FILE")
+                it.node("$EXTERNAL_SCHEMA-alias.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA-alias/$VALUES_SCHEMA_FILE")
             }
         )
     }
@@ -130,20 +140,22 @@ internal class JsonSchemaAggregatorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EMBEDDED_SCHEMA, "0.1.0", THIRDPARTY)))
         testProject.initExtractedSchemas(EMBEDDED_SCHEMA)
         val json = aggregator.aggregate(chart, null)
-        assertThatJson(json, { it.node("properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE") })
+        assertThatJson(json, { it.node("properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE") })
     }
 
     @Test
     fun `aggregate should aggregate extracted JSON schemas from sub-chart`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EMBEDDED_SUB_SCHEMA, "0.1.0", THIRDPARTY)
-        ))
+        val chart = Chart(
+            "v2", CHART_NAME, CHART_VERSION, listOf(
+                ChartDependency(EMBEDDED_SUB_SCHEMA, "0.1.0", THIRDPARTY)
+            )
+        )
         testProject.initExtractedSchemas("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA")
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json).node("properties").and(
             {
                 it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.\$ref")
-                    .isEqualTo("$EXTRACT/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                    .isEqualTo("$EXTRACT_DIR/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
             },
             { it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA").isObject.doesNotContainKey("properties") },
         )
@@ -151,13 +163,15 @@ internal class JsonSchemaAggregatorTest {
 
     @Test
     fun `aggregate should use alias to aggregate extracted JSON schemas`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EMBEDDED_SCHEMA, "0.1.0", THIRDPARTY, "$EMBEDDED_SCHEMA-alias")
-        ))
+        val chart = Chart(
+            "v2", CHART_NAME, CHART_VERSION, listOf(
+                ChartDependency(EMBEDDED_SCHEMA, "0.1.0", THIRDPARTY, "$EMBEDDED_SCHEMA-alias")
+            )
+        )
         testProject.initExtractedSchemas("$EMBEDDED_SCHEMA-alias")
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json,
-            { it.node("properties.$EMBEDDED_SCHEMA-alias.\$ref").isEqualTo("$EXTRACT/$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE") }
+            { it.node("properties.$EMBEDDED_SCHEMA-alias.\$ref").isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE") }
         )
     }
 
@@ -168,15 +182,17 @@ internal class JsonSchemaAggregatorTest {
         testProject.initDownloadedSchemas(EMBEDDED_SCHEMA)
         testProject.initExtractedSchemas(EMBEDDED_SCHEMA)
         assertThatJson(json,
-            { it.node("properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo("$DOWNLOADS/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE") }
+            { it.node("properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE") }
         )
     }
 
     @Test
     fun `aggregate should set property for dependency condition in values`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "$EXTERNAL_SCHEMA.enabled")
-        ))
+        val chart = Chart(
+            "v2", CHART_NAME, CHART_VERSION, listOf(
+                ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "$EXTERNAL_SCHEMA.enabled")
+            )
+        )
         testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
@@ -190,9 +206,11 @@ internal class JsonSchemaAggregatorTest {
 
     @Test
     fun `aggregate should set property for dependency condition for third-party dependencies`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, THIRDPARTY, condition = "$EXTERNAL_SCHEMA.enabled")
-        ))
+        val chart = Chart(
+            "v2", CHART_NAME, CHART_VERSION, listOf(
+                ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, THIRDPARTY, condition = "$EXTERNAL_SCHEMA.enabled")
+            )
+        )
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
             {
@@ -205,9 +223,11 @@ internal class JsonSchemaAggregatorTest {
 
     @Test
     fun `aggregate should use alias to document property for dependency condition`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias", "$EXTERNAL_SCHEMA-alias.enabled")
-        ))
+        val chart = Chart(
+            "v2", CHART_NAME, CHART_VERSION, listOf(
+                ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias", "$EXTERNAL_SCHEMA-alias.enabled")
+            )
+        )
         testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA-alias.properties.enabled").and(

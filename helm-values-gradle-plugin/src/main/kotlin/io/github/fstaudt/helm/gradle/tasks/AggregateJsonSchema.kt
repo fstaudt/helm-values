@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaAggregator
+import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
-import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.EXTRACT
 import io.github.fstaudt.helm.model.Chart
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
@@ -30,8 +32,6 @@ import java.io.File
 open class AggregateJsonSchema : DefaultTask() {
     companion object {
         const val AGGREGATE_JSON_SCHEMA = "aggregateJsonSchema"
-        const val AGGREGATED_SCHEMA_FILE = "aggregated-values.schema.json"
-        const val PATCH_AGGREGATED_SCHEMA_FILE = "patch-aggregated-values.schema.json"
     }
 
     @Nested
@@ -44,11 +44,11 @@ open class AggregateJsonSchema : DefaultTask() {
 
     @InputDirectory
     @PathSensitive(RELATIVE)
-    val downloadSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS")
+    val downloadSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS_DIR")
 
     @InputDirectory
     @PathSensitive(RELATIVE)
-    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACT")
+    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACT_DIR")
 
     @InputFile
     @Optional

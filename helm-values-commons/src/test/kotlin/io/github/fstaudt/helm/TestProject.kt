@@ -1,20 +1,19 @@
 package io.github.fstaudt.helm
 
+import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import java.io.File
 
 const val CHART_NAME = "helm-chart"
 const val CHART_VERSION = "0.1.0"
-const val DOWNLOADS = "downloads"
-const val EXTRACT = "extract"
-const val CHARTS = "charts"
 
 typealias TestProject = File
 
 val TestProject.buildDir get() = File(this, "build")
 
-val TestProject.downloadSchemasDir get() = File(buildDir, DOWNLOADS)
-val TestProject.extractSchemasDir get() = File(buildDir, EXTRACT)
-val TestProject.chartsDir get() = File(this, CHARTS)
+val TestProject.downloadSchemasDir get() = File(buildDir, DOWNLOADS_DIR)
+val TestProject.extractSchemasDir get() = File(buildDir, EXTRACT_DIR)
+val TestProject.chartsDir get() = File(this, HELM_CHARTS_DIR)
 
 fun testProject(parentFolder: File? = File("build/tmp")): TestProject {
     parentFolder?.mkdirs()

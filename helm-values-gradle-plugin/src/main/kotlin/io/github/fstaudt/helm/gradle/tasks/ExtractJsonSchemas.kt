@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.JsonSchemaExtractor
+import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.model.Chart
@@ -22,13 +23,9 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 @CacheableTask
-@Suppress("NestedLambdaShadowedImplicitParameter")
 open class ExtractJsonSchemas : DefaultTask() {
     companion object {
         const val EXTRACT_JSON_SCHEMAS = "extractJsonSchemas"
-        const val CHARTS_DIR = "charts"
-        const val EXTRACT = "extract"
-        const val HELM_SCHEMA_FILE = "values.schema.json"
     }
 
     @Nested
@@ -45,7 +42,7 @@ open class ExtractJsonSchemas : DefaultTask() {
     var chartFile: File? = null
 
     @OutputDirectory
-    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACT")
+    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACT_DIR")
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
         it.registerModule(KotlinModule.Builder().build())

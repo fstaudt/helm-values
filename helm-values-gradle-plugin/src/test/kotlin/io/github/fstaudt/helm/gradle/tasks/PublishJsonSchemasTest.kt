@@ -12,9 +12,11 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.verify
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.CHART_VERSION
+import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.TestProject
 import io.github.fstaudt.helm.gradle.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.gradle.buildDir
@@ -23,7 +25,6 @@ import io.github.fstaudt.helm.gradle.initBuildFile
 import io.github.fstaudt.helm.gradle.initHelmChart
 import io.github.fstaudt.helm.gradle.runAndFail
 import io.github.fstaudt.helm.gradle.runTask
-import io.github.fstaudt.helm.gradle.tasks.GenerateJsonSchemas.Companion.GENERATED
 import io.github.fstaudt.helm.gradle.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.tasks.PublishJsonSchemas.Companion.PUBLISH_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.testProject
@@ -188,7 +189,7 @@ class PublishJsonSchemasTest {
             """.trimIndent()
             )
         }
-        File(testProject.buildDir, GENERATED).mkdirs()
+        File(testProject.buildDir, "$HELM_VALUES/$GENERATION_DIR").mkdirs()
         testProject.runAndFail(PUBLISH_JSON_SCHEMAS, "-x$GENERATE_JSON_SCHEMAS").also {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains("Publication repository null not found in repository mappings.")
@@ -209,7 +210,7 @@ class PublishJsonSchemasTest {
             """.trimIndent()
             )
         }
-        File(testProject.buildDir, GENERATED).mkdirs()
+        File(testProject.buildDir, "$HELM_VALUES/$GENERATION_DIR").mkdirs()
         testProject.runAndFail(PUBLISH_JSON_SCHEMAS, "-x$GENERATE_JSON_SCHEMAS").also {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains("Publication repository unknown not found in repository mappings.")

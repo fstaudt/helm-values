@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.JsonSchemaDownloader
+import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.model.Chart
@@ -24,7 +25,6 @@ import java.io.File
 open class DownloadJsonSchemas : DefaultTask() {
     companion object {
         const val DOWNLOAD_JSON_SCHEMAS = "downloadJsonSchemas"
-        const val DOWNLOADS = "downloads"
     }
 
     @Nested
@@ -36,7 +36,7 @@ open class DownloadJsonSchemas : DefaultTask() {
     var chartFile: File? = null
 
     @OutputDirectory
-    val downloadSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS")
+    val downloadSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS_DIR")
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
         it.registerModule(KotlinModule.Builder().build())

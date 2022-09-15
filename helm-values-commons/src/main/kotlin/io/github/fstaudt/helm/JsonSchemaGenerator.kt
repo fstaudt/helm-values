@@ -19,6 +19,7 @@ class JsonSchemaGenerator(
 ) {
 
     companion object {
+        const val GENERATION_DIR = "generated"
         private val jsonMapper = ObjectMapper().also {
             it.registerModule(KotlinModule.Builder().build())
             it.enable(SerializationFeature.INDENT_OUTPUT)

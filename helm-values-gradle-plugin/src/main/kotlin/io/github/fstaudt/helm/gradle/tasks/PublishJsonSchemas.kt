@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PRO
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
-import io.github.fstaudt.helm.gradle.tasks.GenerateJsonSchemas.Companion.GENERATED
+import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.http.JsonSchemaPublisher
 import io.github.fstaudt.helm.model.Chart
 import org.gradle.api.DefaultTask
@@ -36,7 +37,7 @@ open class PublishJsonSchemas : DefaultTask() {
 
     @InputDirectory
     @PathSensitive(RELATIVE)
-    val generatedSchemaDir = File(project.buildDir, GENERATED)
+    val generatedSchemaDir = File(project.buildDir, "$HELM_VALUES/$GENERATION_DIR")
 
     @Internal
     lateinit var jsonSchemaPublisher: JsonSchemaPublisher

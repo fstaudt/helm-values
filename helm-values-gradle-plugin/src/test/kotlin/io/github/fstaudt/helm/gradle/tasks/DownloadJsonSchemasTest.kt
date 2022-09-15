@@ -8,6 +8,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.SCHEMA_VERSION
@@ -19,7 +20,6 @@ import io.github.fstaudt.helm.gradle.clearHelmChart
 import io.github.fstaudt.helm.gradle.initBuildFile
 import io.github.fstaudt.helm.gradle.initHelmChart
 import io.github.fstaudt.helm.gradle.runTask
-import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOADS
 import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.testProject
 import org.assertj.core.api.Assertions.assertThat
@@ -55,7 +55,7 @@ class DownloadJsonSchemasTest {
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
-        downloadDir = File("${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS")
+        downloadDir = File("${testProject.buildDir}/$HELM_VALUES/$DOWNLOADS_DIR")
         testProject.initBuildFile {
             appendText(
                 """
