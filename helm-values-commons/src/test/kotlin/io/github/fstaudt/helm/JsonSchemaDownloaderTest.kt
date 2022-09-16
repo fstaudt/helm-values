@@ -305,21 +305,30 @@ internal class JsonSchemaDownloaderTest {
     }
 
     @Test
-    fun `downloadJsonSchemas should keep invalid $ref`() {
+    fun `downloadJsonSchemas should ignore invalid $ref and download next $ref`() {
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH,
             """
             "properties": {
               "refs": {
                 "${'$'}ref": "../\"invalid/$HELM_SCHEMA_FILE"
+              },
+              "next": {
+                "${'$'}ref": "$RELATIVE_JSON_SCHEMA"
               }
             }
             """.trimIndent()
         )
         stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        stubForSchema(RELATIVE_JSON_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
-            .hasContent().node("properties.refs.\$ref").isEqualTo("../\\\"invalid/$HELM_SCHEMA_FILE")
+            .hasContent().and(
+                { it.node("properties.refs.\$ref").isEqualTo("../\\\"invalid/$HELM_SCHEMA_FILE") },
+                { it.node("properties.next.\$ref").isEqualTo(RELATIVE_JSON_SCHEMA) },
+            )
+        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$RELATIVE_JSON_SCHEMA").isFile
+            .hasContent().node("\$id").isEqualTo(RELATIVE_JSON_SCHEMA_PATH)
     }
 
     @Test

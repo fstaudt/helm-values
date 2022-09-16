@@ -49,13 +49,9 @@ class JsonSchemaDownloader(
     }
 
     private fun downloadSchema(dependency: ChartDependency, repository: JsonSchemaRepository, fileName: String) {
-        try {
-            val uri = URI("${repository.baseUri}/${dependency.name}/${dependency.version}/$fileName")
-            val downloadFolder = File(downloadSchemasDir, dependency.aliasOrName())
-            downloadSchema(dependency, uri, DownloadedSchema(downloadFolder, fileName, false), repository)
-        } catch (e: Exception) {
-            logger.warn("Failed to download schema for ref \"$fileName\"", e)
-        }
+        val uri = URI("${repository.baseUri}/${dependency.name}/${dependency.version}/$fileName")
+        val downloadFolder = File(downloadSchemasDir, dependency.aliasOrName())
+        downloadSchema(dependency, uri, DownloadedSchema(downloadFolder, fileName, false), repository)
     }
 
     private fun downloadSchema(
@@ -84,14 +80,18 @@ class JsonSchemaDownloader(
         jsonSchema.findParents("\$ref").map {
             with(it.get("\$ref")) {
                 if (!isLocalReference()) {
-                    val refUri = referenceUri(uri)
-                    val refDownloadedSchema = refDownloadedSchema(refUri, downloadedSchema)
-                    val refRepository = repositoryMappings
-                        .filterValues { "$refUri".startsWith(it.baseUri) }.values
-                        .firstOrNull()
-                    downloadSchema(dependency, refUri, refDownloadedSchema, refRepository)
-                    if (isFullUri() || (!downloadedSchema.isReference && !isSimpleFile())) {
-                        (it as ObjectNode).replace("\$ref", TextNode(refUri.toDownloadedUri()))
+                    try {
+                        val refUri = referenceUri(uri)
+                        val refDownloadedSchema = refDownloadedSchema(refUri, downloadedSchema)
+                        val refRepository = repositoryMappings
+                            .filterValues { "$refUri".startsWith(it.baseUri) }.values
+                            .firstOrNull()
+                        downloadSchema(dependency, refUri, refDownloadedSchema, refRepository)
+                        if (isFullUri() || (!downloadedSchema.isReference && !isSimpleFile())) {
+                            (it as ObjectNode).replace("\$ref", TextNode(refUri.toDownloadedUri()))
+                        }
+                    } catch (e: Exception) {
+                        logger.warn("Failed to download schema for ref \"${textValue()}\"", e)
                     }
                 }
             }
@@ -109,6 +109,7 @@ class JsonSchemaDownloader(
             val refPath = downloadedSchema.path.replace(URI_FILENAME_REGEX, textValue())
             DownloadedSchema(downloadedSchema.baseFolder, refPath, downloadedSchema.isReference)
         }
+
         else -> DownloadedSchema(downloadedSchema.baseFolder, refUri.path, true)
     }
 
