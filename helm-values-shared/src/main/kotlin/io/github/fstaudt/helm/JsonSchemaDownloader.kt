@@ -78,33 +78,30 @@ class JsonSchemaDownloader(
             it.isFullUri() || (!downloadedSchema.isReference && !it.isSimpleFile())
         }
         jsonSchema.findParents("\$ref").map {
-            with(it.get("\$ref")) {
-                if (!isLocalReference()) {
-                    try {
-                        val refUri = referenceUri(uri)
-                        val refDownloadedSchema = refDownloadedSchema(refUri, downloadedSchema)
-                        val refRepository = repositoryMappings
-                            .filterValues { "$refUri".startsWith(it.baseUri) }.values
-                            .firstOrNull()
-                        downloadSchema(dependency, refUri, refDownloadedSchema, refRepository)
-                        if (isFullUri() || (!downloadedSchema.isReference && !isSimpleFile())) {
-                            (it as ObjectNode).replace("\$ref", TextNode(refUri.toDownloadedUri()))
-                        }
-                    } catch (e: Exception) {
-                        logger.warn("Failed to download schema for ref \"${textValue()}\"", e)
+            val ref = it.get("\$ref")
+            if (!ref.isInternalReference()) {
+                try {
+                    val refUri = ref.toUriFrom(uri)
+                    val refDownloadedSchema = ref.toDownloadedSchemaFrom(refUri, downloadedSchema)
+                    val refRepository = repositoryMappings.filterValues { "$refUri".startsWith(it.baseUri) }.values.firstOrNull()
+                    downloadSchema(dependency, refUri, refDownloadedSchema, refRepository)
+                    if (ref.isFullUri() || (!downloadedSchema.isReference && !ref.isSimpleFile())) {
+                        (it as ObjectNode).replace("\$ref", TextNode(refUri.toDownloadedUri()))
                     }
+                } catch (e: Exception) {
+                    logger.warn("Failed to download schema for ref \"${ref.textValue()}\"", e)
                 }
             }
         }
         if (needsRewrite) jsonMapper.writeValue(downloadedSchema.file(), jsonSchema)
     }
 
-    private fun JsonNode.referenceUri(uri: URI) = when {
+    private fun JsonNode.toUriFrom(uri: URI) = when {
         isFullUri() -> URI(textValue())
         else -> URI("$uri".replace(URI_FILENAME_REGEX, textValue())).normalize()
     }
 
-    private fun JsonNode.refDownloadedSchema(refUri: URI, downloadedSchema: DownloadedSchema) = when {
+    private fun JsonNode.toDownloadedSchemaFrom(refUri: URI, downloadedSchema: DownloadedSchema) = when {
         isSimpleFile() -> {
             val refPath = downloadedSchema.path.replace(URI_FILENAME_REGEX, textValue())
             DownloadedSchema(downloadedSchema.baseFolder, refPath, downloadedSchema.isReference)
@@ -138,7 +135,7 @@ class JsonSchemaDownloader(
             """.trimIndent()
     }
 
-    private fun JsonNode.isLocalReference() = textValue().startsWith("#")
+    private fun JsonNode.isInternalReference() = textValue().startsWith("#")
     private fun JsonNode.isFullUri() = textValue().matches(FULL_URI_REGEX)
     private fun JsonNode.isSimpleFile() = !textValue().contains("/")
     private fun URI.toDownloadedUri() = "${path.removePrefix("/")}${fragment?.let { "#$it" } ?: ""}"
