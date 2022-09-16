@@ -2,6 +2,9 @@ package io.github.fstaudt.helm.gradle
 
 import io.github.fstaudt.helm.HELM_CHARTS_DIR
 import io.github.fstaudt.helm.HELM_CHARTS_FILE
+import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.EXTENSION
 import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema
 import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
@@ -32,33 +35,41 @@ class HelmValuesPlugin : Plugin<Project> {
                 group = HELM_VALUES
                 description = "Download JSON schemas of dependencies from JSON schema repositories"
                 extension = pluginExtension
-                chartFile = File(projectDir, "${pluginExtension.sourcesDir}/$HELM_CHARTS_FILE").takeIf { it.exists() }
+                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
+                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
             }
             val extractJsonSchemas = tasks.register<ExtractJsonSchemas>(EXTRACT_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Extract JSON schemas values.schema.json from chart dependencies"
                 extension = pluginExtension
-                chartFile = File(projectDir, "${pluginExtension.sourcesDir}/$HELM_CHARTS_FILE").takeIf { it.exists() }
-                chartsDir = File("${projectDir}/${pluginExtension.sourcesDir}/$HELM_CHARTS_DIR").takeIf { it.exists() }
+                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
+                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
+                chartsDir = File(sourcesDir, HELM_CHARTS_DIR).takeIf { it.exists() }
             }
             tasks.register<AggregateJsonSchema>(AGGREGATE_JSON_SCHEMA) {
                 group = HELM_VALUES
                 description = "Aggregate extracted and downloaded JSON schemas for assistance on Helm values in your IDE"
                 extension = pluginExtension
-                chartFile = File(projectDir, "${pluginExtension.sourcesDir}/$HELM_CHARTS_FILE").takeIf { it.exists() }
+                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
+                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
+                patchFile = File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }
                 dependsOn(downloadJsonSchemas, extractJsonSchemas)
             }
             val generateJsonSchemas = tasks.register<GenerateJsonSchemas>(GENERATE_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Generate JSON schemas for publication to a repository of JSON schemas"
                 extension = pluginExtension
-                chartFile = File(projectDir, "${pluginExtension.sourcesDir}/$HELM_CHARTS_FILE").takeIf { it.exists() }
+                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
+                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
+                patchValuesFile = File(sourcesDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }
+                patchGlobalValuesFile = File(sourcesDir, PATCH_GLOBAL_VALUES_SCHEMA_FILE).takeIf { it.exists() }
             }
             tasks.register<PublishJsonSchemas>(PUBLISH_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Publish generated JSON schemas to a repository of JSON schemas"
                 extension = pluginExtension
-                chartFile = File(projectDir, "${pluginExtension.sourcesDir}/$HELM_CHARTS_FILE").takeIf { it.exists() }
+                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
+                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
                 jsonSchemaPublisher = NexusRawJsonSchemaPublisher()
                 dependsOn(generateJsonSchemas)
             }

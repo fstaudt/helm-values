@@ -44,12 +44,12 @@ open class GenerateJsonSchemas : DefaultTask() {
     @InputFile
     @Optional
     @PathSensitive(RELATIVE)
-    var patchValuesFile: File? = File(project.projectDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }
+    var patchValuesFile: File? = null
 
     @InputFile
     @Optional
     @PathSensitive(RELATIVE)
-    var patchGlobalValuesFile: File? = File(project.projectDir, PATCH_GLOBAL_VALUES_SCHEMA_FILE).takeIf { it.exists() }
+    var patchGlobalValuesFile: File? = null
 
     @OutputDirectory
     val generatedSchemaDir = File(project.buildDir, "$HELM_VALUES/$GENERATION_DIR")

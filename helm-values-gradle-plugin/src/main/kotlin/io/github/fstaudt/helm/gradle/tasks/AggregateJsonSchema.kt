@@ -42,6 +42,11 @@ open class AggregateJsonSchema : DefaultTask() {
     @PathSensitive(RELATIVE)
     var chartFile: File? = null
 
+    @InputFile
+    @Optional
+    @PathSensitive(RELATIVE)
+    var patchFile: File? = null
+
     @InputDirectory
     @PathSensitive(RELATIVE)
     val downloadSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS_DIR")
@@ -49,11 +54,6 @@ open class AggregateJsonSchema : DefaultTask() {
     @InputDirectory
     @PathSensitive(RELATIVE)
     val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACT_DIR")
-
-    @InputFile
-    @Optional
-    @PathSensitive(RELATIVE)
-    var patchFile: File? = File(project.projectDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }
 
     @OutputFile
     val aggregatedSchemaFile: File = File(project.buildDir, "$HELM_VALUES/$AGGREGATED_SCHEMA_FILE")
