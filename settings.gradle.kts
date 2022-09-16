@@ -1,2 +1,2 @@
 rootProject.name = "helm-values"
-include("helm-values-commons", "helm-values-gradle-plugin")
+include("helm-values-shared", "helm-values-gradle-plugin")

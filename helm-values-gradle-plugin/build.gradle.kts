@@ -29,7 +29,7 @@ pluginBundle {
 dependencies {
     compileOnly(gradleKotlinDsl())
     api(kotlin("gradle-plugin"))
-    api(project(":helm-values-commons"))
+    api(project(":helm-values-shared"))
     api("org.apache.httpcomponents.client5:httpclient5:5.1.3")
     api("org.apache.commons:commons-compress:1.21")
     api("com.fasterxml.jackson.core:jackson-databind:2.13.3")
