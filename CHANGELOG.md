@@ -1,6 +1,20 @@
+## 0.3.0 - 2022-09-16
+
+- :sparkles: rename patch-*schema.json files to *.schema.patch.json
+- :construction_worker: rename module helm-values-commons to helm-values-shared 
+- :zap: move internal mappers to companion objects
+- :bug: downloader should ignore invalid $ref and download next $ref
+- :bug: downloader should download JSON schemas in same folder when $ref is relative in same folder
+- :construction_worker: bump dependency versions for jackson modules
+- :construction_worker: bump gradle from 7.5 to 7.5.1
+
+**BREAKING CHANGES**:
+- :boom: imports of helm-values-commons must be renamed to helm-values-shared
+- :boom: files patch-*.schema.json must be renamed to *.schema.patch.json and must be stored in same folder as Chart.yaml instead of root directory
+
 ## 0.2.0 - 2022-08-10
 
-- :rocket: extract business logic in shared library
+- :sparkles: extract business logic in shared library
 
 ## 0.1.3 - 2022-06-27
 
@@ -17,6 +31,6 @@
 
 ## 0.1.0 - 2022-06-20
 
-- :rocket: aggregate JSON schemas of Helm chart dependencies for assistance on Helm values in your IDE
-- :rocket: download & publication to external JSON schemas repositories
-- :rocket: patch generated JSON schemas
+- :sparkles: aggregate JSON schemas of Helm chart dependencies for assistance on Helm values in your IDE
+- :sparkles: download & publication to external JSON schemas repositories
+- :sparkles: patch generated JSON schemas
