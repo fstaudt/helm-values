@@ -19,11 +19,16 @@ jobs:
           distribution: adopt
           java-version: 11
           cache: gradle
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+      - name: "Setup gradle wrapper"
+        run: chmod +x gradlew
       - name: "Run Tests"
-        run: chmod +x gradlew && ./gradlew check
+        run: ./gradlew check
       - name: "Collect Tests Result of failed tests"
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3.1.0
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
+      - name: "Sign shared library for mavenCentral"
+        run: ./gradlew :helm-values-shared:signMavenJavaPublication -Psigning.gnupg.keyName=${{ secrets.GPG_KEY_NAME }} -Psigning.gnupg.passphrase="${{ secrets.GPG_PASSPHRASE }}"
