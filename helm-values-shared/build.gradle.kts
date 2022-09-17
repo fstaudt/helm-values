@@ -1,5 +1,4 @@
 import org.gradle.api.JavaVersion.VERSION_1_8
-import java.net.URI
 
 plugins {
     kotlin("jvm") version embeddedKotlinVersion
@@ -70,17 +69,6 @@ publishing {
             artifact(javadocJar)
             groupId = "${project.group}"
             artifactId = project.name
-        }
-    }
-    repositories {
-        val sonatypeUsername: String by project
-        val sonatypePassword: String by project
-        maven {
-            url = URI("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            credentials {
-                username = sonatypeUsername
-                password = sonatypePassword
-            }
         }
     }
 }
