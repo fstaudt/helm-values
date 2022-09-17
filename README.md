@@ -156,6 +156,8 @@ helmValues {
 }
 ```
 
+If JSON schemas are not found in the repository, a fallback empty JSON schema is created instead.
+
 ### JSON schema repository structure
 
 Each schema repository should be structured as follows:
@@ -164,12 +166,24 @@ Each schema repository should be structured as follows:
 repository
  |- chart-name
      |- chart-version
+         |- values.schema.json             # JSON schema for values.yaml (may include a reference to schema for global section)
          |- global-values.schema.json      # JSON schema for global section in values.yaml
-         |- values.schema.json             # JSON schema for values.yaml (including reference to global schema)
 ```
 
 For more information on `global-values.schema.json`, check dedicated section
 on [separate JSON schema for global values](#separate-json-schema-for-global-values).
+
+### Custom JSON schema file names
+
+Default file names for JSON schemas can be overridden for each repository in build.gradle.kts.
+
+```kotlin
+helmValues {
+    repositoryMappings = mapOf(
+        "@apps" to JsonSchemaRepository("https://my-schemas/repository", valuesSchemaFile="helm-values.json", globalValuesSchemaFile="helm-global.json")
+    )
+}
+```
 
 ### JSON schema repository security
 
