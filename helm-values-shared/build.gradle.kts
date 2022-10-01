@@ -15,7 +15,7 @@ dependencies {
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.4")
     api("com.github.java-json-tools:json-patch:1.13")
     testImplementation("org.assertj:assertj-core:3.23.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
     testImplementation("com.github.tomakehurst:wiremock-jre8:2.34.0")
     testImplementation("net.javacrumbs.json-unit:json-unit-assertj:2.35.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
