@@ -31,4 +31,5 @@ jobs:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
       - name: "Sign shared library for mavenCentral"
+        if: github.ref == 'refs/heads/main'
         run: ./gradlew :helm-values-shared:signMavenJavaPublication -Psigning.gnupg.keyName=${{ secrets.GPG_KEY_NAME }} -Psigning.gnupg.passphrase="${{ secrets.GPG_PASSPHRASE }}"
