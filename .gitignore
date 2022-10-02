@@ -12,5 +12,8 @@ gradle-app.setting
 
 # IDEA
 .idea
+*.iml
 
 !src/test/resources/helm-resources
+
+.qodana

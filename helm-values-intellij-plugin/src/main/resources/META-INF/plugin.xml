@@ -1,0 +1,38 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>io.github.fstaudt.helm</id>
+    <name>Helm Values Assistant</name>
+    <vendor url="https://github.com/fstaudt/">fstaudt</vendor>
+    <depends>com.intellij.modules.platform</depends>
+    <extensions defaultExtensionNs="JavaScript">
+        <JsonSchema.ProviderFactory implementation="io.github.fstaudt.helm.idea.providers.HelmValuesJsonSchemaProviderFactory"/>
+    </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="io.github.fstaudt.helm.idea.HelmValuesSettings"/>
+        <applicationService serviceImplementation="io.github.fstaudt.helm.idea.service.AggregationService"/>
+        <applicationService serviceImplementation="io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService"/>
+        <applicationConfigurable parentId="tools"
+                                 instance="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
+                                 id="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
+                                 displayName="Helm Values Assistant"/>
+    </extensions>
+    <actions>
+        <action id="HelmValues.Aggregate" text="Update Aggregated JSON Schema for Helm values of Current Chart"
+                description="Update aggregated JSON schema for Helm values of current chart"
+                class="io.github.fstaudt.helm.idea.actions.AggregateAction"
+                icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
+            <add-to-group group-id="ProjectViewPopupMenu"
+                          anchor="after" relative-to-action="ProjectViewPopupMenuRunGroup"/>
+            <add-to-group group-id="EditorPopupMenu"
+                          anchor="after" relative-to-action="EditorPopupMenuRefactor"/>
+            <add-to-group group-id="EditorTabPopupMenu"
+                          anchor="after" relative-to-action="EditorTabPopupMenuRefactor"/>
+        </action>
+        <action id="HelmValues.AggregateAll"
+                text="Update Aggregated JSON Schemas for Helm Values of All Charts in Project"
+                description="Update aggregated JSON schemas for Helm values of all charts in project"
+                class="io.github.fstaudt.helm.idea.actions.AggregateAllAction"
+                icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
+        </action>
+    </actions>
+</idea-plugin>
