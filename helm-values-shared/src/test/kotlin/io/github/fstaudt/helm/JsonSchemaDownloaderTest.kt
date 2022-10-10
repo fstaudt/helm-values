@@ -287,7 +287,7 @@ internal class JsonSchemaDownloaderTest {
     }
 
     @Test
-    fun `downloadJsonSchemas should keep $ref with fragment`() {
+    fun `download should keep $ref with fragment`() {
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH,
             """
             "properties": {
@@ -302,6 +302,21 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().node("properties.refs.\$ref").isEqualTo("#/objects/refs")
+    }
+
+    @Test
+    fun `download should keep schemas already downloaded`() {
+        testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
+        stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
+        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
+        downloader.download(chart)
+        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+            .hasContent().isObject.doesNotContainKey("\$id")
+        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
+            .hasContent().isObject.doesNotContainKey("\$id")
     }
 
     @Test

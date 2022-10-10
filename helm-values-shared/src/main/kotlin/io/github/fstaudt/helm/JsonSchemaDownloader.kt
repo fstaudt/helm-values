@@ -38,7 +38,6 @@ class JsonSchemaDownloader(
     }
 
     fun download(chart: Chart) {
-        downloadSchemasDir.deleteRecursively()
         downloadSchemasDir.mkdirs()
         chart.dependencies.forEach { dependency ->
             repositoryMappings[dependency.repository]?.let {
