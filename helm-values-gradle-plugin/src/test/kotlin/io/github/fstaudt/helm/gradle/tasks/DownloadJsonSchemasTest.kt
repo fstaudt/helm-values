@@ -23,6 +23,7 @@ import io.github.fstaudt.helm.gradle.runTask
 import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.testProject
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
 import org.gradle.testkit.runner.TaskOutcome.NO_SOURCE
 import org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import org.junit.jupiter.api.AfterEach
@@ -49,7 +50,8 @@ class DownloadJsonSchemasTest {
         private const val EXTERNAL_SCHEMA = "external-json-schema"
         private const val EXTERNAL_VERSION = "0.2.0"
         private const val EXTERNAL_VALUES_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE"
-        private const val EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE"
+        private const val EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH =
+            "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE"
     }
 
     @BeforeEach
@@ -107,7 +109,7 @@ class DownloadJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
+        testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
@@ -145,7 +147,7 @@ class DownloadJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
+        testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
@@ -168,8 +170,42 @@ class DownloadJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
+        testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("\$id").isEqualTo(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        }
+    }
+
+    @Test
+    fun `downloadJsonSchemas should retrieve JSON schemas from cache on second run`() {
+        stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
+        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$CHARTS"
+                - name: unknown-json-schema
+                  version: 0.1.0
+                  repository: "@unknown"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("\$id").isEqualTo(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
+        }
+        downloadDir.deleteRecursively()
+        testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
             assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
             assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile

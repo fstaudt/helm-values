@@ -22,6 +22,7 @@ import org.gradle.api.tasks.UntrackedTask
 import java.io.File
 
 @UntrackedTask(because = "depends on external JSON schema repositories")
+@Suppress("UnstableApiUsage")
 open class PublishJsonSchemas : DefaultTask() {
     companion object {
         const val PUBLISH_JSON_SCHEMAS = "publishJsonSchemas"

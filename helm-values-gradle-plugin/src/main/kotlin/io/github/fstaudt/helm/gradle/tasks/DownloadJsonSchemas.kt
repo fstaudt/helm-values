@@ -10,6 +10,7 @@ import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.model.Chart
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
@@ -17,11 +18,9 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.UntrackedTask
 import java.io.File
 
-@UntrackedTask(because = "depends on external JSON schema repositories")
-@Suppress("UnstableApiUsage")
+@CacheableTask
 open class DownloadJsonSchemas : DefaultTask() {
     companion object {
         const val DOWNLOAD_JSON_SCHEMAS = "downloadJsonSchemas"
