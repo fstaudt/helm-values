@@ -8,9 +8,13 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import io.github.fstaudt.helm.*
+import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaAggregator
+import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.JsonSchemaExtractor
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService
@@ -18,11 +22,10 @@ import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import java.io.File
 
-class AggregationService {
+class HelmChartService {
     companion object {
         const val JSON_SCHEMAS_DIR = ".idea/json-schemas"
-        val instance: AggregationService =
-            ApplicationManager.getApplication().getService(AggregationService::class.java)
+        val instance: HelmChartService = ApplicationManager.getApplication().getService(HelmChartService::class.java)
     }
 
     private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
@@ -45,6 +48,11 @@ class AggregationService {
         aggregator.aggregate(chart, jsonPatch(chartFile)).also {
             jsonMapper.writeValue(File(jsonSchemasDir, AGGREGATED_SCHEMA_FILE), it)
         }
+    }
+
+    fun clear(project: Project, chartFile: File) {
+        val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        File(project.baseDir(), "$JSON_SCHEMAS_DIR/${chart.name}").deleteRecursively()
     }
 
     private fun download(jsonSchemasDir: File, chart: Chart) = File(jsonSchemasDir, DOWNLOADS_DIR).also {

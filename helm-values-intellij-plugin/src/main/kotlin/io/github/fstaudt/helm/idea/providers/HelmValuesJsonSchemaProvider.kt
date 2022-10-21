@@ -8,7 +8,7 @@ import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion.SCHEMA_7
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.baseDir
-import io.github.fstaudt.helm.idea.service.AggregationService.Companion.JSON_SCHEMAS_DIR
+import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
 import java.io.File
 
 class HelmValuesJsonSchemaProvider(project: Project, private val chartDir: File) : JsonSchemaFileProvider {

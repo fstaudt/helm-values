@@ -8,6 +8,8 @@ internal fun Project.baseDir() = stateStore.projectBasePath.toFile()
 
 internal fun Project.helmChartDirs() = baseDir().helmChartDirs()
 
+internal fun File.chartFile() = listFiles()!!.first { it.name == "Chart.yaml" }
+
 private fun File.helmChartDirs(): List<File> {
     return listOf(this).filter { it.isHelmChartDir() } + directories().flatMap { dir -> dir.helmChartDirs() }
 }

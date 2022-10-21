@@ -5,12 +5,12 @@ import io.github.fstaudt.helm.idea.chartFile
 import io.github.fstaudt.helm.idea.helmChartDirs
 import io.github.fstaudt.helm.idea.service.HelmChartService
 
-class AggregateAllAction : ProjectAction() {
+class ClearAllAction : ProjectAction() {
     private val helmChartService = HelmChartService.instance
 
     override fun actionPerformed(event: AnActionEvent) {
         event.project!!.helmChartDirs().forEach {
-            helmChartService.aggregate(event.project!!, it.chartFile())
+            helmChartService.clear(event.project!!, it.chartFile())
         }
         asyncRefresh(event)
     }

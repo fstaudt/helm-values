@@ -5,33 +5,50 @@
     <vendor url="https://github.com/fstaudt/">fstaudt</vendor>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="JavaScript">
-        <JsonSchema.ProviderFactory implementation="io.github.fstaudt.helm.idea.providers.HelmValuesJsonSchemaProviderFactory"/>
+        <JsonSchema.ProviderFactory
+                implementation="io.github.fstaudt.helm.idea.providers.HelmValuesJsonSchemaProviderFactory"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="io.github.fstaudt.helm.idea.HelmValuesSettings"/>
-        <applicationService serviceImplementation="io.github.fstaudt.helm.idea.service.AggregationService"/>
-        <applicationService serviceImplementation="io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService"/>
+        <applicationService serviceImplementation="io.github.fstaudt.helm.idea.service.HelmChartService"/>
+        <applicationService
+                serviceImplementation="io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService"/>
         <applicationConfigurable parentId="tools"
                                  instance="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
                                  id="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
                                  displayName="Helm Values Assistant"/>
     </extensions>
     <actions>
-        <action id="HelmValues.Aggregate" text="Update Aggregated JSON Schema for Helm values of Current Chart"
-                description="Update aggregated JSON schema for Helm values of current chart"
-                class="io.github.fstaudt.helm.idea.actions.AggregateAction"
-                icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
-            <add-to-group group-id="ProjectViewPopupMenu"
-                          anchor="after" relative-to-action="ProjectViewPopupMenuRunGroup"/>
-            <add-to-group group-id="EditorPopupMenu"
-                          anchor="after" relative-to-action="EditorPopupMenuRefactor"/>
-            <add-to-group group-id="EditorTabPopupMenu"
-                          anchor="after" relative-to-action="EditorTabPopupMenuRefactor"/>
-        </action>
+        <group id="ProjectViewPopupMenu.HelmValues" compact="true">
+            <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
+            <separator/>
+            <group id="HelmValues.CurrentChart" text="Helm Values" description="Actions for Helm values"
+                   compact="true" popup="true" icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
+                <add-to-group group-id="EditorPopupMenu2" anchor="first"/>
+                <add-to-group group-id="EditorTabPopupMenuEx" anchor="first"/>
+                <action id="HelmValues.Aggregate" text="Refresh JSON Schemas for Current Chart"
+                        description="Download and extract JSON schemas from dependencies, then refresh aggregated JSON schema for Helm values of current chart"
+                        class="io.github.fstaudt.helm.idea.actions.AggregateAction"
+                        icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
+                </action>
+                <action id="HelmValues.Clear" text="Clear JSON Schemas for Current Chart"
+                        description="Clear extracted, downloaded and aggregated JSON schemas for Helm values of current chart"
+                        class="io.github.fstaudt.helm.idea.actions.ClearAction"
+                        icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
+                </action>
+            </group>
+        </group>
+
         <action id="HelmValues.AggregateAll"
-                text="Update Aggregated JSON Schemas for Helm Values of All Charts in Project"
-                description="Update aggregated JSON schemas for Helm values of all charts in project"
+                text="Refresh JSON Schemas for Helm Values of All Charts in Project"
+                description="Download and extract JSON schemas from dependencies, then refresh aggregated JSON schemas for Helm values of all charts in project"
                 class="io.github.fstaudt.helm.idea.actions.AggregateAllAction"
+                icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
+        </action>
+        <action id="HelmValues.ClearAll"
+                text="Clear JSON Schemas for Helm Values of All Charts in Project"
+                description="Clear all extracted, downloaded and aggregated JSON schemas for Helm values of all charts in project"
+                class="io.github.fstaudt.helm.idea.actions.ClearAllAction"
                 icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
         </action>
     </actions>
