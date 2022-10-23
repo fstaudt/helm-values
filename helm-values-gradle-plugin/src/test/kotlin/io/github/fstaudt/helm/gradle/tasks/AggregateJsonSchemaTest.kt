@@ -75,7 +75,7 @@ class AggregateJsonSchemaTest {
     @Test
     fun `aggregateJsonSchema should depend on downloadJsonSchemas and extractJsonSchemas`() {
         testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
             assertThat(it.task(":$EXTRACT_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isIn(SUCCESS, FROM_CACHE)
         }
@@ -125,11 +125,12 @@ class AggregateJsonSchemaTest {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
-        assertThatJsonFile(aggregatedSchemaFile).exists()
+        assertThatJsonFile(aggregatedSchemaFile).isFile
             .hasContent().node("properties").and(
                 {
                     it.node("global.allOf").isArray.hasSize(1)
-                    it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
+                    it.node("global.allOf[0].\$ref")
+                        .isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
                     it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
                     it.isObject.doesNotContainKey(NO_SCHEMA)
                 }
@@ -151,7 +152,7 @@ class AggregateJsonSchemaTest {
         testProject.initHelmResources(chartName = EMBEDDED_SCHEMA)
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(aggregatedSchemaFile).exists()
+            assertThatJsonFile(aggregatedSchemaFile).isFile
                 .hasContent().node("properties").and(
                     {
                         it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
@@ -182,7 +183,7 @@ class AggregateJsonSchemaTest {
         )
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(aggregatedSchemaFile).exists()
+            assertThatJsonFile(aggregatedSchemaFile).isFile
                 .hasContent().and(
                     { it.node("title").isEqualTo("overridden value") },
                     { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
@@ -228,7 +229,7 @@ class AggregateJsonSchemaTest {
         )
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(aggregatedSchemaFile).exists()
+            assertThatJsonFile(aggregatedSchemaFile).isFile
                 .hasContent().and(
                     { it.node("title").isEqualTo("overridden value") },
                     { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
@@ -274,7 +275,7 @@ class AggregateJsonSchemaTest {
         )
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(aggregatedSchemaFile).exists()
+            assertThatJsonFile(aggregatedSchemaFile).isFile
                 .hasContent().and(
                     { it.node("title").isEqualTo("overridden value") },
                     { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
