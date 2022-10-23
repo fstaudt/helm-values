@@ -56,7 +56,7 @@ This task is a dependency of task [aggregateJsonSchema](#aggregatejsonschema).
 
 Download JSON schemas of dependencies from JSON schema repositories.
 
-Task only attempts to download files `values.schema.json` and `global-values.schema.json` for each dependency
+Task only attempts to download file `values.schema.json` for each dependency
 if a repository mapping is defined for the Helm repository of the dependency.\
 Check dedicated section to [Configure JSON schemas repositories](#configure-json-schemas-repositories).
 
@@ -80,14 +80,13 @@ For more information on IDE configuration, check dedicated section on [Configure
 
 ### generateJsonSchemas
 
-Generate JSON schemas `values.schema.json` and `global-values.schema.json` for publication to a repository of JSON
+Generate JSON schema `values.schema.json` for publication to a repository of JSON
 schemas.
 
-Optional files can be created in the base folder of the chart (same folder as Chart.yaml)
-to [patch generated JSON schemas](https://jsonpatch.com/):
+Optional file can be created in the base folder of the chart (same folder as Chart.yaml)
+to [patch generated JSON schema](https://jsonpatch.com/):
 
 - `values.schema.patch.json`: patch `values.schema.json`
-- `global-values.schema.patch.json`: patch `global-values.schema.json`
 
 Property `publicationRepository` in plugin extension is mandatory and must be an existing key in repositoryMappings.\
 Property `publishedVersion` can be defined in plugin extension to overwrite version defined in Chart.yaml.
@@ -96,7 +95,7 @@ This task is a dependency of task [publishJsonSchemas](#publishjsonschemas).
 
 ### publishJsonSchemas
 
-Publish generated JSON schemas `values.schema.json` and `global-values.schema.json` to a repository of JSON schemas.
+Publish generated JSON schema `values.schema.json` to a repository of JSON schemas.
 
 Property `publicationRepository` in plugin extension is mandatory and must be an existing key in repositoryMappings.\
 Property `publishedVersion` can be defined in plugin extension to overwrite version defined in Chart.yaml.
@@ -144,8 +143,8 @@ The plugin must be configured with following configuration to download JSON sche
 ```kotlin
 helmValues {
     repositoryMappings = mapOf(
-        "@bundles" to JsonSchemaRepository("https://my-schemas/repository"),
-        "@apps" to JsonSchemaRepository("https://my-schemas/repository")
+        "@bundles" to JsonSchemaRepository("https://my-schemas/repository/bundles"),
+        "@apps" to JsonSchemaRepository("https://my-schemas/repository/apps")
     )
 }
 ```
@@ -163,6 +162,8 @@ helmValues {
     )
 }
 ```
+
+**Deprecation notice**: *`globalValuesSchemaFile` is deprecated and will be removed in `1.0.0`.*
 
 ### JSON schema repository security
 

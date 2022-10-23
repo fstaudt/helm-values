@@ -42,7 +42,6 @@ class JsonSchemaDownloader(
         chart.dependencies.forEach { dependency ->
             repositoryMappings[dependency.repository]?.let {
                 downloadSchema(dependency, it, it.valuesSchemaFile)
-                downloadSchema(dependency, it, it.globalValuesSchemaFile)
             }
         }
     }

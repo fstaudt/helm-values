@@ -11,7 +11,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.verify
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
-import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
@@ -84,7 +83,6 @@ class PublishJsonSchemasTest {
     @Test
     fun `publishJsonSchemas should depend on generatedJsonSchemas`() {
         stubForSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-        stubForSchemaPublication("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         testProject.runTask(PUBLISH_JSON_SCHEMAS).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
@@ -94,11 +92,9 @@ class PublishJsonSchemasTest {
     @Test
     fun `publishJsonSchemas should publish generated JSON schemas of chart on JSON schema repository`() {
         stubForSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-        stubForSchemaPublication("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         testProject.runTask(WITH_BUILD_CACHE, PUBLISH_JSON_SCHEMAS).also {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             verifySchemaPublicationOf("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-            verifySchemaPublicationOf("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         }
     }
 
@@ -121,11 +117,9 @@ class PublishJsonSchemasTest {
         testProject.clearHelmChart()
         testProject.initHelmChart(sourcesDir)
         stubForSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-        stubForSchemaPublication("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         testProject.runTask(WITH_BUILD_CACHE, PUBLISH_JSON_SCHEMAS).also {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             verifySchemaPublicationOf("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-            verifySchemaPublicationOf("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         }
     }
 
@@ -144,11 +138,9 @@ class PublishJsonSchemasTest {
             )
         }
         stubForProtectedSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-        stubForProtectedSchemaPublication("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         testProject.runTask(WITH_BUILD_CACHE, PUBLISH_JSON_SCHEMAS).also {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             verifyProtectedSchemaPublicationOf("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-            verifyProtectedSchemaPublicationOf("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         }
     }
 
@@ -168,11 +160,9 @@ class PublishJsonSchemasTest {
             )
         }
         stubForSchemaPublication("$APPS_PATH/$CHART_NAME/0.2.0/$VALUES_SCHEMA_FILE")
-        stubForSchemaPublication("$APPS_PATH/$CHART_NAME/0.2.0/$GLOBAL_VALUES_SCHEMA_FILE")
         testProject.runTask(PUBLISH_JSON_SCHEMAS).also {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             verifySchemaPublicationOf("$APPS_PATH/$CHART_NAME/0.2.0/$VALUES_SCHEMA_FILE")
-            verifySchemaPublicationOf("$APPS_PATH/$CHART_NAME/0.2.0/$GLOBAL_VALUES_SCHEMA_FILE")
         }
     }
 
@@ -224,18 +214,6 @@ class PublishJsonSchemasTest {
             assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains("Publication of $CHART_NAME/$CHART_VERSION/$VALUES_SCHEMA_FILE failed with HTTP code 400.")
             verifySchemaPublicationOf("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-        }
-    }
-
-    @Test
-    fun `publishJsonSchemas should fail when publication repository does not allow publication of global-values schema`() {
-        stubForSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-        stubFor(put("/$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE").willReturn(badRequest()))
-        testProject.runAndFail(WITH_BUILD_CACHE, PUBLISH_JSON_SCHEMAS).also {
-            assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
-            assertThat(it.output).contains("Publication of $CHART_NAME/$CHART_VERSION/$GLOBAL_VALUES_SCHEMA_FILE failed with HTTP code 400.")
-            verifySchemaPublicationOf("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
-            verifySchemaPublicationOf("$BASE_CHART_PATH/$GLOBAL_VALUES_SCHEMA_FILE")
         }
     }
 

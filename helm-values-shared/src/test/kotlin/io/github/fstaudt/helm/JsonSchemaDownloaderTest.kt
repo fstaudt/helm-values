@@ -6,10 +6,10 @@ import com.github.tomakehurst.wiremock.client.WireMock.ok
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
-import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
+import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -36,7 +36,6 @@ internal class JsonSchemaDownloaderTest {
         private const val EXTERNAL_SCHEMA = "external-json-schema"
         private const val EXTERNAL_VERSION = "0.2.0"
         private const val EXTERNAL_VALUES_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE"
-        private const val EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE"
         private const val RELATIVE_JSON_SCHEMA = "relative.schema.json"
         private const val RELATIVE_JSON_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$RELATIVE_JSON_SCHEMA"
         private const val PROTECTED_SCHEMA = "protected-json-schema"
@@ -80,7 +79,6 @@ internal class JsonSchemaDownloaderTest {
     @Test
     fun `download should download JSON schemas of dependencies from JSON schema repository`() {
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS),
             ChartDependency("unknown-json-schema", "0.1.0", "@unknown")
@@ -88,34 +86,28 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-            .hasContent().node("\$id").isEqualTo(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
     }
 
     @Test
     fun `download should use alias to download JSON schemas of dependencies from JSON schema repository`() {
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS, "$EXTERNAL_SCHEMA-alias")
         ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}-alias/$VALUES_SCHEMA_FILE").isFile
             .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-        assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}-alias/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-            .hasContent().node("\$id").isEqualTo(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
     }
 
     @Test
     fun `download should download JSON schemas of dependencies from protected JSON schema repository`() {
         stubForProtectedSchema(EXTERNAL_VALUES_SCHEMA_PATH)
-        stubForProtectedSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, PROTECTED)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, PROTECTED)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-            .hasContent().node("\$id").isEqualTo(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -137,7 +129,9 @@ internal class JsonSchemaDownloaderTest {
               }
             """.trimIndent())
         stubForSchema(REF_GLOBAL_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().and(
@@ -164,8 +158,9 @@ internal class JsonSchemaDownloaderTest {
               }
             """.trimIndent())
         stubForSchema(RELATIVE_JSON_SCHEMA_PATH)
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}/$VALUES_SCHEMA_FILE").isFile
             .hasContent().and(
@@ -186,9 +181,10 @@ internal class JsonSchemaDownloaderTest {
               }
             }
             """.trimIndent())
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         stubForSchema(REF_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent()
@@ -208,9 +204,10 @@ internal class JsonSchemaDownloaderTest {
             }
             """.trimIndent()
         )
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         stubForProtectedSchema(PROTECTED_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent()
@@ -231,9 +228,10 @@ internal class JsonSchemaDownloaderTest {
             }
             """.trimIndent()
         )
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         stubForThirdPartySchema(THIRDPARTY_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().node("properties.refs.\$ref").isEqualTo("$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH")
@@ -253,9 +251,10 @@ internal class JsonSchemaDownloaderTest {
             }
             """.trimIndent()
         )
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         stubForProtectedSchema(PROTECTED_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().node("properties.refs.\$ref").isEqualTo("$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH")
@@ -275,9 +274,10 @@ internal class JsonSchemaDownloaderTest {
             }
             """.trimIndent()
         )
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         stubForThirdPartySchema(THIRDPARTY_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().node("properties.refs.\$ref")
@@ -297,8 +297,9 @@ internal class JsonSchemaDownloaderTest {
             }
             """.trimIndent()
         )
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().node("properties.refs.\$ref").isEqualTo("#/objects/refs")
@@ -308,14 +309,11 @@ internal class JsonSchemaDownloaderTest {
     fun `download should keep schemas already downloaded`() {
         testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
-            .hasContent().isObject.doesNotContainKey("\$id")
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
             .hasContent().isObject.doesNotContainKey("\$id")
     }
 
@@ -333,9 +331,10 @@ internal class JsonSchemaDownloaderTest {
             }
             """.trimIndent()
         )
-        stubForSchema(EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH)
         stubForSchema(RELATIVE_JSON_SCHEMA_PATH)
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().and(
@@ -349,8 +348,9 @@ internal class JsonSchemaDownloaderTest {
     @Test
     fun `download should generate JSON schema with error when JSON schema can't be downloaded from repository`() {
         stubFor(get("/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").willReturn(WireMock.unauthorized()))
-        stubFor(get("/$CHARTS_PATH/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH").willReturn(WireMock.notFound()))
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
+        ))
         downloader.download(chart)
         val baseUrl = "$REPOSITORY_URL/$CHARTS_PATH"
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
@@ -362,20 +362,13 @@ internal class JsonSchemaDownloaderTest {
                 { it.node("description").isString.contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
                 { it.node("description").isString.contains("401 - Unauthorized") },
             )
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-            .hasContent().and(
-                { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                { it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH") },
-                { it.node("type").isEqualTo("object") },
-                { it.node("title").isEqualTo("Fallback schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
-                { it.node("description").isString.contains("$baseUrl/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH") },
-                { it.node("description").isString.contains("404 - Not Found") },
-            )
     }
 
     @Test
     fun `download should generate JSON schema with error when repository is unreachable`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, UNAVAILABLE)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, UNAVAILABLE)
+        ))
         downloader.download(chart)
         val baseUrl = "$UNAVAILABLE_URL/$CHARTS_PATH"
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
@@ -385,15 +378,6 @@ internal class JsonSchemaDownloaderTest {
                 { it.node("type").isEqualTo("object") },
                 { it.node("title").isEqualTo("Fallback schema for $UNAVAILABLE/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
                 { it.node("description").isString.contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
-                { it.node("description").isString.contains("HttpHostConnectException - ") },
-            )
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-            .hasContent().and(
-                { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                { it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH") },
-                { it.node("type").isEqualTo("object") },
-                { it.node("title").isEqualTo("Fallback schema for $UNAVAILABLE/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
-                { it.node("description").isString.contains("$baseUrl/$EXTERNAL_GLOBAL_VALUES_SCHEMA_PATH") },
                 { it.node("description").isString.contains("HttpHostConnectException - ") },
             )
     }

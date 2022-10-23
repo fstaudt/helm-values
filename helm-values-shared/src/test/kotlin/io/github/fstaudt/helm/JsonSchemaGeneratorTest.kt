@@ -62,7 +62,6 @@ internal class JsonSchemaGeneratorTest {
             { it.node("description").isEqualTo("\\n\\\\n ") },
             { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
             { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
-            { it.node("properties.global.\$ref").isEqualTo(GLOBAL_VALUES_SCHEMA_FILE) },
         )
     }
 
@@ -83,7 +82,9 @@ internal class JsonSchemaGeneratorTest {
 
     @Test
     fun `generateValuesJsonSchema should disable additional properties`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)
+        ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).and(
             { it.node("additionalProperties").isBoolean.isFalse },
@@ -93,7 +94,9 @@ internal class JsonSchemaGeneratorTest {
 
     @Test
     fun `generateValuesJsonSchema should use relative ref to external JSON schemas when repositories are same`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)
+        ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).and(
             {
@@ -105,7 +108,9 @@ internal class JsonSchemaGeneratorTest {
 
     @Test
     fun `generateValuesJsonSchema should use relative ref to external JSON schemas when repositories have same host`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, BUNDLES)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, BUNDLES)
+        ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).and(
             {
@@ -117,7 +122,9 @@ internal class JsonSchemaGeneratorTest {
 
     @Test
     fun `generateValuesJsonSchema should use full ref to external JSON schemas when repositories are different`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, INFRA)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, INFRA)
+        ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).and(
             {
@@ -135,7 +142,8 @@ internal class JsonSchemaGeneratorTest {
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
             {
-                it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+                it.node("title")
+                    .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
                 it.node("description").isEqualTo("\\n\\\\n ")
                 it.node("type").isEqualTo("boolean")
             },
@@ -150,7 +158,8 @@ internal class JsonSchemaGeneratorTest {
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
             {
-                it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+                it.node("title")
+                    .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
                 it.node("description").isEqualTo("\\n\\\\n ")
                 it.node("type").isEqualTo("boolean")
             },
@@ -160,12 +169,14 @@ internal class JsonSchemaGeneratorTest {
     @Test
     fun `generateValuesJsonSchema should use alias to document property for dependency condition`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias", "$EXTERNAL_SCHEMA-alias.enabled")
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
+                "$EXTERNAL_SCHEMA-alias", "$EXTERNAL_SCHEMA-alias.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA-alias.properties.enabled").and(
             {
-                it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA-alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+                it.node("title")
+                    .isEqualTo("Enable $EXTERNAL_SCHEMA-alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
                 it.node("description").isEqualTo("\\n\\\\n ")
                 it.node("type").isEqualTo("boolean")
             },
@@ -174,7 +185,9 @@ internal class JsonSchemaGeneratorTest {
 
     @Test
     fun `generateValuesJsonSchema should update generated schema with patch when it is provided`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)))
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)
+        ))
         val jsonPatch = jsonPatch("""
             [
               { "op": "replace", "path": "/title", "value": "overridden value" },
@@ -190,89 +203,109 @@ internal class JsonSchemaGeneratorTest {
     }
 
     @Test
-    fun `generateGlobalValuesSchema should generate global values JSON schema with dependencies in mapped repositories`() {
+    fun `generateValuesJsonSchema should generate global values with dependencies in mapped repositories`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY),
         ))
-        val json = generator.generateGlobalValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-            { it.node("\$id").isEqualTo("$BASE_CHART_URL/$GLOBAL_VALUES_SCHEMA_FILE") },
-            { it.node("title").isEqualTo("Configuration of global values for chart $BASE_CHART_URL") },
-            { it.node("description").isEqualTo("\\n\\\\n ") },
-            { it.node("allOf").isArray.hasSize(1) },
-            { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.global").and(
+            { it.node("additionalProperties").isEqualTo(false) },
+            { it.node("allOf").isArray.hasSize(2) },
+            {
+                it.node("allOf[0].\$ref")
+                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
+            },
+            {
+                it.node("allOf[1].\$ref")
+                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
+            }
         )
     }
 
     @Test
-    fun `generateGlobalValuesSchema should generate empty JSON schema when there are no dependencies`() {
+    fun `generateValuesJsonSchema should generate empty global properties when there are no dependencies`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
-        val json = generator.generateGlobalValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-            { it.node("\$id").isEqualTo("$BASE_CHART_URL/$GLOBAL_VALUES_SCHEMA_FILE") },
-            { it.node("title").isEqualTo("Configuration of global values for chart $BASE_CHART_URL") },
-            { it.node("description").isEqualTo("\\n\\\\n ") },
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.global").and(
+            { it.node("additionalProperties").isEqualTo(false) },
             { it.isObject.doesNotContainKey("allOf") },
         )
     }
 
     @Test
-    fun `generateGlobalValuesSchema should not use alias to generate ref to external JSON schemas`() {
+    fun `generateValuesJsonSchema should not use alias to generate ref to external JSON schemas for global`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
         ))
-        val json = generator.generateGlobalValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            { it.node("allOf").isArray.hasSize(1) },
-            { it.node("allOf[0].\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE") },
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.global").and(
+            { it.node("allOf").isArray.hasSize(2) },
+            {
+                it.node("allOf[0].\$ref")
+                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
+            },
+            {
+                it.node("allOf[1].\$ref")
+                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
+            },
         )
     }
 
     @Test
-    fun `generateGlobalValuesSchema should use relative ref to external JSON schemas when repositories are same`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)))
-        val json = generator.generateGlobalValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            { it.node("allOf").isArray.hasSize(1) },
-            { it.node("allOf[0].\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE") },
+    fun `generateValuesJsonSchema should use relative ref to external JSON schemas for global when repositories are same`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.global").and(
+            { it.node("allOf").isArray.hasSize(2) },
+            {
+                it.node("allOf[0].\$ref")
+                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
+            },
+            {
+                it.node("allOf[1].\$ref")
+                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
+            },
         )
     }
 
     @Test
-    fun `generateGlobalValuesSchema should use relative ref to external JSON schemas when repositories have same host`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, BUNDLES)))
-        val json = generator.generateGlobalValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            { it.node("allOf").isArray.hasSize(1) },
-            { it.node("allOf[0].\$ref").isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE") },
+    fun `generateValuesJsonSchema should use relative ref to external JSON schemas for global when repositories have same host`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, BUNDLES)
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.global").and(
+            { it.node("allOf").isArray.hasSize(2) },
+            {
+                it.node("allOf[0].\$ref")
+                    .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
+            },
+            {
+                it.node("allOf[1].\$ref")
+                    .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
+            },
         )
     }
 
     @Test
-    fun `generateGlobalValuesSchema should use full ref to external JSON schemas when repositories are different`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, INFRA)))
-        val json = generator.generateGlobalValuesJsonSchema(chart, null)
-        assertThatJson(json).node("allOf[0].\$ref")
-            .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
-    }
-
-    @Test
-    fun `generateGlobalValuesSchema should update generated schema with patch when it is provided`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)))
-        val jsonPatch = jsonPatch("""
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" },
-              { "op": "add", "path": "/allOf/0/title", "value": "additional value" }
-            ]
-            """)
-        val json = generator.generateGlobalValuesJsonSchema(chart, jsonPatch)
-        assertThatJson(json).and(
-            { it.node("title").isEqualTo("overridden value") },
-            { it.node("allOf[0].title").isEqualTo("additional value") },
-            { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
+    fun `generateValuesJsonSchema should use full ref to external JSON schemas for global when repositories are different`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, INFRA)
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.global").and(
+            { it.node("allOf").isArray.hasSize(2) },
+            {
+                it.node("allOf[0].\$ref")
+                    .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
+            },
+            {
+                it.node("allOf[1].\$ref")
+                    .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
+            }
         )
     }
 

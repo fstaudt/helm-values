@@ -8,8 +8,6 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.JsonSchemaGenerator
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
-import io.github.fstaudt.helm.PATCH_GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.model.Chart
@@ -46,11 +44,6 @@ open class GenerateJsonSchemas : DefaultTask() {
     @PathSensitive(RELATIVE)
     var patchValuesFile: File? = null
 
-    @InputFile
-    @Optional
-    @PathSensitive(RELATIVE)
-    var patchGlobalValuesFile: File? = null
-
     @OutputDirectory
     val generatedSchemaDir = File(project.buildDir, "$HELM_VALUES/$GENERATION_DIR")
 
@@ -73,18 +66,11 @@ open class GenerateJsonSchemas : DefaultTask() {
         val repository = extension.publicationRepository()
         val generator = JsonSchemaGenerator(extension.repositoryMappings, repository)
         generateValuesSchemaFile(chart, repository, generator)
-        generateGlobalValuesSchemaFile(chart, repository, generator)
     }
 
     private fun generateValuesSchemaFile(chart: Chart, repository: JsonSchemaRepository, generator: JsonSchemaGenerator) {
         val jsonPatch = patchValuesFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
         val jsonSchema = generator.generateValuesJsonSchema(chart, jsonPatch)
         jsonMapper.writeValue(File(generatedSchemaDir, repository.valuesSchemaFile), jsonSchema)
-    }
-
-    private fun generateGlobalValuesSchemaFile(chart: Chart, repository: JsonSchemaRepository, generator: JsonSchemaGenerator) {
-        val jsonPatch = patchGlobalValuesFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
-        val jsonSchema = generator.generateGlobalValuesJsonSchema(chart, jsonPatch)
-        jsonMapper.writeValue(File(generatedSchemaDir, repository.globalValuesSchemaFile), jsonSchema)
     }
 }

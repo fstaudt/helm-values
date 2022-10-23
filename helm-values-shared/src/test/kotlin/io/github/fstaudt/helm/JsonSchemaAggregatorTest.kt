@@ -69,8 +69,9 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json).node("properties").and(
             {
-                it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
-                it.node("global.allOf").isArray.hasSize(1)
+                it.node("global.allOf").isArray.hasSize(2)
+                it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE#/properties/global")
+                it.node("global.allOf[1].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
                 it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
                 it.isObject.doesNotContainKey(NO_SCHEMA)
             }
@@ -128,7 +129,8 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null)
         assertThatJson(json).node("properties").and(
             {
-                it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA-alias/$GLOBAL_VALUES_SCHEMA_FILE")
+                it.node("global.allOf[0].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA-alias/$VALUES_SCHEMA_FILE#/properties/global")
+                it.node("global.allOf[1].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA-alias/$GLOBAL_VALUES_SCHEMA_FILE")
                 it.node("$EXTERNAL_SCHEMA-alias.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA-alias/$VALUES_SCHEMA_FILE")
             }
         )

@@ -30,9 +30,7 @@ class JsonSchemaGenerator(
 
     fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = chart.toValuesJsonSchema()
-        jsonSchema.objectNode("properties").objectNode("global")
-            .put("\$ref", publicationRepository.globalValuesSchemaFile)
-            .put("additionalProperties", false)
+        jsonSchema.objectNode("properties").objectNode("global").putGlobalProperties(chart)
         jsonSchema.put("additionalProperties", false)
         chart.dependencies.forEach { dependency ->
             repositoryMappings[dependency.repository]?.let {
@@ -47,19 +45,21 @@ class JsonSchemaGenerator(
         return jsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 
-    fun generateGlobalValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): JsonNode {
-        val jsonSchema = chart.toGlobalValuesJsonSchema()
+    private fun ObjectNode.putGlobalProperties(chart: Chart) {
+        put("additionalProperties", false)
         if (chart.dependencies.any { repositoryMappings.containsKey(it.repository) }) {
-            jsonSchema.allOf().let { allOf ->
+            allOf().let { allOf ->
                 chart.dependencies.forEach { dependency ->
                     repositoryMappings[dependency.repository]?.let {
-                        val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/${it.globalValuesSchemaFile}".toRelativeUri()
+                        val refPrefix = "${it.baseUri}/${dependency.name}/${dependency.version}".toRelativeUri()
+                        val ref = "$refPrefix/${it.valuesSchemaFile}#/properties/global"
                         allOf.add(ObjectNode(nodeFactory).put("\$ref", ref))
+                        val globalRef = "$refPrefix/${it.globalValuesSchemaFile}"
+                        allOf.add(ObjectNode(nodeFactory).put("\$ref", globalRef))
                     }
                 }
             }
         }
-        return jsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 
     private fun Chart.toValuesJsonSchema(): ObjectNode {
@@ -67,14 +67,6 @@ class JsonSchemaGenerator(
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${publicationRepository.baseUri}/$name/$version/${publicationRepository.valuesSchemaFile}")
             .put("title", "Configuration for chart ${publicationRepository.baseUri}/$name/$version")
-            .put("description", EMPTY)
-    }
-
-    private fun Chart.toGlobalValuesJsonSchema(): ObjectNode {
-        return ObjectNode(nodeFactory)
-            .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "${publicationRepository.baseUri}/$name/$version/${publicationRepository.globalValuesSchemaFile}")
-            .put("title", "Configuration of global values for chart ${publicationRepository.baseUri}/$name/$version")
             .put("description", EMPTY)
     }
 

@@ -1,8 +1,6 @@
 package io.github.fstaudt.helm.gradle.tasks
 
-import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
-import io.github.fstaudt.helm.PATCH_GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
@@ -99,7 +97,6 @@ class GenerateJsonSchemasTest {
                     { it.node("description").isEqualTo("\\n\\\\n ") },
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
-                    { it.node("properties.global.\$ref").isEqualTo(GLOBAL_VALUES_SCHEMA_FILE) },
                 )
         }
     }
@@ -152,14 +149,6 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0/$VALUES_SCHEMA_FILE") },
                     { it.node("title").isEqualTo("Configuration for chart $BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0") },
-                )
-            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-                .hasContent().and(
-                    { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0/$GLOBAL_VALUES_SCHEMA_FILE") },
-                    {
-                        it.node("title")
-                            .isEqualTo("Configuration of global values for chart $BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0")
-                    },
                 )
         }
     }
@@ -287,128 +276,6 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchemas should update generated global values schema with global values schema patch`() {
-        testProject.initHelmChart {
-            appendText(
-                """
-                dependencies:
-                - name: $EXTERNAL_SCHEMA
-                  version: $EXTERNAL_VERSION
-                  repository: "$APPS"
-                """.trimIndent()
-            )
-        }
-        File(testProject, PATCH_GLOBAL_VALUES_SCHEMA_FILE).writeText(
-            """
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" },
-              { "op": "add", "path": "/allOf/0/title", "value": "additional value" }
-            ]
-            """.trimIndent()
-        )
-        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-                .hasContent().and(
-                    { it.node("title").isEqualTo("overridden value") },
-                    { it.node("allOf[0].title").isEqualTo("additional value") },
-                    { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
-                )
-        }
-    }
-
-    @Test
-    fun `generateJsonSchemas should update generated global values schema with global values schema patch in sourcesDir`() {
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
-        testProject.initHelmChart(sourcesDir) {
-            appendText(
-                """
-                dependencies:
-                - name: $EXTERNAL_SCHEMA
-                  version: $EXTERNAL_VERSION
-                  repository: "$APPS"
-                """.trimIndent()
-            )
-        }
-        testProject.initBuildFile {
-            appendText(
-                """
-                helmValues {
-                  sourcesDir = "sources"
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH")
-                  )
-                  publicationRepository = "$APPS"
-                }
-            """.trimIndent()
-            )
-        }
-        File(sourcesDir, PATCH_GLOBAL_VALUES_SCHEMA_FILE).writeText(
-            """
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" },
-              { "op": "add", "path": "/allOf/0/title", "value": "additional value" }
-            ]
-            """.trimIndent()
-        )
-        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-                .hasContent().and(
-                    { it.node("title").isEqualTo("overridden value") },
-                    { it.node("allOf[0].title").isEqualTo("additional value") },
-                    { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
-                )
-        }
-    }
-
-    @Test
-    fun `generateJsonSchemas should update generated global values schema with provided global values schema patch`() {
-        testProject.initHelmChart {
-            appendText(
-                """
-                dependencies:
-                - name: $EXTERNAL_SCHEMA
-                  version: $EXTERNAL_VERSION
-                  repository: "$APPS"
-                """.trimIndent()
-            )
-        }
-        testProject.initBuildFile {
-            appendText(
-                """
-                helmValues {
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH")
-                  )
-                  publicationRepository = "$APPS"
-                }
-                tasks.named<${GenerateJsonSchemas::class.java.name}>("$GENERATE_JSON_SCHEMAS") {
-                  patchGlobalValuesFile = File(project.projectDir, "custom.schema.patch.json")
-                }
-            """.trimIndent()
-            )
-        }
-        File(testProject, "custom.schema.patch.json").writeText(
-            """
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" },
-              { "op": "add", "path": "/allOf/0/title", "value": "additional value" }
-            ]
-            """.trimIndent()
-        )
-        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-                .hasContent().and(
-                    { it.node("title").isEqualTo("overridden value") },
-                    { it.node("allOf[0].title").isEqualTo("additional value") },
-                    { it.node("allOf[0].\$ref").isString.contains(EXTERNAL_SCHEMA) },
-                )
-        }
-    }
-
-    @Test
     fun `generateJsonSchemas should fail when publication repository is not found in repository mappings`() {
         testProject.initBuildFile {
             appendText(
@@ -454,16 +321,12 @@ class GenerateJsonSchemasTest {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
-            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$GLOBAL_VALUES_SCHEMA_FILE")
         }
         File("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR").deleteRecursively()
         testProject.runTask(WITH_BUILD_CACHE, GENERATE_JSON_SCHEMAS).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
-            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$GLOBAL_VALUES_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$GLOBAL_VALUES_SCHEMA_FILE")
         }
     }
 

@@ -24,6 +24,7 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         arrayOf(
             Column(JsonSchemaRepositoryMapping::name),
             Column(JsonSchemaRepositoryMapping::baseUri),
+            Column(JsonSchemaRepositoryMapping::valuesSchemaFile),
             BooleanColumn(JsonSchemaRepositoryMapping::secured)
         ),
         JsonSchemaRepositoryMappingEditor(),

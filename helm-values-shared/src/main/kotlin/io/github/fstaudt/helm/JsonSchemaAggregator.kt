@@ -39,6 +39,7 @@ class JsonSchemaAggregator(
                 val ref = "${downloadSchemasDir.name}/${dependency.aliasOrName()}/${repository.valuesSchemaFile}"
                 properties.objectNode(dependency.aliasOrName()).put("\$ref", ref)
                 val globalRef = "${downloadSchemasDir.name}/${dependency.aliasOrName()}/${repository.globalValuesSchemaFile}"
+                globalProperties.allOf().add(ObjectNode(nodeFactory).put("\$ref", "$ref#/properties/global"))
                 globalProperties.allOf().add(ObjectNode(nodeFactory).put("\$ref", globalRef))
             }
             dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)

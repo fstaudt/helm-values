@@ -1,5 +1,6 @@
 package io.github.fstaudt.helm.model
 
+import io.github.fstaudt.helm.GLOBAL_VALUES_DEPRECATION
 import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import org.apache.commons.codec.binary.Base64
@@ -31,6 +32,7 @@ data class JsonSchemaRepository(
     val username: String? = null,
     val password: String? = null,
     val valuesSchemaFile: String = VALUES_SCHEMA_FILE,
+    @Deprecated(GLOBAL_VALUES_DEPRECATION)
     val globalValuesSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
 ) : Serializable {
 

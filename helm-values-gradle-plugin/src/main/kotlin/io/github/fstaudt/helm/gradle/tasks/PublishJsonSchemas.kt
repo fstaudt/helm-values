@@ -54,6 +54,5 @@ open class PublishJsonSchemas : DefaultTask() {
         val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         extension.publishedVersion?.let { chart.version = it }
         jsonSchemaPublisher.publish(repository, chart, File(generatedSchemaDir, repository.valuesSchemaFile))
-        jsonSchemaPublisher.publish(repository, chart, File(generatedSchemaDir, repository.globalValuesSchemaFile))
     }
 }
