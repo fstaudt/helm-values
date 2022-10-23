@@ -12,7 +12,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-@Suppress("NestedLambdaShadowedImplicitParameter")
 internal class JsonSchemaAggregatorTest {
     private lateinit var testProject: TestProject
     private lateinit var aggregator: JsonSchemaAggregator

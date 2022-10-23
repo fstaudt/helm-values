@@ -1,6 +1,6 @@
 package io.github.fstaudt.helm
 
-import io.github.fstaudt.helm.assertions.JsonFileAssert.Companion.assertThatJsonFile
+import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import org.assertj.core.api.Assertions.assertThat

@@ -1,4 +1,4 @@
-package io.github.fstaudt.helm.gradle.assertions
+package io.github.fstaudt.helm.test.assertions
 
 import net.javacrumbs.jsonunit.assertj.JsonAssert
 import net.javacrumbs.jsonunit.assertj.assertThatJson

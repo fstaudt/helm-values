@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    api(project(":helm-values-shared")) {
+    api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
     testImplementation("org.assertj:assertj-core:3.23.1")

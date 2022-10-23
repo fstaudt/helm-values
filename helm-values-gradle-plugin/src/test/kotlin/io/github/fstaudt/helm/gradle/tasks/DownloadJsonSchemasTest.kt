@@ -14,7 +14,6 @@ import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.gradle.TestProject
 import io.github.fstaudt.helm.gradle.WITH_BUILD_CACHE
-import io.github.fstaudt.helm.gradle.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.gradle.buildDir
 import io.github.fstaudt.helm.gradle.clearHelmChart
 import io.github.fstaudt.helm.gradle.initBuildFile
@@ -22,6 +21,7 @@ import io.github.fstaudt.helm.gradle.initHelmChart
 import io.github.fstaudt.helm.gradle.runTask
 import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.testProject
+import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
 import org.gradle.testkit.runner.TaskOutcome.NO_SOURCE
