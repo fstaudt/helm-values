@@ -9,7 +9,7 @@ plugins {
 
 dependencies {
     api("org.apache.httpcomponents.client5:httpclient5:5.1.3")
-    api("org.apache.commons:commons-compress:1.21")
+    api("org.apache.commons:commons-compress:1.22")
     api("com.fasterxml.jackson.core:jackson-databind:2.13.4.2") {
         api("org.yaml:snakeyaml:1.33")
     }
