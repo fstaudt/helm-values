@@ -1,3 +1,4 @@
+import org.jetbrains.changelog.Changelog.OutputType.HTML
 import org.jetbrains.changelog.markdownToHTML
 
 val intellijPluginName: String by project
@@ -16,7 +17,7 @@ plugins {
     // Gradle IntelliJ Plugin
     id("org.jetbrains.intellij") version "1.9.0"
     // Gradle Changelog Plugin
-    id("org.jetbrains.changelog") version "1.3.1"
+    id("org.jetbrains.changelog") version "2.0.0"
 }
 
 // Configure project's dependencies
@@ -84,9 +85,7 @@ tasks {
 
         // Get the latest available change notes from the changelog file
         changeNotes.set(provider {
-            changelog.run {
-                getOrNull(intellijPluginVersion) ?: getLatest()
-            }.toHTML()
+            changelog.renderItem(changelog.run { getOrNull(intellijPluginVersion) ?: getLatest() }, HTML)
         })
     }
 
