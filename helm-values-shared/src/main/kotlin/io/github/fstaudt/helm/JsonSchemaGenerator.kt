@@ -1,6 +1,5 @@
 package io.github.fstaudt.helm
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ArrayNode
@@ -12,7 +11,6 @@ import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import java.net.URI
 
-@Suppress("NestedLambdaShadowedImplicitParameter")
 class JsonSchemaGenerator(
     private val repositoryMappings: Map<String, JsonSchemaRepository>,
     private val publicationRepository: JsonSchemaRepository,
@@ -28,21 +26,21 @@ class JsonSchemaGenerator(
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
     }
 
-    fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): JsonNode {
+    fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
         val jsonSchema = chart.toValuesJsonSchema()
         jsonSchema.objectNode("properties").objectNode("global").putGlobalProperties(chart)
         jsonSchema.put("additionalProperties", false)
-        chart.dependencies.forEach { dependency ->
-            repositoryMappings[dependency.repository]?.let {
-                val ref = "${it.baseUri}/${dependency.name}/${dependency.version}/${it.valuesSchemaFile}".toRelativeUri()
-                jsonSchema.objectNode("properties").objectNode(dependency.aliasOrName()).put("\$ref", ref)
+        chart.dependencies.forEach { dep ->
+            repositoryMappings[dep.repository]?.let {
+                val ref = "${it.baseUri}/${dep.name}/${dep.version}/${it.valuesSchemaFile}".toRelativeUri()
+                jsonSchema.objectNode("properties").objectNode(dep.aliasOrName()).put("\$ref", ref)
             }
-            dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)
-                ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
+            dep.condition?.toPropertiesObjectNodeIn(jsonSchema)
+                ?.put("title", "Enable ${dep.aliasOrName()} dependency (${dep.fullName()})")
                 ?.put("description", EMPTY)
                 ?.put("type", "boolean")
         }
-        return jsonPatch?.apply(jsonSchema) ?: jsonSchema
+        return (jsonPatch?.apply(jsonSchema) as? ObjectNode) ?: jsonSchema
     }
 
     private fun ObjectNode.putGlobalProperties(chart: Chart) {
@@ -71,16 +69,16 @@ class JsonSchemaGenerator(
     }
 
     private fun String.toRelativeUri(): String {
-        return publicationRepository.let {
-            val uri = URI(this)
-            val publicationUri = URI(it.baseUri)
-            when {
-                uri.host == publicationUri.host && uri.path.startsWith(publicationUri.path) ->
-                    uri.path.replace(publicationUri.path, "../..")
-                uri.host == publicationUri.host ->
-                    "../..${"/..".repeat(publicationUri.path.count { it == '/' })}${uri.path}"
-                else -> this
-            }
+        val uri = URI(this)
+        val publicationUri = URI(publicationRepository.baseUri)
+        return when {
+            uri.host == publicationUri.host && uri.path.startsWith(publicationUri.path) ->
+                uri.path.replace(publicationUri.path, "../..")
+
+            uri.host == publicationUri.host ->
+                "../..${"/..".repeat(publicationUri.path.count { it == '/' })}${uri.path}"
+
+            else -> this
         }
     }
 

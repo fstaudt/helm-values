@@ -5,6 +5,8 @@ import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHARTS_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.CHART_NAME
 import io.github.fstaudt.helm.idea.HelmValuesSettings
@@ -12,6 +14,7 @@ import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.initHelmChart
 import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
+import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 
@@ -38,6 +41,9 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         state = HelmValuesSettings.instance.state
         state.jsonSchemaRepositories = emptyMap()
         service = HelmChartService.instance
+        File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
+        File(project.baseDir(), PATCH_AGGREGATED_SCHEMA_FILE).delete()
+        File(project.baseDir(), PATCH_VALUES_SCHEMA_FILE).delete()
     }
 
     fun `test - aggregate should download JSON schemas from external repositories`() {
@@ -92,9 +98,62 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             )
     }
 
+    fun `test - aggregate should update aggregated JSON schema with values schema patch`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        project.initHelmChart {
+            appendText("""
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$EXTERNAL"
+            """.trimIndent())
+        }
+        File(project.baseDir(), PATCH_VALUES_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional value" }
+            ]
+            """.trimIndent()
+        )
+        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().and(
+                { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
+                { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+            )
+    }
+
+    fun `test - aggregate should update aggregated JSON schema with aggregated schema patch`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        project.initHelmChart {
+            appendText("""
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$EXTERNAL"
+            """.trimIndent())
+        }
+        File(project.baseDir(), PATCH_AGGREGATED_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" },
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional value" }
+            ]
+            """.trimIndent()
+        )
+        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().and(
+                { it.node("title").isEqualTo("overridden value") },
+                { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
+                { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+            )
+    }
+
     fun `test - clear should delete JSON schemas directory for current chart`() {
         reset()
-        File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
         project.initHelmChart()
         val chartFolder = File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME")
         writeEmptyJsonIn(File(chartFolder, AGGREGATED_SCHEMA_FILE))
@@ -106,7 +165,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
 
     fun `test - clear should succeed when JSON schemas directory is missing`() {
         reset()
-        val jsonSchemasDir = File(project.baseDir(), JSON_SCHEMAS_DIR).also { it.deleteRecursively() }
+        val jsonSchemasDir = File(project.baseDir(), JSON_SCHEMAS_DIR)
         project.initHelmChart()
         service.clear(project, File(project.baseDir(), HELM_CHARTS_FILE))
         assertThat(jsonSchemasDir).doesNotExist()
@@ -114,7 +173,6 @@ class HelmChartServiceTest : BasePlatformTestCase() {
 
     fun `test - clear should keep JSON schemas directories of other charts`() {
         reset()
-        File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
         project.initHelmChart()
         val chartFolder = File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME")
         writeEmptyJsonIn(File(chartFolder, AGGREGATED_SCHEMA_FILE))

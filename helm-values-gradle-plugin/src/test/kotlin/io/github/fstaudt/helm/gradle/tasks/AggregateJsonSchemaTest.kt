@@ -6,6 +6,7 @@ import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.CHART_VERSION
@@ -262,7 +263,7 @@ class AggregateJsonSchemaTest {
                   publicationRepository = "$APPS"
                 }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
-                  patchFile = File(project.projectDir, "custom.schema.patch.json")
+                  patchAggregatedFile = File(project.projectDir, "custom.schema.patch.json")
                 }
             """.trimIndent()
             )
@@ -280,6 +281,123 @@ class AggregateJsonSchemaTest {
             assertThatJsonFile(aggregatedSchemaFile).isFile
                 .hasContent().and(
                     { it.node("title").isEqualTo("overridden value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with values schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_VALUES_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile
+                .hasContent().and(
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with values schema patch in sourcesDir`() {
+        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        testProject.clearHelmChart()
+        testProject.initHelmChart(sourcesDir) {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "sources"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+            """.trimIndent()
+            )
+        }
+        File(sourcesDir, PATCH_VALUES_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile
+                .hasContent().and(
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+                )
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with provided values schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+                tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
+                  patchValuesFile = File(project.projectDir, "custom.schema.patch.json")
+                }
+            """.trimIndent()
+            )
+        }
+        File(testProject, "custom.schema.patch.json").writeText(
+            """
+            [
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile
+                .hasContent().and(
                     { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
                     { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
                 )

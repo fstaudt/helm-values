@@ -36,6 +36,10 @@ data class JsonSchemaRepository(
     val globalValuesSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
 ) : Serializable {
 
+    companion object {
+        val DEFAULT_JSON_SCHEMA_REPOSITORY = JsonSchemaRepository("")
+    }
+
     fun basicAuthentication(): String? {
         return username?.let { "Basic ${Base64.encodeBase64String("$username:$password".toByteArray())}" }
     }

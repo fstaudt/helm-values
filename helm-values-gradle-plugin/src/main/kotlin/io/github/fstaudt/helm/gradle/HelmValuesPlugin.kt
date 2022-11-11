@@ -51,7 +51,8 @@ class HelmValuesPlugin : Plugin<Project> {
                 extension = pluginExtension
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
                 chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
-                patchFile = File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }
+                patchValuesFile = File(sourcesDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }
+                patchAggregatedFile = File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }
                 dependsOn(downloadJsonSchemas, extractJsonSchemas)
             }
             val generateJsonSchemas = tasks.register<GenerateJsonSchemas>(GENERATE_JSON_SCHEMAS) {

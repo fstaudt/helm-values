@@ -3,13 +3,15 @@ package io.github.fstaudt.helm
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.model.Chart
+import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
+import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.DEFAULT_JSON_SCHEMA_REPOSITORY
 import java.io.File
 import java.io.FileFilter
 
@@ -27,35 +29,26 @@ class JsonSchemaAggregator(
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
     }
 
-    fun aggregate(chart: Chart, jsonPatch: JsonPatch?): JsonNode {
-        val jsonSchema = chart.toAggregatedValuesJsonSchema()
-        jsonSchema.put("additionalProperties", false)
+    private val generator = JsonSchemaGenerator(repositoryMappings, DEFAULT_JSON_SCHEMA_REPOSITORY)
+
+    fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedJsonPatch: JsonPatch?): JsonNode {
+        val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
+        jsonSchema.put("\$id", "${chart.name}/${chart.version}/${AGGREGATED_SCHEMA_FILE}")
+        jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
+        jsonSchema.updateDependencyReferencesFor(chart)
         val properties = jsonSchema.objectNode("properties")
-        val globalProperties = properties.objectNode("global")
-        globalProperties.put("additionalProperties", false)
         properties.setExtractedDependencyRefsFrom(extractSchemasDir, extractSchemasDir.name)
-        chart.dependencies.forEach { dependency ->
-            repositoryMappings[dependency.repository]?.let { repository ->
-                val ref = "${downloadSchemasDir.name}/${dependency.aliasOrName()}/${repository.valuesSchemaFile}"
-                properties.objectNode(dependency.aliasOrName()).put("\$ref", ref)
-                val globalRef = "${downloadSchemasDir.name}/${dependency.aliasOrName()}/${repository.globalValuesSchemaFile}"
-                globalProperties.allOf().add(ObjectNode(nodeFactory).put("\$ref", "$ref#/properties/global"))
-                globalProperties.allOf().add(ObjectNode(nodeFactory).put("\$ref", globalRef))
-            }
-            dependency.condition?.toPropertiesObjectNodeIn(jsonSchema)
-                ?.put("title", "Enable ${dependency.aliasOrName()} dependency (${dependency.fullName()})")
-                ?.put("description", EMPTY)
-                ?.put("type", "boolean")
-        }
-        return jsonPatch?.apply(jsonSchema) ?: jsonSchema
+        return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 
-    private fun Chart.toAggregatedValuesJsonSchema(): ObjectNode {
-        return ObjectNode(nodeFactory)
-            .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "$name/$version/${AGGREGATED_SCHEMA_FILE}")
-            .put("title", "Configuration for chart $name/$version")
-            .put("description", EMPTY)
+    private fun ObjectNode.updateDependencyReferencesFor(chart: Chart) {
+        val refMappings = chart.dependencies.mapNotNull { it.toRefMapping() }
+        findParents("\$ref").forEach { parent ->
+            val ref = parent.get("\$ref")
+            refMappings.firstOrNull { it.matches(ref) }?.let {
+                (parent as ObjectNode).replace("\$ref", it.map(ref))
+            }
+        }
     }
 
     private fun ObjectNode.setExtractedDependencyRefsFrom(extractSchemasDir: File, refPrefix: String) {
@@ -78,13 +71,14 @@ class JsonSchemaAggregator(
         return get(propertyName) as? ObjectNode ?: ObjectNode(nodeFactory).also { set<ObjectNode>(propertyName, it) }
     }
 
-    private fun ObjectNode.allOf(): ArrayNode {
-        return get("allOf") as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ObjectNode>("allOf", it) }
+    private data class RefMapping(val baseUri: String, val mappedBaseUri: String) {
+        fun matches(ref: JsonNode) = ref.textValue().startsWith(baseUri)
+        fun map(ref: JsonNode) = TextNode(ref.textValue().replace(baseUri, mappedBaseUri))
     }
 
-    private fun String.toPropertiesObjectNodeIn(jsonSchema: ObjectNode): ObjectNode {
-        return split('.').fold(jsonSchema) { node: ObjectNode, property: String ->
-            node.objectNode("properties").objectNode(property)
+    private fun ChartDependency.toRefMapping(): RefMapping? {
+        return repositoryMappings[repository]?.let {
+            RefMapping("${it.baseUri}/$name/$version", "${downloadSchemasDir.name}/${aliasOrName()}")
         }
     }
 }

@@ -30,6 +30,10 @@ dependencies {
         exclude(module = "slf4j-api")
     }
     testImplementation("org.assertj:assertj-core:3.23.1")
+    testImplementation(projects.helmValuesTest) {
+        exclude(module = "junit-jupiter-api")
+        exclude(module = "wiremock-jre8")
+    }
 }
 
 // Set the JVM language level used to compile sources and generate files - Java 11 is required since 2020.3

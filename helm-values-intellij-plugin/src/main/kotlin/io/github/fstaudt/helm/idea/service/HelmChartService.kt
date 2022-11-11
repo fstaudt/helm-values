@@ -15,6 +15,7 @@ import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService
@@ -45,7 +46,9 @@ class HelmChartService {
         val downloadSchemaDir = download(jsonSchemasDir, chart)
         val extractSchemaDir = extract(jsonSchemasDir, File(chartFile.parentFile, "charts"), chart)
         val aggregator = JsonSchemaAggregator(mappings(), downloadSchemaDir, extractSchemaDir)
-        aggregator.aggregate(chart, jsonPatch(chartFile)).also {
+        val aggregatedJsonPatch = jsonPatch(chartFile, PATCH_AGGREGATED_SCHEMA_FILE)
+        val valuesJsonPatch = jsonPatch(chartFile, PATCH_VALUES_SCHEMA_FILE)
+        aggregator.aggregate(chart, valuesJsonPatch, aggregatedJsonPatch).also {
             jsonMapper.writeValue(File(jsonSchemasDir, AGGREGATED_SCHEMA_FILE), it)
         }
     }
@@ -60,11 +63,11 @@ class HelmChartService {
     }
 
     private fun extract(jsonSchemasDir: File, chartsDir: File, chart: Chart) = File(jsonSchemasDir, EXTRACT_DIR).also {
-        JsonSchemaExtractor(chartsDir, it).extract(chart)
+        JsonSchemaExtractor(chartsDir, mappings(), it).extract(chart)
     }
 
-    private fun jsonPatch(chartFile: File): JsonPatch? {
-        return File(chartFile.parent, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }?.let {
+    private fun jsonPatch(chartFile: File, patchFile: String): JsonPatch? {
+        return File(chartFile.parent, patchFile).takeIf { it.exists() }?.let {
             JsonPatch.fromJson(jsonMapper.readTree(it))
         }
     }
