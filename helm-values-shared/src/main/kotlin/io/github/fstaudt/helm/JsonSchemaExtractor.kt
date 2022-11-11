@@ -2,6 +2,7 @@ package io.github.fstaudt.helm
 
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
+import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
@@ -11,6 +12,7 @@ import java.io.File
 
 class JsonSchemaExtractor(
     private val chartsDir: File?,
+    private val repositoryMappings: Map<String, JsonSchemaRepository>,
     private val extractSchemasDir: File,
 ) {
     companion object {
@@ -22,7 +24,9 @@ class JsonSchemaExtractor(
         extractSchemasDir.deleteRecursively()
         extractSchemasDir.mkdirs()
         chart.dependencies.forEach { dependency ->
-            extractSchema(dependency)
+            if (!repositoryMappings.contains(dependency.repository)) {
+                extractSchema(dependency)
+            }
         }
     }
 

@@ -29,6 +29,9 @@ class ExtractJsonSchemasTest {
     companion object {
         private const val THIRDPARTY = "@thirdparty"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
+        private const val CHARTS = "@charts"
+        private const val CHARTS_URL = "http://localhost/charts"
+
     }
 
     @BeforeEach
@@ -60,6 +63,35 @@ class ExtractJsonSchemasTest {
             assertThat(it.task(":$EXTRACT_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
+        }
+    }
+
+    @Test
+    fun `extractJsonSchemas should not extract JSON schemas when dependency repository is in repository mappings`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: 0.1.0
+                  repository: "$CHARTS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings = mapOf(
+                    "$CHARTS" to JsonSchemaRepository("$CHARTS_URL")
+                  )
+                }
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(EXTRACT_JSON_SCHEMAS).also {
+            assertThat(it.task(":$EXTRACT_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(extractSchemasDir).isEmptyDirectory
         }
     }
 

@@ -52,7 +52,7 @@ open class ExtractJsonSchemas : DefaultTask() {
     @TaskAction
     fun extract() {
         val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
-        val extractor = JsonSchemaExtractor(chartsDir, extractSchemasDir)
+        val extractor = JsonSchemaExtractor(chartsDir, extension.repositoryMappings, extractSchemasDir)
         extractor.extract(chart)
     }
 }
