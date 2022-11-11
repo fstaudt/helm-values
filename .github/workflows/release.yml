@@ -18,10 +18,11 @@ jobs:
         with:
           distribution: adopt
           java-version: 11
-          cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
       - name: "Setup gradle wrapper"
         run: chmod +x gradlew
+      - name: "Setup gradle"
+        uses: gradle/gradle-build-action@v2.3.3
       - name: "Get version from tag"
         id: version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}

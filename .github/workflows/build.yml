@@ -1,7 +1,7 @@
 name: Build
 on:
   push:
-    branches: [main]
+    branches: [main,test]
   pull_request:
 
 jobs:
@@ -18,10 +18,11 @@ jobs:
         with:
           distribution: adopt
           java-version: 11
-          cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
       - name: "Setup gradle wrapper"
         run: chmod +x gradlew
+      - name: "Setup gradle"
+        uses: gradle/gradle-build-action@v2.3.3
       - name: "Run Tests"
         run: ./gradlew check
       - name: "Collect Tests Result of failed tests"
@@ -33,8 +34,8 @@ jobs:
       - name: "Sign shared library for mavenCentral"
         if: github.ref == 'refs/heads/main'
         run: ./gradlew :helm-values-shared:signMavenJavaPublication -Psigning.gnupg.keyName=${{ secrets.GPG_KEY_NAME }} -Psigning.gnupg.passphrase="${{ secrets.GPG_PASSPHRASE }}"
-      - name: "Qodana - Code Inspection"
-        uses: JetBrains/qodana-action@v2022.2.3
+#      - name: "Qodana - Code Inspection"
+#        uses: JetBrains/qodana-action@v2022.2.3
       - name: "Export Properties & products releases"
         id: properties
         shell: bash
