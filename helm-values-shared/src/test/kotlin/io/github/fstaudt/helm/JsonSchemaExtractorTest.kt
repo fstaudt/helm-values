@@ -21,6 +21,7 @@ internal class JsonSchemaExtractorTest {
         private const val THIRDPARTY = "@thirdparty"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
         private const val EMBEDDED_SUB_SCHEMA = "embedded-sub-json-schema"
+        private const val MULTIPLE_EMBEDDED_SCHEMA = "multiple-embedded-json-schema"
         private const val INVALID_ARCHIVE = "invalid-archive"
         private const val MISSING_ARCHIVE = "missing-archive"
         private const val NO_SCHEMA = "no-json-schema"
@@ -78,6 +79,25 @@ internal class JsonSchemaExtractorTest {
         testProject.initHelmResources(EMBEDDED_SUB_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+            .hasContent().and(
+                { it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
+                { it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION") }
+            )
+    }
+
+    @Test
+    fun `extract should extract charts & sub-charts JSON schemas from dependency archives`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(MULTIPLE_EMBEDDED_SCHEMA, SUBCHART_VERSION, THIRDPARTY)
+        ))
+        testProject.initHelmResources(MULTIPLE_EMBEDDED_SCHEMA, SUBCHART_VERSION)
+        extractor.extract(chart)
+        assertThatJsonFile("$extractSchemasDir/$MULTIPLE_EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+            .hasContent().and(
+                { it.node("\$id").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
+                { it.node("title").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA $SUBCHART_VERSION") }
+            )
+        assertThatJsonFile("$extractSchemasDir/$MULTIPLE_EMBEDDED_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and(
                 { it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
                 { it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION") }

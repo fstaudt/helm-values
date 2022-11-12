@@ -38,16 +38,15 @@ class JsonSchemaExtractor(
                     GzipCompressorInputStream(it).use {
                         TarArchiveInputStream(it).use {
                             var entry: TarArchiveEntry? = it.nextTarEntry
-                            logger.info("entry ${entry?.name}: $entry")
-                            while (entry != null && !entry.name.endsWith("/$HELM_SCHEMA_FILE")) {
+                            while (entry != null) {
                                 logger.info("entry ${entry.name}: $entry")
-                                entry = it.nextTarEntry
-                            }
-                            if (entry != null) {
-                                with(dependency.toSchemaFileFor(entry)) {
-                                    parentFile.mkdirs()
-                                    writeBytes(it.readAllBytes())
+                                if (entry.name.endsWith("/$HELM_SCHEMA_FILE")) {
+                                    with(dependency.toSchemaFileFor(entry)) {
+                                        parentFile.mkdirs()
+                                        writeBytes(it.readAllBytes())
+                                    }
                                 }
+                                entry = it.nextTarEntry
                             }
                         }
                     }
@@ -63,7 +62,7 @@ class JsonSchemaExtractor(
     }
 
     private fun ChartDependency.toSchemaFileFor(entry: TarArchiveEntry): File {
-        val basePath = File("$extractSchemasDir/${alias ?: name}")
+        val basePath = File("$extractSchemasDir/${aliasOrName()}")
         return File(basePath, entry.name.removePrefix("${name}/").replace("$HELM_CHARTS_DIR/", ""))
     }
 
