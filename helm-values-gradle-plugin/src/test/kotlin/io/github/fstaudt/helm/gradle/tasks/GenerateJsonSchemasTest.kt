@@ -94,7 +94,6 @@ class GenerateJsonSchemasTest {
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
                     { it.node("title").isEqualTo("Configuration for chart $BASE_CHART_URL") },
-                    { it.node("description").isEqualTo("\\n\\\\n ") },
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
                 )

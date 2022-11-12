@@ -1,5 +1,10 @@
 package io.github.fstaudt.helm
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -17,6 +22,11 @@ class JsonSchemaExtractor(
 ) {
     companion object {
         const val EXTRACT_DIR = "extract"
+        private val jsonMapper = ObjectMapper().also {
+            it.registerModule(KotlinModule.Builder().build())
+            it.enable(SerializationFeature.INDENT_OUTPUT)
+        }
+        private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
         private val logger: Logger = LoggerFactory.getLogger(JsonSchemaExtractor::class.java)
     }
 
@@ -69,17 +79,16 @@ class JsonSchemaExtractor(
     private fun ChartDependency.fallbackSchemaFor(errorMessage: String) {
         File("$extractSchemasDir/${alias ?: name}/$HELM_SCHEMA_FILE").also {
             it.parentFile.mkdirs()
-            it.writeText(
-                """
-                    {
-                      "${'$'}schema": "$SCHEMA_VERSION",
-                      "${'$'}id": "$name/$version/$HELM_SCHEMA_FILE",
-                      "type": "object",
-                      "title": "Fallback schema for $name:$version",
-                      "description": "An error occurred during extraction from $name-$version.tgz: $errorMessage"
-                    }
-                """.trimIndent()
-            )
+            val errorLabel = "An error occurred during extraction from archive $HELM_CHARTS_DIR/$name-$version.tgz"
+            val fallbackSchema = ObjectNode(nodeFactory)
+                .put("\$schema", SCHEMA_VERSION)
+                .put("\$id", "$name/$version/$HELM_SCHEMA_FILE")
+                .put("type", "object")
+                .put("additionalProperties", false)
+                .put("title", "Fallback schema for $name:$version")
+                .put("description", "$NEW_LINE $errorLabel: '$errorMessage'")
+                .put("x-intellij-html-description", "<br>$errorLabel:<br> <code>$errorMessage</code>")
+            jsonMapper.writeValue(it, fallbackSchema)
         }
     }
 }

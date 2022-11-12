@@ -1,9 +1,11 @@
 package io.github.fstaudt.helm
 
 import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.ok
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
+import com.github.tomakehurst.wiremock.client.WireMock.unauthorized
 import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.model.Chart
@@ -346,8 +348,8 @@ internal class JsonSchemaDownloaderTest {
     }
 
     @Test
-    fun `download should generate JSON schema with error when JSON schema can't be downloaded from repository`() {
-        stubFor(get("/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").willReturn(WireMock.unauthorized()))
+    fun `download should generate fallback JSON schema with error when JSON schema can't be downloaded from repository`() {
+        stubFor(get("/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").willReturn(unauthorized()))
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
@@ -355,17 +357,24 @@ internal class JsonSchemaDownloaderTest {
         val baseUrl = "$REPOSITORY_URL/$CHARTS_PATH"
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().and(
-                { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                { it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
-                { it.node("type").isEqualTo("object") },
-                { it.node("title").isEqualTo("Fallback schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
-                { it.node("description").isString.contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
-                { it.node("description").isString.contains("401 - Unauthorized") },
+                {
+                    it.node("\$schema").isEqualTo(SCHEMA_VERSION)
+                    it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                    it.node("type").isEqualTo("object")
+                    it.node("additionalProperties").isBoolean.isFalse
+                    it.node("title").isEqualTo("Fallback schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
+                    it.node("description").isString
+                        .contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                        .contains("401 - Unauthorized")
+                    it.node("x-intellij-html-description").isString
+                        .contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                        .contains("401 - Unauthorized")
+                },
             )
     }
 
     @Test
-    fun `download should generate JSON schema with error when repository is unreachable`() {
+    fun `download should generate fallback JSON schema with error when repository is unreachable`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, UNAVAILABLE)
         ))
@@ -373,12 +382,19 @@ internal class JsonSchemaDownloaderTest {
         val baseUrl = "$UNAVAILABLE_URL/$CHARTS_PATH"
         assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
             .hasContent().and(
-                { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                { it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
-                { it.node("type").isEqualTo("object") },
-                { it.node("title").isEqualTo("Fallback schema for $UNAVAILABLE/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION") },
-                { it.node("description").isString.contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH") },
-                { it.node("description").isString.contains("HttpHostConnectException - ") },
+                {
+                    it.node("\$schema").isEqualTo(SCHEMA_VERSION)
+                    it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                    it.node("type").isEqualTo("object")
+                    it.node("additionalProperties").isBoolean.isFalse
+                    it.node("title").isEqualTo("Fallback schema for $UNAVAILABLE/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
+                    it.node("description").isString
+                        .contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                        .contains("HttpHostConnectException - ")
+                    it.node("x-intellij-html-description").isString
+                        .contains("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                        .contains("HttpHostConnectException - ")
+                },
             )
     }
 
@@ -408,7 +424,7 @@ internal class JsonSchemaDownloaderTest {
               ${fileContent?.let { ",$it" } ?: ""}
             }
             """.trimIndent().toByteArray())
-        stubFor(get("/$PROTECTED_PATH/$path").withHeader("Authorization", WireMock.equalTo(REPOSITORY_AUTHORIZATION))
+        stubFor(get("/$PROTECTED_PATH/$path").withHeader("Authorization", equalTo(REPOSITORY_AUTHORIZATION))
             .willReturn(ok().withResponseBody(body)))
     }
 

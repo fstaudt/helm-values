@@ -59,7 +59,7 @@ internal class JsonSchemaGeneratorTest {
             { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
             { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
             { it.node("title").isEqualTo("Configuration for chart $BASE_CHART_URL") },
-            { it.node("description").isEqualTo("\\n\\\\n ") },
+            { it.node("description").isEqualTo("\\n\\\\n") },
             { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
             { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
         )
@@ -144,7 +144,7 @@ internal class JsonSchemaGeneratorTest {
             {
                 it.node("title")
                     .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n ")
+                it.node("description").isEqualTo("\\n\\\\n")
                 it.node("type").isEqualTo("boolean")
             },
         )
@@ -160,7 +160,7 @@ internal class JsonSchemaGeneratorTest {
             {
                 it.node("title")
                     .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n ")
+                it.node("description").isEqualTo("\\n\\\\n")
                 it.node("type").isEqualTo("boolean")
             },
         )
@@ -177,7 +177,7 @@ internal class JsonSchemaGeneratorTest {
             {
                 it.node("title")
                     .isEqualTo("Enable $EXTERNAL_SCHEMA-alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n ")
+                it.node("description").isEqualTo("\\n\\\\n")
                 it.node("type").isEqualTo("boolean")
             },
         )
@@ -210,13 +210,11 @@ internal class JsonSchemaGeneratorTest {
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.global").and(
-            { it.node("additionalProperties").isEqualTo(false) },
-            { it.node("allOf").isArray.hasSize(2) },
             {
+                it.node("additionalProperties").isEqualTo(false)
+                it.node("allOf").isArray.hasSize(2)
                 it.node("allOf[0].\$ref")
                     .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
-            },
-            {
                 it.node("allOf[1].\$ref")
                     .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
             }

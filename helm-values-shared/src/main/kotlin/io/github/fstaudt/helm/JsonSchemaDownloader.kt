@@ -3,6 +3,7 @@ package io.github.fstaudt.helm
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -34,6 +35,7 @@ class JsonSchemaDownloader(
             it.registerModule(KotlinModule.Builder().build())
             it.enable(SerializationFeature.INDENT_OUTPUT)
         }
+        private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
         private val client: CloseableHttpClient = HttpClientBuilder.create().useSystemProperties().build()
     }
 
@@ -49,28 +51,28 @@ class JsonSchemaDownloader(
     private fun downloadSchema(dependency: ChartDependency, repository: JsonSchemaRepository, fileName: String) {
         val uri = URI("${repository.baseUri}/${dependency.name}/${dependency.version}/$fileName")
         val downloadFolder = File(downloadSchemasDir, dependency.aliasOrName())
-        downloadSchema(dependency, uri, DownloadedSchema(downloadFolder, fileName, false), repository)
+        downloadSchema(dependency.fullName(), uri, DownloadedSchema(downloadFolder, fileName, false), repository)
     }
 
     private fun downloadSchema(
-        dependency: ChartDependency,
+        schemaName: String,
         uri: URI,
         downloadedSchema: DownloadedSchema,
-        repository: JsonSchemaRepository?,
+        repository: JsonSchemaRepository?
     ) {
         if (!downloadedSchema.file().exists()) {
             logger.info("Downloading $downloadedSchema from $uri")
             val request = HttpGet(uri)
             repository?.basicAuthentication()?.let { request.addHeader("Authorization", it) }
-            request.toResponseBody(dependency).let {
+            request.toResponseBody(schemaName).let {
                 downloadedSchema.file().parentFile.mkdirs()
                 downloadedSchema.file().writeText(it)
             }
-            downloadSchemaReferences(dependency, uri, downloadedSchema)
+            downloadSchemaReferences(uri, downloadedSchema)
         }
     }
 
-    private fun downloadSchemaReferences(dependency: ChartDependency, uri: URI, downloadedSchema: DownloadedSchema) {
+    private fun downloadSchemaReferences(uri: URI, downloadedSchema: DownloadedSchema) {
         val jsonSchema = jsonMapper.readTree(downloadedSchema.file())
         val needsRewrite = jsonSchema.findValues("\$ref").any {
             it.isFullUri() || (!downloadedSchema.isReference && !it.isSimpleFile())
@@ -81,8 +83,9 @@ class JsonSchemaDownloader(
                 try {
                     val refUri = ref.toUriFrom(uri)
                     val refDownloadedSchema = ref.toDownloadedSchemaFrom(refUri, downloadedSchema)
-                    val refRepository = repositoryMappings.filterValues { "$refUri".startsWith(it.baseUri) }.values.firstOrNull()
-                    downloadSchema(dependency, refUri, refDownloadedSchema, refRepository)
+                    val refRepository =
+                        repositoryMappings.filterValues { "$refUri".startsWith(it.baseUri) }.values.firstOrNull()
+                    downloadSchema(refUri.path, refUri, refDownloadedSchema, refRepository)
                     if (ref.isFullUri() || (!downloadedSchema.isReference && !ref.isSimpleFile())) {
                         (it as ObjectNode).replace("\$ref", TextNode(refUri.toDownloadedUri()))
                     }
@@ -108,29 +111,32 @@ class JsonSchemaDownloader(
         else -> DownloadedSchema(downloadedSchema.baseFolder, refUri.path, true)
     }
 
-    private fun HttpGet.toResponseBody(dependency: ChartDependency): String {
+    private fun HttpGet.toResponseBody(schemaName: String): String {
         return try {
             client.execute(this).use {
-                if (it.code == 200)
+                if (it.code == 200) {
                     EntityUtils.toString(it.entity)
-                else
-                    fallbackSchemaFor(dependency, "${it.code} - ${it.reasonPhrase}")
+                } else {
+                    fallbackSchemaFor(schemaName, "HTTP ${it.code} - ${it.reasonPhrase}")
+                }
             }
         } catch (e: Exception) {
-            fallbackSchemaFor(dependency, "${e.javaClass.simpleName} - ${e.localizedMessage}")
+            fallbackSchemaFor(schemaName, "${e.javaClass.simpleName} - ${e.localizedMessage}")
         }
     }
 
-    private fun HttpGet.fallbackSchemaFor(dependency: ChartDependency, errorMessage: String): String {
-        return """
-            {
-              "${'$'}schema": "$SCHEMA_VERSION",
-              "${'$'}id": "$uri",
-              "type": "object",
-              "title": "Fallback schema for ${dependency.repository}/${dependency.name}:${dependency.version}",
-              "description":"An error occurred during download of $uri: $errorMessage"
-            }
-            """.trimIndent()
+    private fun HttpGet.fallbackSchemaFor(schemaName: String, errorMessage: String): String {
+        val errorLabel = "An error occurred during download of $uri:"
+        val htmlLabel = "An error occurred during download of <a href='$uri'>JSON schema for $schemaName</a>:"
+        return ObjectNode(nodeFactory)
+            .put("\$schema", SCHEMA_VERSION)
+            .put("\$id", "$uri")
+            .put("type", "object")
+            .put("additionalProperties", false)
+            .put("title", "Fallback schema for $schemaName")
+            .put("description", "$NEW_LINE $errorLabel '$errorMessage'")
+            .put("x-intellij-html-description", "<br>$htmlLabel<br><code>$errorMessage</code>")
+            .toPrettyString()
     }
 
     private fun JsonNode.isInternalReference() = textValue().startsWith("#")

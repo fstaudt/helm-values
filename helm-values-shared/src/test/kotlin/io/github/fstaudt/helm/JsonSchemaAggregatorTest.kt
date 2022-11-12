@@ -54,7 +54,7 @@ internal class JsonSchemaAggregatorTest {
                 it.node("\$schema").isEqualTo(SCHEMA_VERSION)
                 it.node("\$id").isEqualTo("$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
                 it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION")
-                it.node("description").isEqualTo("\\n\\\\n ")
+                it.node("description").isEqualTo("\\n\\\\n")
             },
         )
     }
@@ -283,7 +283,7 @@ internal class JsonSchemaAggregatorTest {
             {
                 it.node("title")
                     .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n ")
+                it.node("description").isEqualTo("\\n\\\\n")
                 it.node("type").isEqualTo("boolean")
             },
         )
@@ -299,7 +299,7 @@ internal class JsonSchemaAggregatorTest {
             {
                 it.node("title")
                     .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n ")
+                it.node("description").isEqualTo("\\n\\\\n")
                 it.node("type").isEqualTo("boolean")
             },
         )
@@ -315,7 +315,7 @@ internal class JsonSchemaAggregatorTest {
         assertThatJson(json).node("properties.alias.properties.enabled").and(
             {
                 it.node("title").isEqualTo("Enable alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n ")
+                it.node("description").isEqualTo("\\n\\\\n")
                 it.node("type").isEqualTo("boolean")
             },
         )

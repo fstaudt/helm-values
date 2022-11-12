@@ -37,7 +37,7 @@ class JsonSchemaGenerator(
             }
             dep.condition?.toPropertiesObjectNodeIn(jsonSchema)
                 ?.put("title", "Enable ${dep.aliasOrName()} dependency (${dep.fullName()})")
-                ?.put("description", EMPTY)
+                ?.put("description", NEW_LINE)
                 ?.put("type", "boolean")
         }
         return (jsonPatch?.apply(jsonSchema) as? ObjectNode) ?: jsonSchema
@@ -65,7 +65,7 @@ class JsonSchemaGenerator(
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${publicationRepository.baseUri}/$name/$version/${publicationRepository.valuesSchemaFile}")
             .put("title", "Configuration for chart ${publicationRepository.baseUri}/$name/$version")
-            .put("description", EMPTY)
+            .put("description", NEW_LINE)
     }
 
     private fun String.toRelativeUri(): String {

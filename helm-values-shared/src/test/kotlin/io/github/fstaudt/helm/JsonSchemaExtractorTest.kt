@@ -105,39 +105,52 @@ internal class JsonSchemaExtractorTest {
     }
 
     @Test
-    fun `extract should generate JSON schema with error when archive is not found for dependency`() {
+    fun `extract should generate fallback JSON schema with error when archive is not found for dependency`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(MISSING_ARCHIVE, SUBCHART_VERSION, THIRDPARTY)
         ))
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$MISSING_ARCHIVE/$HELM_SCHEMA_FILE").isFile
             .hasContent().and(
-                { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                { it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("type").isEqualTo("object") },
-                { it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION") },
-                { it.node("description").isString.contains("Archive not found") },
+                {
+                    it.node("\$schema").isEqualTo(SCHEMA_VERSION)
+                    it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                    it.node("type").isEqualTo("object")
+                    it.node("additionalProperties").isBoolean.isFalse
+                    it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
+                    it.node("description").isString
+                        .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
+                        .contains("Archive not found")
+                    it.node("x-intellij-html-description").isString
+                        .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
+                        .contains("Archive not found")
+                },
             )
     }
 
     @Test
-    fun `extract should use alias to generate JSON schema with error when archive is not found for dependency`() {
+    fun `extract should use alias to generate fallback JSON schema with error when archive is not found for dependency`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(MISSING_ARCHIVE, SUBCHART_VERSION, THIRDPARTY, "$MISSING_ARCHIVE-alias")
         ))
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$MISSING_ARCHIVE-alias/$HELM_SCHEMA_FILE").isFile
             .hasContent().and(
-                { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                { it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("type").isEqualTo("object") },
-                { it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION") },
-                { it.node("description").isString.contains("Archive not found") },
+                {
+                    it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                    it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
+                    it.node("description").isString
+                        .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
+                        .contains("Archive not found")
+                    it.node("x-intellij-html-description").isString
+                        .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
+                        .contains("Archive not found")
+                },
             )
     }
 
     @Test
-    fun `extract should generate JSON schema with error when archive is invalid`() {
+    fun `extract should generate fallback JSON schema with error when archive is invalid`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(INVALID_ARCHIVE, SUBCHART_VERSION, THIRDPARTY)
         ))
@@ -145,16 +158,24 @@ internal class JsonSchemaExtractorTest {
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$INVALID_ARCHIVE/values.schema.json").isFile
             .hasContent().and(
-                { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("type").isEqualTo("object") },
-                { it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION") },
-                { it.node("description").isString.contains("IOException - ") },
+                {
+                    it.node("\$schema").isEqualTo(SCHEMA_VERSION)
+                    it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                    it.node("type").isEqualTo("object")
+                    it.node("additionalProperties").isBoolean.isFalse
+                    it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
+                    it.node("description").isString
+                        .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
+                        .contains("IOException - ")
+                    it.node("x-intellij-html-description").isString
+                        .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
+                        .contains("IOException - ")
+                },
             )
     }
 
     @Test
-    fun `extract should use alias to generate JSON schema with error when archive is invalid`() {
+    fun `extract should use alias to generate fallback JSON schema with error when archive is invalid`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(INVALID_ARCHIVE, SUBCHART_VERSION, THIRDPARTY, "$INVALID_ARCHIVE-alias")
         ))
@@ -162,11 +183,16 @@ internal class JsonSchemaExtractorTest {
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$INVALID_ARCHIVE-alias/$HELM_SCHEMA_FILE").isFile
             .hasContent().and(
-                { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                { it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("type").isEqualTo("object") },
-                { it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION") },
-                { it.node("description").isString.contains("IOException - ") },
+                {
+                    it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                    it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
+                    it.node("description").isString
+                        .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
+                        .contains("IOException - ")
+                    it.node("x-intellij-html-description").isString
+                        .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
+                        .contains("IOException - ")
+                },
             )
     }
 

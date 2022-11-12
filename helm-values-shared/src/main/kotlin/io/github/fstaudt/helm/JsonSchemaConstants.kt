@@ -15,4 +15,4 @@ const val SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
 
 const val AGGREGATED_SCHEMA_FILE = "aggregated-values.schema.json"
 const val PATCH_AGGREGATED_SCHEMA_FILE = "aggregated-values.schema.patch.json"
-const val EMPTY = "\n\\n "
+const val NEW_LINE = "\n\\n"
