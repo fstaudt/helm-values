@@ -57,14 +57,14 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY),
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-            { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
-            { it.node("title").isEqualTo("Configuration for chart $BASE_CHART_URL") },
-            { it.node("description").isEqualTo("\\n\\\\n") },
-            { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
-            { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
-        )
+        assertThatJson(json).and({
+            it.node("\$schema").isEqualTo(SCHEMA_VERSION)
+            it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
+            it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA)
+            it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA)
+        })
     }
 
     @Test
@@ -73,13 +73,11 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            { it.node("properties").isObject.doesNotContainKey(EXTERNAL_SCHEMA) },
-            {
-                it.node("properties.$EXTERNAL_SCHEMA-alias.\$ref")
-                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
-            },
-        )
+        assertThatJson(json).and({
+            it.node("properties").isObject.doesNotContainKey(EXTERNAL_SCHEMA)
+            it.node("properties.$EXTERNAL_SCHEMA-alias.\$ref")
+                .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+        })
     }
 
     @Test
@@ -88,10 +86,10 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            { it.node("additionalProperties").isBoolean.isFalse },
-            { it.node("properties.global.additionalProperties").isBoolean.isFalse }
-        )
+        assertThatJson(json).and({
+            it.node("additionalProperties").isBoolean.isFalse
+            it.node("properties.global.additionalProperties").isBoolean.isFalse
+        })
     }
 
     @Test
@@ -100,12 +98,8 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            {
-                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
-                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
-            },
-        )
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.\$ref")
+            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
     }
 
     @Test
@@ -114,12 +108,8 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, BUNDLES)
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            {
-                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
-                    .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
-            },
-        )
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.\$ref")
+            .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
     }
 
     @Test
@@ -128,12 +118,8 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, INFRA)
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).and(
-            {
-                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
-                    .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
-            },
-        )
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.\$ref")
+            .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
     }
 
     @Test
@@ -142,14 +128,11 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "$EXTERNAL_SCHEMA.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
-            {
-                it.node("title")
-                    .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n")
-                it.node("type").isEqualTo("boolean")
-            },
-        )
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
     }
 
     @Test
@@ -158,14 +141,12 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, THIRDPARTY, condition = "$EXTERNAL_SCHEMA.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
-            {
-                it.node("title")
-                    .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n")
-                it.node("type").isEqualTo("boolean")
-            },
-        )
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title")
+                .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
     }
 
     @Test
@@ -175,14 +156,12 @@ internal class JsonSchemaGeneratorTest {
                 "$EXTERNAL_SCHEMA-alias", "$EXTERNAL_SCHEMA-alias.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA-alias.properties.enabled").and(
-            {
-                it.node("title")
-                    .isEqualTo("Enable $EXTERNAL_SCHEMA-alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n")
-                it.node("type").isEqualTo("boolean")
-            },
-        )
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA-alias.properties.enabled").and({
+            it.node("title")
+                .isEqualTo("Enable $EXTERNAL_SCHEMA-alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
     }
 
     @Test
@@ -197,11 +176,11 @@ internal class JsonSchemaGeneratorTest {
             ]
             """)
         val json = generator.generateValuesJsonSchema(chart, jsonPatch)
-        assertThatJson(json).and(
-            { it.node("title").isEqualTo("overridden value") },
-            { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
-            { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
-        )
+        assertThatJson(json).and({
+            it.node("title").isEqualTo("overridden value")
+            it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
+            it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+        })
     }
 
     @Test
@@ -211,36 +190,33 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY),
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.global").and(
-            {
-                it.node("additionalProperties").isEqualTo(false)
-                it.node("allOf").isArray.hasSize(3)
-                it.node("allOf[0].\$ref")
-                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
-                it.node("allOf[1].\$ref")
-                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
-                it.node("allOf[2].title").isEqualTo("$GLOBAL_VALUES_TITLE $CHART_NAME:$CHART_VERSION")
-                it.node("allOf[2].description").isString
-                    .contains(GLOBAL_VALUES_DESCRIPTION)
-                    .contains("$APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
-                    .doesNotContain("$THIRDPARTY/$EMBEDDED_SCHEMA:$EMBEDDED_VERSION")
-                it.node("allOf[2].x-intellij-html-description").isString
-                    .contains(GLOBAL_VALUES_DESCRIPTION)
-                    .contains("$APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
-                    .contains("$BASE_URL/$APPS_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION")
-                    .doesNotContain("$THIRDPARTY/$EMBEDDED_SCHEMA:$EMBEDDED_VERSION")
-            }
-        )
+        assertThatJson(json).node("properties.global").and({
+            val externalSchemaRef = "../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION"
+            it.node("additionalProperties").isEqualTo(false)
+            it.node("allOf").isArray.hasSize(3)
+            it.node("allOf[0].\$ref").isEqualTo("$externalSchemaRef/$VALUES_SCHEMA_FILE#/properties/global")
+            it.node("allOf[1].\$ref").isEqualTo("$externalSchemaRef/$GLOBAL_VALUES_SCHEMA_FILE")
+            it.node("allOf[2].title").isEqualTo("$GLOBAL_VALUES_TITLE $CHART_NAME:$CHART_VERSION")
+            it.node("allOf[2].description").isString
+                .contains(GLOBAL_VALUES_DESCRIPTION)
+                .contains("$APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
+                .doesNotContain("$THIRDPARTY/$EMBEDDED_SCHEMA:$EMBEDDED_VERSION")
+            it.node("allOf[2].x-intellij-html-description").isString
+                .contains(GLOBAL_VALUES_DESCRIPTION)
+                .contains("$APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
+                .contains("$BASE_URL/$APPS_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION")
+                .doesNotContain("$THIRDPARTY/$EMBEDDED_SCHEMA:$EMBEDDED_VERSION")
+        })
     }
 
     @Test
     fun `generateValuesJsonSchema should generate empty global properties when there are no dependencies`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.global").and(
-            { it.node("additionalProperties").isEqualTo(false) },
-            { it.isObject.doesNotContainKey("allOf") },
-        )
+        assertThatJson(json).node("properties.global").and({
+            it.node("additionalProperties").isEqualTo(false)
+            it.isObject.doesNotContainKey("allOf")
+        })
     }
 
     @Test
@@ -249,16 +225,13 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.global").and(
-            {
-                it.node("allOf").isArray.hasSize(3)
-                it.node("allOf[0].\$ref")
-                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
-                it.node("allOf[1].\$ref")
-                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
-                it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
-            },
-        )
+        assertThatJson(json).node("properties.global").and({
+            val externalSchemaRef = "../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION"
+            it.node("allOf").isArray.hasSize(3)
+            it.node("allOf[0].\$ref").isEqualTo("$externalSchemaRef/$VALUES_SCHEMA_FILE#/properties/global")
+            it.node("allOf[1].\$ref").isEqualTo("$externalSchemaRef/$GLOBAL_VALUES_SCHEMA_FILE")
+            it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
+        })
     }
 
     @Test
@@ -267,16 +240,13 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS)
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.global").and(
-            {
-                it.node("allOf").isArray.hasSize(3)
-                it.node("allOf[0].\$ref")
-                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
-                it.node("allOf[1].\$ref")
-                    .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
-                it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
-            },
-        )
+        assertThatJson(json).node("properties.global").and({
+            val externalSchemaRef = "../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION"
+            it.node("allOf").isArray.hasSize(3)
+            it.node("allOf[0].\$ref").isEqualTo("$externalSchemaRef/$VALUES_SCHEMA_FILE#/properties/global")
+            it.node("allOf[1].\$ref").isEqualTo("$externalSchemaRef/$GLOBAL_VALUES_SCHEMA_FILE")
+            it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
+        })
     }
 
     @Test
@@ -285,16 +255,13 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, BUNDLES)
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.global").and(
-            {
-                it.node("allOf").isArray.hasSize(3)
-                it.node("allOf[0].\$ref")
-                    .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
-                it.node("allOf[1].\$ref")
-                    .isEqualTo("../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
-                it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
-            },
-        )
+        assertThatJson(json).node("properties.global").and({
+            val externalSchemaRef = "../../../$BUNDLES_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION"
+            it.node("allOf").isArray.hasSize(3)
+            it.node("allOf[0].\$ref").isEqualTo("$externalSchemaRef/$VALUES_SCHEMA_FILE#/properties/global")
+            it.node("allOf[1].\$ref").isEqualTo("$externalSchemaRef/$GLOBAL_VALUES_SCHEMA_FILE")
+            it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
+        })
     }
 
     @Test
@@ -303,16 +270,46 @@ internal class JsonSchemaGeneratorTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, INFRA)
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.global").and(
-            {
-                it.node("allOf").isArray.hasSize(3)
-                it.node("allOf[0].\$ref")
-                    .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
-                it.node("allOf[1].\$ref")
-                    .isEqualTo("$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE")
-                it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
-            }
-        )
+        assertThatJson(json).node("properties.global").and({
+            val externalSchemaRef = "$INFRA_REPOSITORY_URL/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION"
+            it.node("allOf").isArray.hasSize(3)
+            it.node("allOf[0].\$ref").isEqualTo("$externalSchemaRef/$VALUES_SCHEMA_FILE#/properties/global")
+            it.node("allOf[1].\$ref").isEqualTo("$externalSchemaRef/$GLOBAL_VALUES_SCHEMA_FILE")
+            it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
+        })
+    }
+
+    @Test
+    fun `generatePackagedValuesJsonSchema should generate JSON schema with references to aggregated schema`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
+        val json = generator.generatePackagedValuesJsonSchema(chart, null)
+        assertThatJson(json).and({
+            it.node("\$schema").isEqualTo(SCHEMA_VERSION)
+            it.node("\$id").isEqualTo("$BASE_CHART_URL/$PACKAGED_SCHEMA_FILE")
+            it.node("title").isEqualTo("Configuration for packaged chart $CHART_NAME:$CHART_VERSION")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("properties.global.\$ref").isEqualTo("$AGGREGATED_SCHEMA_FILE#/properties/global")
+            it.node("properties.$CHART_NAME.\$ref").isEqualTo(AGGREGATED_SCHEMA_FILE)
+        })
+    }
+
+    @Test
+    fun `generatePackagedValuesJsonSchema should disable additional properties`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
+        val json = generator.generatePackagedValuesJsonSchema(chart, null)
+        assertThatJson(json).node("additionalProperties").isBoolean.isFalse
+    }
+
+    @Test
+    fun `generatePackagedValuesJsonSchema should update generated JSON schema with patch when it is provided`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
+        val jsonPatch = jsonPatch("""
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" }
+            ]
+            """)
+        val json = generator.generatePackagedValuesJsonSchema(chart, jsonPatch)
+        assertThatJson(json).node("title").isEqualTo("overridden value")
     }
 
     private fun jsonPatch(content: String) = JsonPatch.fromJson(jsonMapper.readTree(content))

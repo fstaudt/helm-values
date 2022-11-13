@@ -31,6 +31,14 @@ class JsonSchemaGenerator(
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
     }
 
+    fun generatePackagedValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
+        val jsonSchema = chart.toPackagedValuesJsonSchema()
+        jsonSchema.properties().global().put("\$ref", "$AGGREGATED_SCHEMA_FILE#/properties/global")
+        jsonSchema.properties().objectNode(chart.name).put("\$ref", AGGREGATED_SCHEMA_FILE)
+        jsonSchema.put("additionalProperties", false)
+        return (jsonPatch?.apply(jsonSchema) as? ObjectNode) ?: jsonSchema
+    }
+
     fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
         val jsonSchema = chart.toValuesJsonSchema()
         jsonSchema.properties().global().putGlobalProperties(chart)
@@ -84,7 +92,15 @@ class JsonSchemaGenerator(
         return ObjectNode(nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${publicationRepository.baseUri}/$name/$version/${publicationRepository.valuesSchemaFile}")
-            .put("title", "Configuration for chart ${publicationRepository.baseUri}/$name/$version")
+            .put("title", "Configuration for chart $name:$version")
+            .put("description", NEW_LINE)
+    }
+
+    private fun Chart.toPackagedValuesJsonSchema(): ObjectNode {
+        return ObjectNode(nodeFactory)
+            .put("\$schema", SCHEMA_VERSION)
+            .put("\$id", "${publicationRepository.baseUri}/$name/$version/$PACKAGED_SCHEMA_FILE")
+            .put("title", "Configuration for packaged chart $name:$version")
             .put("description", NEW_LINE)
     }
 

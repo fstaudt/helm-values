@@ -5,10 +5,13 @@ import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHARTS_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.PACKAGED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_PACKAGED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.CHART_NAME
+import io.github.fstaudt.helm.idea.CHART_VERSION
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.initHelmChart
@@ -44,6 +47,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
         File(project.baseDir(), PATCH_AGGREGATED_SCHEMA_FILE).delete()
         File(project.baseDir(), PATCH_VALUES_SCHEMA_FILE).delete()
+        File(project.baseDir(), PATCH_PACKAGED_SCHEMA_FILE).delete()
     }
 
     fun `test - aggregate should download JSON schemas from external repositories`() {
@@ -91,11 +95,11 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             """.trimIndent())
         }
         service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
-        assertThat(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
-            .content().contains(
-                "$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE",
-                "$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE"
-            )
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().node("properties").and({
+                it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
+                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
+            })
     }
 
     fun `test - aggregate should update aggregated JSON schema with values schema patch`() {
@@ -118,10 +122,10 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         )
         service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
-            .hasContent().and(
-                { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
-                { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
-            )
+            .hasContent().and({
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+            })
     }
 
     fun `test - aggregate should update aggregated JSON schema with aggregated schema patch`() {
@@ -145,11 +149,35 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         )
         service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
-            .hasContent().and(
-                { it.node("title").isEqualTo("overridden value") },
-                { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
-                { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
-            )
+            .hasContent().and({
+                it.node("title").isEqualTo("overridden value")
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+            })
+    }
+
+    fun `test - aggregate should generate packaged JSON schema`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        project.initHelmChart()
+        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$PACKAGED_SCHEMA_FILE")).isFile
+            .hasContent().node("title").isEqualTo("Configuration for packaged chart $CHART_NAME:$CHART_VERSION")
+    }
+
+    fun `test - aggregate should update packaged JSON schema with packaged schema patch`() {
+        reset()
+        project.initHelmChart()
+        File(project.baseDir(), PATCH_PACKAGED_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" }
+            ]
+            """.trimIndent()
+        )
+        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$PACKAGED_SCHEMA_FILE")).isFile
+            .hasContent().node("title").isEqualTo("overridden value")
     }
 
     fun `test - clear should delete JSON schemas directory for current chart`() {

@@ -10,9 +10,12 @@ import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaAggregator
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.JsonSchemaGenerator
+import io.github.fstaudt.helm.PACKAGED_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.model.Chart
+import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.DEFAULT_JSON_SCHEMA_REPOSITORY
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
@@ -51,6 +54,11 @@ open class AggregateJsonSchema : DefaultTask() {
     @PathSensitive(RELATIVE)
     var patchValuesFile: File? = null
 
+    @InputFile
+    @Optional
+    @PathSensitive(RELATIVE)
+    var patchPackagedFile: File? = null
+
     @InputDirectory
     @PathSensitive(RELATIVE)
     val downloadSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS_DIR")
@@ -61,6 +69,9 @@ open class AggregateJsonSchema : DefaultTask() {
 
     @OutputFile
     val aggregatedSchemaFile: File = File(project.buildDir, "$HELM_VALUES/$AGGREGATED_SCHEMA_FILE")
+
+    @OutputFile
+    val packagedSchemaFile: File = File(project.buildDir, "$HELM_VALUES/$PACKAGED_SCHEMA_FILE")
 
     @Internal
     protected val yamlMapper = ObjectMapper(YAMLFactory()).also {
@@ -80,7 +91,13 @@ open class AggregateJsonSchema : DefaultTask() {
         val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         val aggregatedJsonPatch = patchAggregatedFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
         val valuesJsonPatch = patchValuesFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
-        val jsonSchema = aggregator.aggregate(chart, valuesJsonPatch, aggregatedJsonPatch)
-        jsonMapper.writeValue(aggregatedSchemaFile, jsonSchema)
+        aggregator.aggregate(chart, valuesJsonPatch, aggregatedJsonPatch).also {
+            jsonMapper.writeValue(aggregatedSchemaFile, it)
+        }
+        val generator = JsonSchemaGenerator(extension.repositoryMappings, DEFAULT_JSON_SCHEMA_REPOSITORY)
+        val packagedJsonPatch = patchPackagedFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
+        generator.generatePackagedValuesJsonSchema(chart, packagedJsonPatch).also {
+            jsonMapper.writeValue(packagedSchemaFile, it)
+        }
     }
 }

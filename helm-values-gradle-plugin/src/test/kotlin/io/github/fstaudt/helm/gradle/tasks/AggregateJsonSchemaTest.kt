@@ -6,7 +6,9 @@ import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
+import io.github.fstaudt.helm.PACKAGED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_PACKAGED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
@@ -38,6 +40,7 @@ import java.io.File
 class AggregateJsonSchemaTest {
     private lateinit var testProject: TestProject
     private lateinit var aggregatedSchemaFile: File
+    private lateinit var packagedSchemaFile: File
 
     companion object {
         private const val REPOSITORY_URL = "http://localhost:1980"
@@ -54,6 +57,7 @@ class AggregateJsonSchemaTest {
     fun `init test project`() {
         testProject = testProject()
         aggregatedSchemaFile = File(testProject.buildDir, "$HELM_VALUES/$AGGREGATED_SCHEMA_FILE")
+        packagedSchemaFile = File(testProject.buildDir, "$HELM_VALUES/$PACKAGED_SCHEMA_FILE")
         testProject.initBuildFile {
             appendText(
                 """
@@ -63,7 +67,7 @@ class AggregateJsonSchemaTest {
                   )
                   publicationRepository = "$APPS"
                 }
-            """.trimIndent()
+                """.trimIndent()
             )
         }
         testProject.initHelmChart()
@@ -76,10 +80,10 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should depend on downloadJsonSchemas and extractJsonSchemas`() {
-        testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
-            assertThat(it.task(":$EXTRACT_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
-            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$EXTRACT_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
     }
 
@@ -98,7 +102,7 @@ class AggregateJsonSchemaTest {
                   )
                   publicationRepository = "$APPS"
                 }
-            """.trimIndent()
+                """.trimIndent()
             )
         }
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
@@ -213,7 +217,7 @@ class AggregateJsonSchemaTest {
                   )
                   publicationRepository = "$APPS"
                 }
-            """.trimIndent()
+                """.trimIndent()
             )
         }
         File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE).writeText(
@@ -258,7 +262,7 @@ class AggregateJsonSchemaTest {
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
                   patchAggregatedFile = File(project.projectDir, "custom.schema.patch.json")
                 }
-            """.trimIndent()
+                """.trimIndent()
             )
         }
         File(testProject, "custom.schema.patch.json").writeText(
@@ -331,7 +335,7 @@ class AggregateJsonSchemaTest {
                   )
                   publicationRepository = "$APPS"
                 }
-            """.trimIndent()
+                """.trimIndent()
             )
         }
         File(sourcesDir, PATCH_VALUES_SCHEMA_FILE).writeText(
@@ -374,7 +378,7 @@ class AggregateJsonSchemaTest {
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
                   patchValuesFile = File(project.projectDir, "custom.schema.patch.json")
                 }
-            """.trimIndent()
+                """.trimIndent()
             )
         }
         File(testProject, "custom.schema.patch.json").writeText(
@@ -390,6 +394,94 @@ class AggregateJsonSchemaTest {
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
                 it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
             })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should generate packaged JSON schema`() {
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(packagedSchemaFile).isFile.hasContent().and({
+                it.node("title").isEqualTo("Configuration for packaged chart $CHART_NAME:$CHART_VERSION")
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update packaged JSON schema with packaged schema patch`() {
+        File(testProject, PATCH_PACKAGED_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(packagedSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update packaged JSON schema with packaged schema patch in sourcesDir`() {
+        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        testProject.clearHelmChart()
+        testProject.initHelmChart(sourcesDir)
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "sources"
+                }
+                """.trimIndent()
+            )
+        }
+        File(sourcesDir, PATCH_PACKAGED_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(packagedSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update packaged JSON schema with provided packaged schema patch`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
+                  patchPackagedFile = File(project.projectDir, "custom.schema.patch.json")
+                }
+                """.trimIndent()
+            )
+        }
+        File(testProject, "custom.schema.patch.json").writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden value" }
+            ]
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(packagedSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should retrieve JSON schemas from cache on second run`() {
+        testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+        }
+        packagedSchemaFile.delete()
+        aggregatedSchemaFile.delete()
+        testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(FROM_CACHE)
         }
     }
 

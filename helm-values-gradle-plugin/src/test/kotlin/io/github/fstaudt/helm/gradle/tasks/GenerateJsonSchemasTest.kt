@@ -93,7 +93,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
-                    { it.node("title").isEqualTo("Configuration for chart $BASE_CHART_URL") },
+                    { it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION") },
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
                 )
@@ -147,7 +147,7 @@ class GenerateJsonSchemasTest {
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0/$VALUES_SCHEMA_FILE") },
-                    { it.node("title").isEqualTo("Configuration for chart $BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0") },
+                    { it.node("title").isEqualTo("Configuration for chart $CHART_NAME:0.2.0") },
                 )
         }
     }
