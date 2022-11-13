@@ -3,12 +3,17 @@ package io.github.fstaudt.helm
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
+import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.properties
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -22,6 +27,7 @@ class JsonSchemaAggregator(
     private val extractSchemasDir: File,
 ) {
     companion object {
+        const val EXTRACTED_GLOBAL_VALUES_TITLE = "Aggregated global values for"
         private val jsonMapper = ObjectMapper().also {
             it.registerModule(KotlinModule.Builder().build())
             it.enable(SerializationFeature.INDENT_OUTPUT)
@@ -37,7 +43,9 @@ class JsonSchemaAggregator(
         jsonSchema.put("\$id", "${chart.name}/${chart.version}/${AGGREGATED_SCHEMA_FILE}")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
         jsonSchema.updateDownloadedDependencyReferencesFor(chart)
+        jsonSchema.removeGeneratedGlobalDescription()
         jsonSchema.setExtractedDependencyReferencesFrom(extractSchemasDir, extractSchemasDir.name)
+        jsonSchema.addGlobalPropertiesDescriptionFor(chart)
         return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 
@@ -51,43 +59,69 @@ class JsonSchemaAggregator(
         }
     }
 
-    private fun ObjectNode.setExtractedDependencyReferencesFrom(extractSchemasDir: File, refPrefix: String) {
-        with(objectNode("properties")) {
-            extractSchemasDir.listFiles(FileFilter { it.isDirectory })?.forEach {
+    private fun ObjectNode.removeGeneratedGlobalDescription() {
+        properties().global().allOf().also { allOf ->
+            allOf.removeAll { it.get("title")?.textValue()?.startsWith(GLOBAL_VALUES_TITLE) ?: false }
+        }
+    }
+
+    private fun ObjectNode.setExtractedDependencyReferencesFrom(schemasDir: File, refPrefix: String) {
+        with(properties()) {
+            schemasDir.listFiles(FileFilter { it.isDirectory })?.forEach {
                 with(objectNode(it.name)) {
                     if (it.containsFile(HELM_SCHEMA_FILE)) {
                         put("\$ref", "$refPrefix/${it.name}/$HELM_SCHEMA_FILE")
                     }
-                    objectNode("properties").objectNode("global").put("additionalProperties", false)
                     setExtractedDependencyReferencesFrom(it, "$refPrefix/${it.name}")
+                    properties().global().put("additionalProperties", false)
+                    addGlobalPropertiesDescriptionFor("$refPrefix/${it.name}".removePrefix("${extractSchemasDir.name}/"))
                 }
                 addGlobalPropertiesFrom(it, refPrefix)
             }
         }
     }
 
-    private fun ObjectNode.addGlobalPropertiesFrom(extractSchemasDir: File, refPrefix: String) {
-        if (extractSchemasDir.containsFile(HELM_SCHEMA_FILE)) {
-            val ref = "$refPrefix/${extractSchemasDir.name}/$HELM_SCHEMA_FILE#/properties/global"
-            objectNode("global").allOf().add(ObjectNode(nodeFactory).put("\$ref", ref))
+    private fun ObjectNode.addGlobalPropertiesFrom(schemasDir: File, refPrefix: String) {
+        if (schemasDir.containsFile(HELM_SCHEMA_FILE)) {
+            val ref = "$refPrefix/${schemasDir.name}/$HELM_SCHEMA_FILE#/properties/global"
+            global().allOf().add(ObjectNode(nodeFactory).put("\$ref", ref))
         }
-        if (extractSchemasDir.hasSubDirectories()) {
-            extractSchemasDir.listFiles()?.forEach {
-                addGlobalPropertiesFrom(it, "$refPrefix/${extractSchemasDir.name}")
+        if (schemasDir.hasSubDirectories()) {
+            schemasDir.listFiles()?.forEach {
+                addGlobalPropertiesFrom(it, "$refPrefix/${schemasDir.name}")
             }
         }
     }
 
+    private fun ObjectNode.addGlobalPropertiesDescriptionFor(chart: Chart) {
+        val dependencyLabels = chart.dependencies.joinToString("") { "$NEW_LINE- ${it.fullName()}" }
+        val htmlDependencyLabels = chart.dependencies.joinToString("", "<ul>", "</ul>") {
+            if (repositoryMappings.containsKey(it.repository)) {
+                "<li><a href='${it.fullUri()}'>${it.fullName()}</a></li>"
+            } else {
+                "<li>${it.fullName()}</li>"
+            }
+        }
+        properties().global().allOf().add(
+            ObjectNode(nodeFactory)
+                .put("title", "$GLOBAL_VALUES_TITLE ${chart.name}:${chart.version}")
+                .put("description", "$NEW_LINE $GLOBAL_VALUES_DESCRIPTION: $dependencyLabels")
+                .put("x-intellij-html-description", "<br>$GLOBAL_VALUES_DESCRIPTION: $htmlDependencyLabels")
+        )
+    }
+
+    private fun ObjectNode.addGlobalPropertiesDescriptionFor(dependencyName: String) {
+        properties().global().allOf().add(
+            ObjectNode(nodeFactory)
+                .put("title", "$EXTRACTED_GLOBAL_VALUES_TITLE $dependencyName dependency")
+                .put("description", NEW_LINE)
+        )
+    }
+
+    private fun ChartDependency.fullUri() = repositoryMappings[repository]?.let { "${it.baseUri}/$name/$version" }
+
     private fun File.hasSubDirectories() = listFiles(FileFilter { it.isDirectory })?.any() ?: false
     private fun File.containsFile(fileName: String) = listFiles(FileFilter { it.name == fileName })?.any() ?: false
-
-    private fun ObjectNode.objectNode(propertyName: String): ObjectNode {
-        return get(propertyName) as? ObjectNode ?: ObjectNode(nodeFactory).also { set<ObjectNode>(propertyName, it) }
-    }
-
-    private fun ObjectNode.allOf(): ArrayNode {
-        return get("allOf") as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ObjectNode>("allOf", it) }
-    }
 
     private data class RefMapping(val baseUri: String, val mappedBaseUri: String) {
         fun matches(ref: JsonNode) = ref.textValue().startsWith(baseUri)

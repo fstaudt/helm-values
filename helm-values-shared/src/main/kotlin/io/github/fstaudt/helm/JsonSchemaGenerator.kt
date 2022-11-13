@@ -2,12 +2,16 @@ package io.github.fstaudt.helm
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.properties
 import io.github.fstaudt.helm.model.Chart
+import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import java.net.URI
 
@@ -18,22 +22,23 @@ class JsonSchemaGenerator(
 
     companion object {
         const val GENERATION_DIR = "generated"
+        const val GLOBAL_VALUES_TITLE = "Aggregated global values for chart"
+        const val GLOBAL_VALUES_DESCRIPTION = "Aggregation of global values of chart and its dependencies"
         private val jsonMapper = ObjectMapper().also {
             it.registerModule(KotlinModule.Builder().build())
             it.enable(SerializationFeature.INDENT_OUTPUT)
         }
-
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
     }
 
     fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
         val jsonSchema = chart.toValuesJsonSchema()
-        jsonSchema.objectNode("properties").objectNode("global").putGlobalProperties(chart)
+        jsonSchema.properties().global().putGlobalProperties(chart)
         jsonSchema.put("additionalProperties", false)
         chart.dependencies.forEach { dep ->
             repositoryMappings[dep.repository]?.let {
                 val ref = "${it.baseUri}/${dep.name}/${dep.version}/${it.valuesSchemaFile}".toRelativeUri()
-                jsonSchema.objectNode("properties").objectNode(dep.aliasOrName()).put("\$ref", ref)
+                jsonSchema.properties().objectNode(dep.aliasOrName()).put("\$ref", ref)
             }
             dep.condition?.toPropertiesObjectNodeIn(jsonSchema)
                 ?.put("title", "Enable ${dep.aliasOrName()} dependency (${dep.fullName()})")
@@ -56,9 +61,24 @@ class JsonSchemaGenerator(
                         allOf.add(ObjectNode(nodeFactory).put("\$ref", globalRef))
                     }
                 }
+                allOf.add(globalPropertiesDescriptionFor(chart))
             }
         }
     }
+
+    private fun globalPropertiesDescriptionFor(chart: Chart): ObjectNode {
+        val dependencies = chart.dependencies.filter { repositoryMappings.containsKey(it.repository) }
+        val dependencyLabels = dependencies.joinToString("") { "$NEW_LINE- ${it.fullName()}" }
+        val htmlDependencyLabels = dependencies.joinToString("", "<ul>", "</ul>") {
+            "<li><a href='${it.fullUri()}'>${it.fullName()}</a></li>"
+        }
+        return ObjectNode(nodeFactory)
+            .put("title", "$GLOBAL_VALUES_TITLE ${chart.name}:${chart.version}")
+            .put("description", "$NEW_LINE $GLOBAL_VALUES_DESCRIPTION: $dependencyLabels")
+            .put("x-intellij-html-description", "<br>$GLOBAL_VALUES_DESCRIPTION: $htmlDependencyLabels")
+    }
+
+    private fun ChartDependency.fullUri() = repositoryMappings[repository]?.let { "${it.baseUri}/$name/$version" }
 
     private fun Chart.toValuesJsonSchema(): ObjectNode {
         return ObjectNode(nodeFactory)
@@ -82,17 +102,9 @@ class JsonSchemaGenerator(
         }
     }
 
-    private fun ObjectNode.objectNode(propertyName: String): ObjectNode {
-        return get(propertyName) as? ObjectNode ?: ObjectNode(nodeFactory).also { set<ObjectNode>(propertyName, it) }
-    }
-
-    private fun ObjectNode.allOf(): ArrayNode {
-        return get("allOf") as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ObjectNode>("allOf", it) }
-    }
-
     private fun String.toPropertiesObjectNodeIn(jsonSchema: ObjectNode): ObjectNode {
         return split('.').fold(jsonSchema) { node: ObjectNode, property: String ->
-            node.objectNode("properties").objectNode(property)
+            node.properties().objectNode(property)
         }
     }
 }
