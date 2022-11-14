@@ -85,6 +85,16 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
+    fun `aggregate should skip dependencies without version`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, null, APPS, "no-version")
+        ))
+        testProject.initExtractedSchemas(EMBEDDED_SCHEMA)
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").isObject.doesNotContainKeys(EXTERNAL_SCHEMA, "no-version")
+    }
+
+    @Test
     fun `aggregate should document list of dependencies in description of global values`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
@@ -291,12 +301,19 @@ internal class JsonSchemaAggregatorTest {
         ))
         testProject.initExtractedSchemas("$EMBEDDED_SCHEMA-alias")
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json,
-            {
-                it.node("properties.$EMBEDDED_SCHEMA-alias.\$ref")
-                    .isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE")
-            }
-        )
+        assertThatJson(json).node("properties.$EMBEDDED_SCHEMA-alias.\$ref")
+            .isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE")
+    }
+
+    @Test
+    fun `aggregate should aggregate extracted JSON schemas for dependency without repository`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, null)
+        ))
+        testProject.initExtractedSchemas(EMBEDDED_SCHEMA)
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties.$EMBEDDED_SCHEMA.\$ref")
+            .isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
     }
 
     @Test

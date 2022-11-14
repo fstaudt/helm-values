@@ -33,7 +33,7 @@ class JsonSchemaExtractor(
     fun extract(chart: Chart) {
         extractSchemasDir.deleteRecursively()
         extractSchemasDir.mkdirs()
-        chart.dependencies.forEach { dependency ->
+        chart.dependencies.filter { it.version != null }.forEach { dependency ->
             if (!repositoryMappings.contains(dependency.repository)) {
                 extractSchema(dependency)
             }

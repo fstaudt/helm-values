@@ -51,10 +51,10 @@ internal class JsonSchemaExtractorTest {
         testProject.initHelmResources(EMBEDDED_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and(
-                { it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION") }
-            )
+            .hasContent().and({
+                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
+            })
     }
 
     @Test
@@ -65,10 +65,10 @@ internal class JsonSchemaExtractorTest {
         testProject.initHelmResources(EMBEDDED_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and(
-                { it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION") }
-            )
+            .hasContent().and({
+                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
+            })
     }
 
     @Test
@@ -79,10 +79,10 @@ internal class JsonSchemaExtractorTest {
         testProject.initHelmResources(EMBEDDED_SUB_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and(
-                { it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION") }
-            )
+            .hasContent().and({
+                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
+            })
     }
 
     @Test
@@ -93,15 +93,15 @@ internal class JsonSchemaExtractorTest {
         testProject.initHelmResources(MULTIPLE_EMBEDDED_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$MULTIPLE_EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and(
-                { it.node("\$id").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("title").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA $SUBCHART_VERSION") }
-            )
+            .hasContent().and({
+                it.node("\$id").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA $SUBCHART_VERSION")
+            })
         assertThatJsonFile("$extractSchemasDir/$MULTIPLE_EMBEDDED_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and(
-                { it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE") },
-                { it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION") }
-            )
+            .hasContent().and({
+                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
+            })
     }
 
     @Test
@@ -111,21 +111,19 @@ internal class JsonSchemaExtractorTest {
         ))
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$MISSING_ARCHIVE/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and(
-                {
-                    it.node("\$schema").isEqualTo(SCHEMA_VERSION)
-                    it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
-                    it.node("type").isEqualTo("object")
-                    it.node("additionalProperties").isBoolean.isFalse
-                    it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
-                    it.node("description").isString
-                        .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
-                        .contains("Archive not found")
-                    it.node("x-intellij-html-description").isString
-                        .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
-                        .contains("Archive not found")
-                },
-            )
+            .hasContent().and({
+                it.node("\$schema").isEqualTo(SCHEMA_VERSION)
+                it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("type").isEqualTo("object")
+                it.node("additionalProperties").isBoolean.isFalse
+                it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
+                it.node("description").isString
+                    .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
+                    .contains("Archive not found")
+                it.node("x-intellij-html-description").isString
+                    .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
+                    .contains("Archive not found")
+            })
     }
 
     @Test
@@ -135,18 +133,16 @@ internal class JsonSchemaExtractorTest {
         ))
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$MISSING_ARCHIVE-alias/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and(
-                {
-                    it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
-                    it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
-                    it.node("description").isString
-                        .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
-                        .contains("Archive not found")
-                    it.node("x-intellij-html-description").isString
-                        .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
-                        .contains("Archive not found")
-                },
-            )
+            .hasContent().and({
+                it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
+                it.node("description").isString
+                    .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
+                    .contains("Archive not found")
+                it.node("x-intellij-html-description").isString
+                    .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
+                    .contains("Archive not found")
+            })
     }
 
     @Test
@@ -157,21 +153,19 @@ internal class JsonSchemaExtractorTest {
         testProject.initHelmResources(INVALID_ARCHIVE, SUBCHART_VERSION)
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$INVALID_ARCHIVE/values.schema.json").isFile
-            .hasContent().and(
-                {
-                    it.node("\$schema").isEqualTo(SCHEMA_VERSION)
-                    it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
-                    it.node("type").isEqualTo("object")
-                    it.node("additionalProperties").isBoolean.isFalse
-                    it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
-                    it.node("description").isString
-                        .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
-                        .contains("IOException - ")
-                    it.node("x-intellij-html-description").isString
-                        .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
-                        .contains("IOException - ")
-                },
-            )
+            .hasContent().and({
+                it.node("\$schema").isEqualTo(SCHEMA_VERSION)
+                it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("type").isEqualTo("object")
+                it.node("additionalProperties").isBoolean.isFalse
+                it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
+                it.node("description").isString
+                    .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
+                    .contains("IOException - ")
+                it.node("x-intellij-html-description").isString
+                    .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
+                    .contains("IOException - ")
+            })
     }
 
     @Test
@@ -182,18 +176,16 @@ internal class JsonSchemaExtractorTest {
         testProject.initHelmResources(INVALID_ARCHIVE, SUBCHART_VERSION)
         extractor.extract(chart)
         assertThatJsonFile("$extractSchemasDir/$INVALID_ARCHIVE-alias/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and(
-                {
-                    it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
-                    it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
-                    it.node("description").isString
-                        .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
-                        .contains("IOException - ")
-                    it.node("x-intellij-html-description").isString
-                        .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
-                        .contains("IOException - ")
-                },
-            )
+            .hasContent().and({
+                it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
+                it.node("description").isString
+                    .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
+                    .contains("IOException - ")
+                it.node("x-intellij-html-description").isString
+                    .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
+                    .contains("IOException - ")
+            })
     }
 
     @Test
@@ -207,11 +199,34 @@ internal class JsonSchemaExtractorTest {
     }
 
     @Test
-    fun `extract should not extract JSON schemas from dependency when repository is in repository mappings`() {
+    fun `extract should ignore dependency when repository is in repository mappings`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(NO_SCHEMA, SUBCHART_VERSION, CHARTS)
         ))
         testProject.initHelmResources(NO_SCHEMA, SUBCHART_VERSION)
+        extractor.extract(chart)
+        assertThat(extractSchemasDir).isEmptyDirectory
+    }
+
+    @Test
+    fun `extract should extract JSON schemas when dependency has no repository`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, SUBCHART_VERSION, null),
+        ))
+        testProject.initHelmResources(EMBEDDED_SCHEMA, SUBCHART_VERSION)
+        extractor.extract(chart)
+        assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+            .hasContent().and({
+                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
+            })
+    }
+
+    @Test
+    fun `extract should ignore dependencies without version`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, null, THIRDPARTY, "no-version"),
+        ))
         extractor.extract(chart)
         assertThat(extractSchemasDir).isEmptyDirectory
     }

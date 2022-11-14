@@ -68,6 +68,16 @@ internal class JsonSchemaGeneratorTest {
     }
 
     @Test
+    fun `generateValuesJsonSchema should ignore dependencies without version or repository`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, null, "no-repository"),
+            ChartDependency(EXTERNAL_SCHEMA, null, APPS, "no-version"),
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties").isObject.doesNotContainKeys("no-repository", "no-version")
+    }
+
+    @Test
     fun `generateValuesJsonSchema should use alias as property names`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
@@ -144,6 +154,25 @@ internal class JsonSchemaGeneratorTest {
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title")
                 .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($THIRDPARTY/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
+    }
+
+    @Test
+    fun `generateValuesJsonSchema should set property for dependency condition for dependencies without version or repository`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, null, "no-repository", "no-repository.enabled"),
+            ChartDependency(EXTERNAL_SCHEMA, null, APPS, "no-version", "no-version.enabled"),
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.no-repository.properties.enabled").and({
+            it.node("title").isEqualTo("Enable no-repository dependency ($EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
+        assertThatJson(json).node("properties.no-version.properties.enabled").and({
+            it.node("title").isEqualTo("Enable no-version dependency ($APPS/$EXTERNAL_SCHEMA)")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("type").isEqualTo("boolean")
         })

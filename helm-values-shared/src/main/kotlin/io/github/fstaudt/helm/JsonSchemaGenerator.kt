@@ -43,11 +43,13 @@ class JsonSchemaGenerator(
         val jsonSchema = chart.toValuesJsonSchema()
         jsonSchema.properties().global().putGlobalProperties(chart)
         jsonSchema.put("additionalProperties", false)
-        chart.dependencies.forEach { dep ->
+        chart.dependencies.filter { it.version != null }.forEach { dep ->
             repositoryMappings[dep.repository]?.let {
                 val ref = "${it.baseUri}/${dep.name}/${dep.version}/${it.valuesSchemaFile}".toRelativeUri()
                 jsonSchema.properties().objectNode(dep.aliasOrName()).put("\$ref", ref)
             }
+        }
+        chart.dependencies.forEach { dep ->
             dep.condition?.toPropertiesObjectNodeIn(jsonSchema)
                 ?.put("title", "Enable ${dep.aliasOrName()} dependency (${dep.fullName()})")
                 ?.put("description", NEW_LINE)

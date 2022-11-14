@@ -399,6 +399,16 @@ internal class JsonSchemaDownloaderTest {
     }
 
     @Test
+    fun `download should ignore dependencies without version or repository`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, null, "no-repository"),
+            ChartDependency(EXTERNAL_SCHEMA, null, CHARTS, "no-version"),
+        ))
+        downloader.download(chart)
+        assertThat(downloadDir).isEmptyDirectory
+    }
+
+    @Test
     fun `download should create empty downloads directory when chart has no dependencies`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         downloader.download(chart)

@@ -41,7 +41,7 @@ class JsonSchemaDownloader(
 
     fun download(chart: Chart) {
         downloadSchemasDir.mkdirs()
-        chart.dependencies.forEach { dependency ->
+        chart.dependencies.filter { it.version != null }.forEach { dependency ->
             repositoryMappings[dependency.repository]?.let {
                 downloadSchema(dependency, it, it.valuesSchemaFile)
             }
