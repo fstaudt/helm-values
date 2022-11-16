@@ -1,7 +1,37 @@
+## 0.4.0 - 2022-11-16
+
+- :sparkles: (intellij) actions to clear JSON schemas for current chart or all charts
+- :sparkles: merge global-values.schema.json in global properties of
+  values.schema.json ([#11](https://github.com/fstaudt/helm-values/issues/11))
+- :sparkles: extract should not extract JSON schemas from dependency when repository is in repository mappings
+- :sparkles: reuse patch of values.schema.json for
+  aggregated-values.schema.json ([#12](https://github.com/fstaudt/helm-values/issues/12))
+- :sparkles: aggregate global values of extracted JSON schemas in aggregated JSON
+  schema ([#13](https://github.com/fstaudt/helm-values/issues/13))
+- :sparkles: improve readability of error messages in fallback
+  schemas ([#14](https://github.com/fstaudt/helm-values/issues/14))
+- :sparkles: title and description for aggregation of global values
+- :sparkles: schema for validation of extra values applied on packaged
+  charts ([#16](https://github.com/fstaudt/helm-values/issues/16))
+- :sparkles: plugins renamed to "Helm values"
+- :zap: download should keep schemas already downloaded
+- :zap: (gradle) cache output of task downloadJsonSchemas
+- :bug: (intellij) HelmValuesJsonSchemaProvider should be disabled when virtual file parent is
+  null ([#8](https://github.com/fstaudt/helm-values/issues/8))
+- :bug: extractor should extract charts & sub-charts JSON schemas from dependency archives
+- :bug: Chart.yaml should be correctly parsed when dependency contain no version or
+  repository ([#28](https://github.com/fstaudt/helm-values/issues/28))
+
+**BREAKING CHANGES**:
+
+- :boom: Since [#11](https://github.com/fstaudt/helm-values/issues/11),
+  patch file `global-values.schema.patch.json` is no more used and should be removed.\
+  Patches previously configured in this file must be reintegrated in patch file `values.schema.patch.json`.
+
 ## 0.3.0 - 2022-09-16
 
 - :sparkles: rename patch-*schema.json files to *.schema.patch.json
-- :construction_worker: rename module helm-values-commons to helm-values-shared 
+- :construction_worker: rename module helm-values-commons to helm-values-shared
 - :zap: move internal mappers to companion objects
 - :bug: downloader should ignore invalid $ref and download next $ref
 - :bug: downloader should download JSON schemas in same folder when $ref is relative in same folder
