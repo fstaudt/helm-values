@@ -12,8 +12,8 @@ gradlePlugin {
     plugins {
         register(pluginName) {
             id = "io.github.fstaudt.$pluginName"
-            displayName = "Helm values assistant"
-            description = "Generate JSON schemas to validate values of complex Helm charts with Gradle!"
+            displayName = "Helm values"
+            description = "Generate JSON schemas to help writing values for Helm charts!"
             implementationClass = "$group.gradle.HelmValuesPlugin"
             version = pluginVersion
         }

@@ -1,8 +1,8 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>io.github.fstaudt.helm</id>
-    <name>Helm Values Assistant</name>
-    <vendor url="https://github.com/fstaudt/">fstaudt</vendor>
+    <name>Helm Values</name>
+    <vendor url="https://github.com/fstaudt/helm-values">fstaudt</vendor>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="JavaScript">
         <JsonSchema.ProviderFactory
@@ -16,7 +16,7 @@
         <applicationConfigurable parentId="tools"
                                  instance="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
                                  id="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
-                                 displayName="Helm Values Assistant"/>
+                                 displayName="Helm Values"/>
     </extensions>
     <actions>
         <group id="ProjectViewPopupMenu.HelmValues" compact="true">
