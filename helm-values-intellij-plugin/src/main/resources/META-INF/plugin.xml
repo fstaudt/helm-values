@@ -27,12 +27,12 @@
                 <add-to-group group-id="EditorPopupMenu2" anchor="first"/>
                 <add-to-group group-id="EditorTabPopupMenuEx" anchor="first"/>
                 <action id="HelmValues.Aggregate" text="Refresh JSON Schemas for Current Chart"
-                        description="Download and extract JSON schemas from dependencies, then refresh aggregated JSON schema for Helm values of current chart"
+                        description="Download and extract JSON schemas from dependencies, then refresh aggregated JSON schemas for current chart"
                         class="io.github.fstaudt.helm.idea.actions.AggregateAction"
                         icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                 </action>
                 <action id="HelmValues.Clear" text="Clear JSON Schemas for Current Chart"
-                        description="Clear extracted, downloaded and aggregated JSON schemas for Helm values of current chart"
+                        description="Clear extracted, downloaded and aggregated JSON schemas for current chart"
                         class="io.github.fstaudt.helm.idea.actions.ClearAction"
                         icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                 </action>
@@ -40,14 +40,14 @@
         </group>
 
         <action id="HelmValues.AggregateAll"
-                text="Refresh JSON Schemas for Helm Values of All Charts in Project"
-                description="Download and extract JSON schemas from dependencies, then refresh aggregated JSON schemas for Helm values of all charts in project"
+                text="Refresh JSON Schemas for All Charts in Project"
+                description="Download and extract JSON schemas from dependencies, then refresh aggregated JSON schemas for all charts in project"
                 class="io.github.fstaudt.helm.idea.actions.AggregateAllAction"
                 icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
         </action>
         <action id="HelmValues.ClearAll"
-                text="Clear JSON Schemas for Helm Values of All Charts in Project"
-                description="Clear all extracted, downloaded and aggregated JSON schemas for Helm values of all charts in project"
+                text="Clear JSON Schemas for All Charts in Project"
+                description="Clear all extracted, downloaded and aggregated JSON schemas for all charts in project"
                 class="io.github.fstaudt.helm.idea.actions.ClearAllAction"
                 icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
         </action>
