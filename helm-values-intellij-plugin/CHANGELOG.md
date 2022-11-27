@@ -12,6 +12,18 @@
 
 ### 🔥 Removed
 
+## 0.4.1 - 2022-11-27
+
+### ✨ New
+
+- add generation info in generated schemas
+- add actions for all charts in popup menu
+
+### 🐛 Fixed
+
+- download should update downloaded schemas when dependency version is
+  updated ([#31](https://github.com/fstaudt/helm-values/issues/31))
+
 ## 0.4.0 - 2022-11-16
 
 ### ✨ New

@@ -1,3 +1,10 @@
+## 0.4.1 - 2022-11-27
+
+- :sparkles: add generation info in generated schemas
+- :sparkles: (intellij) add actions for all charts in popup menu
+- :bug: download should update downloaded schemas when dependency version is
+  updated ([#31](https://github.com/fstaudt/helm-values/issues/31))
+
 ## 0.4.0 - 2022-11-16
 
 - :sparkles: (intellij) actions to clear JSON schemas for current chart or all charts
@@ -39,8 +46,10 @@
 - :construction_worker: bump gradle from 7.5 to 7.5.1
 
 **BREAKING CHANGES**:
+
 - :boom: imports of helm-values-commons must be renamed to helm-values-shared
-- :boom: files patch-*.schema.json must be renamed to *.schema.patch.json and must be stored in same folder as Chart.yaml instead of root directory
+- :boom: files patch-*.schema.json must be renamed to *.schema.patch.json and must be stored in same folder as
+  Chart.yaml instead of root directory
 
 ## 0.2.0 - 2022-08-10
 
