@@ -34,8 +34,13 @@ jobs:
       - name: "Sign shared library for mavenCentral"
         if: github.ref == 'refs/heads/main'
         run: ./gradlew :helm-values-shared:signMavenJavaPublication -Psigning.gnupg.keyName=${{ secrets.GPG_KEY_NAME }} -Psigning.gnupg.passphrase="${{ secrets.GPG_PASSPHRASE }}"
-#      - name: "Qodana - Code Inspection"
-#        uses: JetBrains/qodana-action@v2022.2.3
+      - name: "Sign IntelliJ plugin for IntelliJ marketplace"
+        if: github.ref == 'refs/heads/main'
+        env:
+          CERTIFICATE_CHAIN: ${{ secrets.INTELLIJ_CERTIFICATE_CHAIN }}
+          PRIVATE_KEY: ${{ secrets.INTELLIJ_PRIVATE_KEY }}
+          PRIVATE_KEY_PASSWORD: ${{ secrets.INTELLIJ_PRIVATE_KEY_PASSWORD }}
+        run: ./gradlew :helm-values-intellij-plugin:signPlugin
       - name: "Export Properties & products releases"
         id: properties
         shell: bash
@@ -67,9 +72,9 @@ jobs:
         shell: bash
         run: |
           cd ${{ github.workspace }}/helm-values-intellij-plugin/build/distributions
-          FILENAME=`ls *.zip`
-          unzip "$FILENAME" -d content
-          echo "filename=${FILENAME:0:-4}" >> $GITHUB_OUTPUT
+          FILENAME="${{ steps.properties.outputs.name }}-${{ steps.properties.outputs.version }}"
+          unzip "$FILENAME.zip" -d content
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
       - name: "Upload IntelliJ Plugin Artifact"
         uses: actions/upload-artifact@v3.1.1
         with:
