@@ -20,6 +20,7 @@ import io.github.fstaudt.helm.model.JsonSchemaRepository
 import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.DEFAULT_JSON_SCHEMA_REPOSITORY
 import java.io.File
 import java.io.FileFilter
+import java.net.URI
 
 class JsonSchemaAggregator(
     private val repositoryMappings: Map<String, JsonSchemaRepository>,
@@ -130,7 +131,10 @@ class JsonSchemaAggregator(
 
     private fun ChartDependency.toRefMapping(): RefMapping? {
         return repositoryMappings[repository]?.let {
-            RefMapping("${it.baseUri}/$name/$version", "${downloadSchemasDir.name}/${aliasOrName()}")
+            RefMapping(
+                "${it.baseUri}/$name/$version",
+                "${downloadSchemasDir.name}${URI(it.baseUri).path}/$name/$version"
+            )
         }
     }
 }

@@ -49,6 +49,8 @@ class AggregateJsonSchemaTest {
         private const val THIRDPARTY = "@thirdparty"
         private const val EXTERNAL_SCHEMA = "external-json-schema"
         private const val EXTERNAL_VERSION = "0.2.0"
+        private const val EXTERNAL_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE"
+        private const val EXTERNAL_GLOBAL_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
         private const val NO_SCHEMA = "no-json-schema"
     }
@@ -134,10 +136,10 @@ class AggregateJsonSchemaTest {
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
             it.node("global.allOf").isArray.hasSize(3)
             it.node("global.allOf[0].\$ref")
-                .isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE#/properties/global")
-            it.node("global.allOf[1].\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$GLOBAL_VALUES_SCHEMA_FILE")
+                .isEqualTo("$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH#/properties/global")
+            it.node("global.allOf[1].\$ref").isEqualTo("$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_GLOBAL_SCHEMA_PATH")
             it.node("global.allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
-            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
             it.isObject.doesNotContainKey(NO_SCHEMA)
         })
     }

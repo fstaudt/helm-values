@@ -46,7 +46,8 @@ internal class JsonSchemaDownloaderTest {
         private const val REF_SCHEMA = "ref-json-schema"
         private const val REF_VERSION = "0.4.0"
         private const val REF_VALUES_SCHEMA_PATH = "$REF_SCHEMA/$REF_VERSION/$VALUES_SCHEMA_FILE"
-        private const val REF_GLOBAL_VALUES_SCHEMA_PATH = "$REF_SCHEMA/$REF_VERSION/$GLOBAL_VALUES_SCHEMA_FILE"
+        private const val SUB_SCHEMA_FILE = "sub-values.schema.json"
+        private const val REF_SUB_SCHEMA_PATH = "$REF_SCHEMA/$REF_VERSION/$SUB_SCHEMA_FILE"
         private const val THIRDPARTY_SCHEMA = "thirdparty-json-schema"
         private const val THIRDPARTY_VERSION = "0.5.0"
         private const val THIRDPARTY_VALUES_SCHEMA_PATH = "$THIRDPARTY_SCHEMA/$THIRDPARTY_VERSION/$VALUES_SCHEMA_FILE"
@@ -86,18 +87,18 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency("unknown-json-schema", "0.1.0", "@unknown")
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
     }
 
     @Test
-    fun `download should use alias to download JSON schemas of dependencies from JSON schema repository`() {
+    fun `download should not use alias to download JSON schemas of dependencies from JSON schema repository`() {
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS, "$EXTERNAL_SCHEMA-alias")
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}-alias/$VALUES_SCHEMA_FILE").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
     }
 
@@ -108,12 +109,12 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, PROTECTED)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+        assertThatJsonFile("$downloadDir/$PROTECTED_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
     }
 
     @Test
-    fun `download should download JSON schemas and update $ref in downloaded schema when $ref is relative`() {
+    fun `download should download JSON schemas and keep $ref in downloaded schemas when $ref is relative`() {
         stubForSchema("$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE",
             """
             "properties": {
@@ -126,27 +127,27 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "global": {
-                "${'$'}ref": "$GLOBAL_VALUES_SCHEMA_FILE"
+                "${'$'}ref": "$SUB_SCHEMA_FILE"
                 }
               }
             """.trimIndent())
-        stubForSchema(REF_GLOBAL_VALUES_SCHEMA_PATH)
+        stubForSchema(REF_SUB_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
                 { it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH) },
-                { it.node("properties.ref.\$ref").isEqualTo("$CHARTS_PATH/$REF_VALUES_SCHEMA_PATH") },
+                { it.node("properties.ref.\$ref").isEqualTo("../../$REF_VALUES_SCHEMA_PATH") },
             )
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_VALUES_SCHEMA_PATH").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$REF_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
                 { it.node("\$id").isEqualTo(REF_VALUES_SCHEMA_PATH) },
-                { it.node("properties.global.\$ref").isEqualTo(GLOBAL_VALUES_SCHEMA_FILE) },
+                { it.node("properties.global.\$ref").isEqualTo(SUB_SCHEMA_FILE) },
             )
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_GLOBAL_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(REF_GLOBAL_VALUES_SCHEMA_PATH)
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$REF_SUB_SCHEMA_PATH").isFile
+            .hasContent().node("\$id").isEqualTo(REF_SUB_SCHEMA_PATH)
     }
 
     @Test
@@ -164,17 +165,17 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}/$VALUES_SCHEMA_FILE").isFile
-            .hasContent().and(
-                { it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH) },
-                { it.node("properties.global.\$ref").isEqualTo(RELATIVE_JSON_SCHEMA) },
-            )
-        assertThatJsonFile("$downloadDir/${EXTERNAL_SCHEMA}/$RELATIVE_JSON_SCHEMA").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
+            .hasContent().and({
+                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.global.\$ref").isEqualTo(RELATIVE_JSON_SCHEMA)
+            })
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$RELATIVE_JSON_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(RELATIVE_JSON_SCHEMA_PATH)
     }
 
     @Test
-    fun `download should download JSON schemas and update $ref in downloaded schema when $ref is relative with fragment`() {
+    fun `download should download JSON schemas and keep $ref in downloaded schema when $ref is relative with fragment`() {
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH,
             """
             "properties": {
@@ -188,15 +189,17 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
-            .hasContent()
-            .node("properties.refs.\$ref").isEqualTo("$CHARTS_PATH/$REF_VALUES_SCHEMA_PATH#/objects/refs")
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$CHARTS_PATH/$REF_VALUES_SCHEMA_PATH").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
+            .hasContent().and({
+                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.\$ref").isEqualTo("../../$REF_VALUES_SCHEMA_PATH#/objects/refs")
+            })
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$REF_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(REF_VALUES_SCHEMA_PATH)
     }
 
     @Test
-    fun `download should download JSON schemas and update $ref in downloaded schema when $ref is relative and protected`() {
+    fun `download should download JSON schemas and keep $ref in downloaded schema when $ref is relative and protected`() {
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH,
             """
             "properties": {
@@ -211,11 +214,13 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
-            .hasContent()
-            .node("properties.refs.\$ref")
-            .isEqualTo("$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH#/objects/refs")
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
+            .hasContent().and({
+                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.\$ref")
+                    .isEqualTo("../../../$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH#/objects/refs")
+            })
+        assertThatJsonFile("$downloadDir/$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(PROTECTED_VALUES_SCHEMA_PATH)
     }
 
@@ -235,10 +240,13 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
-            .hasContent().node("properties.refs.\$ref").isEqualTo("$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH")
-
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
+            .hasContent().and({
+                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.\$ref")
+                    .isEqualTo("../../../$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH")
+            })
+        assertThatJsonFile("$downloadDir/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(THIRDPARTY_VALUES_SCHEMA_PATH)
     }
 
@@ -258,10 +266,12 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
-            .hasContent().node("properties.refs.\$ref").isEqualTo("$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH")
-
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
+            .hasContent().and({
+                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.\$ref").isEqualTo("../../../$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH")
+            })
+        assertThatJsonFile("$downloadDir/$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(PROTECTED_VALUES_SCHEMA_PATH)
     }
 
@@ -281,10 +291,13 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
-            .hasContent().node("properties.refs.\$ref")
-            .isEqualTo("$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH#/objects/refs")
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
+            .hasContent().and({
+                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.\$ref")
+                    .isEqualTo("../../../$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH#/objects/refs")
+            })
+        assertThatJsonFile("$downloadDir/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(THIRDPARTY_VALUES_SCHEMA_PATH)
     }
 
@@ -303,20 +316,23 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("properties.refs.\$ref").isEqualTo("#/objects/refs")
     }
 
     @Test
     fun `download should keep schemas already downloaded`() {
-        testProject.initDownloadedSchemas(EXTERNAL_SCHEMA)
+        File(downloadDir, "$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").let {
+            it.parentFile.mkdirs()
+            it.writeText("{}")
+        }
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
-            .hasContent().isObject.doesNotContainKey("\$id")
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
+            .hasContent().isObject.isEmpty()
     }
 
     @Test
@@ -338,12 +354,12 @@ internal class JsonSchemaDownloaderTest {
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS)
         ))
         downloader.download(chart)
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
                 { it.node("properties.refs.\$ref").isEqualTo("../\\\"invalid/$HELM_SCHEMA_FILE") },
                 { it.node("properties.next.\$ref").isEqualTo(RELATIVE_JSON_SCHEMA) },
             )
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$RELATIVE_JSON_SCHEMA").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$RELATIVE_JSON_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(RELATIVE_JSON_SCHEMA_PATH)
     }
 
@@ -355,7 +371,7 @@ internal class JsonSchemaDownloaderTest {
         ))
         downloader.download(chart)
         val baseUrl = "$REPOSITORY_URL/$CHARTS_PATH"
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
                 {
                     it.node("\$schema").isEqualTo(SCHEMA_VERSION)
@@ -380,7 +396,7 @@ internal class JsonSchemaDownloaderTest {
         ))
         downloader.download(chart)
         val baseUrl = "$UNAVAILABLE_URL/$CHARTS_PATH"
-        assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
                 {
                     it.node("\$schema").isEqualTo(SCHEMA_VERSION)

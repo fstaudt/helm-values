@@ -107,7 +107,7 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+            assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
                 .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
     }
@@ -142,7 +142,7 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+            assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
                 .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
     }
@@ -162,7 +162,7 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+            assertThatJsonFile("$downloadDir/$PROTECTED_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
                 .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
     }
@@ -185,13 +185,13 @@ class DownloadJsonSchemasTest {
         }
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
-            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+            assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
                 .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
         downloadDir.deleteRecursively()
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
-            assertThatJsonFile("$downloadDir/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE").isFile
+            assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
                 .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
     }

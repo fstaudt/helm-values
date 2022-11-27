@@ -23,12 +23,6 @@ fun testProject(parentFolder: File? = File("build/tmp")): TestProject {
     }
 }
 
-fun TestProject.initDownloadedSchemas(dependencyName: String) {
-    File(downloadSchemasDir, dependencyName).mkdirs()
-    File(downloadSchemasDir, "$dependencyName/$VALUES_SCHEMA_FILE").writeText("{}")
-    File(downloadSchemasDir, "$dependencyName/$GLOBAL_VALUES_SCHEMA_FILE").writeText("{}")
-}
-
 fun TestProject.initExtractedSchemas(dependencyName: String) {
     File(extractSchemasDir, dependencyName).mkdirs()
     File(extractSchemasDir, "$dependencyName/$HELM_SCHEMA_FILE").writeText("{}")

@@ -62,7 +62,8 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             """.trimIndent())
         }
         service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
-        assertThat(File(project.baseDir(), "$CHART_DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")).isFile
+        assertThat(File(project.baseDir(),
+            "$CHART_DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")).isFile
     }
 
     fun `test - aggregate should extract JSON schemas from Helm dependencies`() {
@@ -98,7 +99,8 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().node("properties").and({
                 it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
-                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE")
+                it.node("$EXTERNAL_SCHEMA.\$ref")
+                    .isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
             })
     }
 
