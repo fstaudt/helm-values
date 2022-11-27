@@ -14,6 +14,9 @@ import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import java.net.URI
+import java.time.OffsetDateTime.now
+import java.time.ZoneOffset.UTC
+import java.time.temporal.ChronoUnit.SECONDS
 
 class JsonSchemaGenerator(
     private val repositoryMappings: Map<String, JsonSchemaRepository>,
@@ -94,6 +97,8 @@ class JsonSchemaGenerator(
         return ObjectNode(nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${publicationRepository.baseUri}/$name/$version/${publicationRepository.valuesSchemaFile}")
+            .put("x-generated-by", GENERATOR_LABEL)
+            .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
             .put("title", "Configuration for chart $name:$version")
             .put("description", NEW_LINE)
     }
@@ -102,6 +107,8 @@ class JsonSchemaGenerator(
         return ObjectNode(nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "${publicationRepository.baseUri}/$name/$version/$PACKAGED_SCHEMA_FILE")
+            .put("x-generated-by", GENERATOR_LABEL)
+            .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
             .put("title", "Configuration for packaged chart $name:$version")
             .put("description", NEW_LINE)
     }

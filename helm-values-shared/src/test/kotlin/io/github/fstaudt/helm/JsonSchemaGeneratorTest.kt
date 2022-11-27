@@ -60,6 +60,8 @@ internal class JsonSchemaGeneratorTest {
         assertThatJson(json).and({
             it.node("\$schema").isEqualTo(SCHEMA_VERSION)
             it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
+            it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
+            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")
             it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA)
@@ -315,6 +317,8 @@ internal class JsonSchemaGeneratorTest {
         assertThatJson(json).and({
             it.node("\$schema").isEqualTo(SCHEMA_VERSION)
             it.node("\$id").isEqualTo("$BASE_CHART_URL/$PACKAGED_SCHEMA_FILE")
+            it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
+            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")
             it.node("title").isEqualTo("Configuration for packaged chart $CHART_NAME:$CHART_VERSION")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("properties.global.\$ref").isEqualTo("$AGGREGATED_SCHEMA_FILE#/properties/global")
