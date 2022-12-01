@@ -11,7 +11,7 @@ dependencies {
     api("net.javacrumbs.json-unit:json-unit-assertj:2.36.0") {
         api("net.minidev:json-smart:2.4.8")
     }
-    api("com.github.tomakehurst:wiremock-jre8:2.34.0")
+    api("com.github.tomakehurst:wiremock-jre8:2.35.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:2.14.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
