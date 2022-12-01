@@ -10,9 +10,9 @@ plugins {
 dependencies {
     api("org.apache.httpcomponents.client5:httpclient5:5.1.3")
     api("org.apache.commons:commons-compress:1.22")
-    api("com.fasterxml.jackson.core:jackson-databind:2.14.0")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.0")
+    api("com.fasterxml.jackson.core:jackson-databind:2.14.1")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.1")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.1")
     api("com.github.java-json-tools:json-patch:1.13")
     testImplementation(projects.helmValuesTest)
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
