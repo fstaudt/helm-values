@@ -7,6 +7,7 @@ repositories {
     mavenCentral()
 }
 plugins {
+    kotlin("jvm") version embeddedKotlinVersion apply false
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 val sonatypeUsername: String? by project
