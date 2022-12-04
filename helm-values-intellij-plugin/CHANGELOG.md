@@ -12,7 +12,13 @@
 
 ### 🔥 Removed
 
-## 0.4.1 - 2022-11-27
+## 0.4.2 - Dec 4, 2022
+
+### ✨ New
+
+- support for IntelliJ IDEA 2022.3
+
+## 0.4.1 - Nov 27, 2022
 
 ### ✨ New
 
@@ -24,7 +30,7 @@
 - download should update downloaded schemas when dependency version is
   updated ([#31](https://github.com/fstaudt/helm-values/issues/31))
 
-## 0.4.0 - 2022-11-16
+## 0.4.0 - Nov 16, 2022
 
 ### ✨ New
 
@@ -65,7 +71,7 @@
   patch file `global-values.schema.patch.json` is no more used and should be removed.\
   Patches previously stored in this file must be reintegrated in patch file `values.schema.patch.json`.
 
-## 0.1.0 - 2022-09-19
+## 0.1.0 - Sep 19, 2022
 
 ### ✨ New
 

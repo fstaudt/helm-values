@@ -1,11 +1,15 @@
-## 0.4.1 - 2022-11-27
+## 0.4.2 - Dec 4, 2022
+
+- :sparkles: (intellij) support for IntelliJ IDEA 2022.3
+
+## 0.4.1 - Nov 27, 2022
 
 - :sparkles: add generation info in generated schemas
 - :sparkles: (intellij) add actions for all charts in popup menu
 - :bug: download should update downloaded schemas when dependency version is
   updated ([#31](https://github.com/fstaudt/helm-values/issues/31))
 
-## 0.4.0 - 2022-11-16
+## 0.4.0 - Nov 16, 2022
 
 - :sparkles: (intellij) actions to clear JSON schemas for current chart or all charts
 - :sparkles: merge global-values.schema.json in global properties of
@@ -35,7 +39,7 @@
   patch file `global-values.schema.patch.json` is no more used and should be removed.\
   Patches previously configured in this file must be reintegrated in patch file `values.schema.patch.json`.
 
-## 0.3.0 - 2022-09-16
+## 0.3.0 - Sep 16, 2022
 
 - :sparkles: rename patch-*schema.json files to *.schema.patch.json
 - :construction_worker: rename module helm-values-commons to helm-values-shared
@@ -51,24 +55,24 @@
 - :boom: files patch-*.schema.json must be renamed to *.schema.patch.json and must be stored in same folder as
   Chart.yaml instead of root directory
 
-## 0.2.0 - 2022-08-10
+## 0.2.0 - Aug 10, 2022
 
 - :sparkles: extract business logic in shared library
 
-## 0.1.3 - 2022-06-27
+## 0.1.3 - Jun 27, 2022
 
 - :bug: generated global JSON schema should be empty when chart has no dependencies
 
-## 0.1.2 - 2022-06-26
+## 0.1.2 - Jun 26, 2022
 
 - :bug: tasks should get Chart.yaml in provided sources directory when it is specified
 
-## 0.1.1 - 2022-06-20
+## 0.1.1 - Jun 20, 2022
 
 - :bug: aggregateJsonSchema should treat aggregated patch file as input when it exists
 - :bug: generateJsonSchemas should treat patch files as inputs when they exist
 
-## 0.1.0 - 2022-06-20
+## 0.1.0 - Jun 20, 2022
 
 - :sparkles: aggregate JSON schemas of Helm chart dependencies for assistance on Helm values in your IDE
 - :sparkles: download & publication to external JSON schemas repositories
