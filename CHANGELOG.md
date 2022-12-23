@@ -1,3 +1,12 @@
+## 0.5.0 - Dec 23, 2022
+
+- :sparkles: support for inter-dependent charts stored in the same repository
+  ([#30](https://github.com/fstaudt/helm-values/issues/30))
+- :sparkles: (intellij) run processing of intellij actions in background
+  ([#17](https://github.com/fstaudt/helm-values/issues/17))
+- :sparkles: (intellij) notifications of processing for intellij actions
+  ([#17](https://github.com/fstaudt/helm-values/issues/17))
+
 ## 0.4.2 - Dec 4, 2022
 
 - :sparkles: (intellij) support for IntelliJ IDEA 2022.3
@@ -6,32 +15,32 @@
 
 - :sparkles: add generation info in generated schemas
 - :sparkles: (intellij) add actions for all charts in popup menu
-- :bug: download should update downloaded schemas when dependency version is
-  updated ([#31](https://github.com/fstaudt/helm-values/issues/31))
+- :bug: download should update downloaded schemas when dependency version is updated
+  ([#31](https://github.com/fstaudt/helm-values/issues/31))
 
 ## 0.4.0 - Nov 16, 2022
 
 - :sparkles: (intellij) actions to clear JSON schemas for current chart or all charts
-- :sparkles: merge global-values.schema.json in global properties of
-  values.schema.json ([#11](https://github.com/fstaudt/helm-values/issues/11))
+- :sparkles: merge global-values.schema.json in global properties of values.schema.json
+  ([#11](https://github.com/fstaudt/helm-values/issues/11))
 - :sparkles: extract should not extract JSON schemas from dependency when repository is in repository mappings
-- :sparkles: reuse patch of values.schema.json for
-  aggregated-values.schema.json ([#12](https://github.com/fstaudt/helm-values/issues/12))
-- :sparkles: aggregate global values of extracted JSON schemas in aggregated JSON
-  schema ([#13](https://github.com/fstaudt/helm-values/issues/13))
-- :sparkles: improve readability of error messages in fallback
-  schemas ([#14](https://github.com/fstaudt/helm-values/issues/14))
+- :sparkles: reuse patch of values.schema.json for aggregated-values.schema.json
+  ([#12](https://github.com/fstaudt/helm-values/issues/12))
+- :sparkles: aggregate global values of extracted JSON schemas in aggregated JSON schema
+  ([#13](https://github.com/fstaudt/helm-values/issues/13))
+- :sparkles: improve readability of error messages in fallback schemas
+  ([#14](https://github.com/fstaudt/helm-values/issues/14))
 - :sparkles: title and description for aggregation of global values
-- :sparkles: schema for validation of extra values applied on packaged
-  charts ([#16](https://github.com/fstaudt/helm-values/issues/16))
+- :sparkles: schema for validation of extra values applied on packaged charts
+  ([#16](https://github.com/fstaudt/helm-values/issues/16))
 - :sparkles: plugins renamed to "Helm values"
 - :zap: download should keep schemas already downloaded
 - :zap: (gradle) cache output of task downloadJsonSchemas
-- :bug: (intellij) HelmValuesJsonSchemaProvider should be disabled when virtual file parent is
-  null ([#8](https://github.com/fstaudt/helm-values/issues/8))
+- :bug: (intellij) HelmValuesJsonSchemaProvider should be disabled when virtual file parent is null
+  ([#8](https://github.com/fstaudt/helm-values/issues/8))
 - :bug: extractor should extract charts & sub-charts JSON schemas from dependency archives
-- :bug: Chart.yaml should be correctly parsed when dependency contain no version or
-  repository ([#28](https://github.com/fstaudt/helm-values/issues/28))
+- :bug: Chart.yaml should be correctly parsed when dependency contain no version or repository
+  ([#28](https://github.com/fstaudt/helm-values/issues/28))
 
 **BREAKING CHANGES**:
 
