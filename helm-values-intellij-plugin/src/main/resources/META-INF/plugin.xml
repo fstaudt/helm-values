@@ -9,6 +9,10 @@
                 implementation="io.github.fstaudt.helm.idea.providers.HelmValuesJsonSchemaProviderFactory"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="helm.values.notifications" displayType="BALLOON"
+                           bundle="messages.HelmValuesBundle" key="notifications.info"/>
+        <notificationGroup id="helm.values.errors" displayType="BALLOON"
+                           bundle="messages.HelmValuesBundle" key="notifications.error"/>
         <applicationService serviceImplementation="io.github.fstaudt.helm.idea.HelmValuesSettings"/>
         <applicationService serviceImplementation="io.github.fstaudt.helm.idea.service.HelmChartService"/>
         <applicationService

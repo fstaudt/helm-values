@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 abstract class HelmChartAction : ProjectAction() {
     override fun update(event: AnActionEvent) {
+        super.update(event)
         event.getData(VIRTUAL_FILE)?.let {
             event.presentation.isEnabledAndVisible = event.chartFile() != null
         }
