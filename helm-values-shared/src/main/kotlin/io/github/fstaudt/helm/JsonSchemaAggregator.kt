@@ -17,13 +17,13 @@ import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.properties
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
-import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.DEFAULT_JSON_SCHEMA_REPOSITORY
 import java.io.File
 import java.io.FileFilter
 import java.net.URI
 
 class JsonSchemaAggregator(
     private val repositoryMappings: Map<String, JsonSchemaRepository>,
+    private val schemaLocator: SchemaLocator,
     private val downloadSchemasDir: File,
     private val extractSchemasDir: File,
 ) {
@@ -37,21 +37,21 @@ class JsonSchemaAggregator(
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
     }
 
-    private val generator = JsonSchemaGenerator(repositoryMappings, DEFAULT_JSON_SCHEMA_REPOSITORY)
+    private val generator = JsonSchemaGenerator(repositoryMappings, null)
 
     fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedJsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
         jsonSchema.put("\$id", "${chart.name}/${chart.version}/${AGGREGATED_SCHEMA_FILE}")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
-        jsonSchema.updateDownloadedDependencyReferencesFor(chart)
+        jsonSchema.updateReferencesFor(chart.dependencies.toDownloadedRefMappings())
+        jsonSchema.updateReferencesFor(chart.dependencies.toLocallyStoredRefMappings())
         jsonSchema.removeGeneratedGlobalDescription()
         jsonSchema.setExtractedDependencyReferencesFrom(extractSchemasDir, extractSchemasDir.name)
         jsonSchema.addGlobalPropertiesDescriptionFor(chart)
         return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 
-    private fun ObjectNode.updateDownloadedDependencyReferencesFor(chart: Chart) {
-        val refMappings = chart.dependencies.mapNotNull { it.toRefMapping() }
+    private fun ObjectNode.updateReferencesFor(refMappings: List<RefMapping>) {
         findParents("\$ref").forEach { parent ->
             val ref = parent.get("\$ref")
             refMappings.firstOrNull { it.matches(ref) }?.let {
@@ -121,6 +121,14 @@ class JsonSchemaAggregator(
 
     private fun ChartDependency.fullUri() = repositoryMappings[repository]?.let { "${it.baseUri}/$name/$version" }
 
+    private fun ChartDependency.fullName(): String {
+        return if (isStoredLocally()) {
+            "$name${version?.let { ":$it" } ?: ""}"
+        } else {
+            "${repository?.let { "$it/" } ?: ""}$name${version?.let { ":$it" } ?: ""}"
+        }
+    }
+
     private fun File.hasSubDirectories() = listFiles(FileFilter { it.isDirectory })?.any() ?: false
     private fun File.containsFile(fileName: String) = listFiles(FileFilter { it.name == fileName })?.any() ?: false
 
@@ -129,12 +137,20 @@ class JsonSchemaAggregator(
         fun map(ref: JsonNode) = TextNode(ref.textValue().replace(baseUri, mappedBaseUri))
     }
 
-    private fun ChartDependency.toRefMapping(): RefMapping? {
+    private fun List<ChartDependency>.toDownloadedRefMappings() = mapNotNull { it.toDownloadedRefMapping() }
+    private fun ChartDependency.toDownloadedRefMapping(): RefMapping? {
         return repositoryMappings[repository]?.let {
             RefMapping(
                 "${it.baseUri}/$name/$version",
                 "${downloadSchemasDir.name}${URI(it.baseUri).path}/$name/$version"
             )
+        }
+    }
+
+    private fun List<ChartDependency>.toLocallyStoredRefMappings() = mapNotNull { it.toLocallyStoredRefMapping() }
+    private fun ChartDependency.toLocallyStoredRefMapping(): RefMapping? {
+        return takeIf { it.isStoredLocally() }?.let {
+            RefMapping("../../$name/$version/$VALUES_SCHEMA_FILE", schemaLocator.aggregatedSchemaFor(this))
         }
     }
 }

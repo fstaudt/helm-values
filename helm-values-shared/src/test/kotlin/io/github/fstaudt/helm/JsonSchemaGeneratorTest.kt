@@ -42,7 +42,7 @@ internal class JsonSchemaGeneratorTest {
             BUNDLES to JsonSchemaRepository("$BASE_URL/$BUNDLES_PATH"),
             INFRA to JsonSchemaRepository(INFRA_REPOSITORY_URL)
         )
-        generator = JsonSchemaGenerator(repositoryMappings, repositoryMappings[APPS]!!)
+        generator = JsonSchemaGenerator(repositoryMappings, APPS)
     }
 
     @AfterEach
@@ -61,8 +61,8 @@ internal class JsonSchemaGeneratorTest {
             it.node("\$schema").isEqualTo(SCHEMA_VERSION)
             it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
             it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
-            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")
-            it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION")
+            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
+            it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME:$CHART_VERSION")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA)
             it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA)
@@ -125,6 +125,26 @@ internal class JsonSchemaGeneratorTest {
     }
 
     @Test
+    fun `generateValuesJsonSchema should use relative ref to external JSON schemas when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA")
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.\$ref")
+            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+    }
+
+    @Test
+    fun `generateValuesJsonSchema should use alias when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA", alias = "alias")
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.alias.\$ref")
+            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+    }
+
+    @Test
     fun `generateValuesJsonSchema should use full ref to external JSON schemas when repositories are different`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, INFRA)
@@ -138,6 +158,20 @@ internal class JsonSchemaGeneratorTest {
     fun `generateValuesJsonSchema should set property for dependency condition`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "$EXTERNAL_SCHEMA.enabled")
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
+    }
+
+    @Test
+    fun `generateValuesJsonSchema should set property for dependency condition when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA",
+                condition = "$EXTERNAL_SCHEMA.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
@@ -311,6 +345,26 @@ internal class JsonSchemaGeneratorTest {
     }
 
     @Test
+    fun `generateValuesJsonSchema should add refs in global when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA")
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.global").and({
+            val externalSchemaRef = "../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION"
+            it.node("allOf").isArray.hasSize(3)
+            it.node("allOf[0].\$ref").isEqualTo("$externalSchemaRef/$VALUES_SCHEMA_FILE#/properties/global")
+            it.node("allOf[1].\$ref").isEqualTo("$externalSchemaRef/$GLOBAL_VALUES_SCHEMA_FILE")
+            it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
+            it.node("allOf[2].description").isString
+                .contains("$APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
+            it.node("allOf[2].x-intellij-html-description").isString
+                .contains("$BASE_URL/$APPS_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION")
+                .contains("$APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
+        })
+    }
+
+    @Test
     fun `generatePackagedValuesJsonSchema should generate JSON schema with references to aggregated schema`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         val json = generator.generatePackagedValuesJsonSchema(chart, null)
@@ -318,8 +372,8 @@ internal class JsonSchemaGeneratorTest {
             it.node("\$schema").isEqualTo(SCHEMA_VERSION)
             it.node("\$id").isEqualTo("$BASE_CHART_URL/$PACKAGED_SCHEMA_FILE")
             it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
-            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")
-            it.node("title").isEqualTo("Configuration for packaged chart $CHART_NAME:$CHART_VERSION")
+            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
+            it.node("title").isEqualTo("Configuration for packaged chart $APPS/$CHART_NAME:$CHART_VERSION")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("properties.global.\$ref").isEqualTo("$AGGREGATED_SCHEMA_FILE#/properties/global")
             it.node("properties.$CHART_NAME.\$ref").isEqualTo(AGGREGATED_SCHEMA_FILE)

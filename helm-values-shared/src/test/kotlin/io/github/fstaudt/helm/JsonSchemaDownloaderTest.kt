@@ -84,11 +84,28 @@ internal class JsonSchemaDownloaderTest {
         stubForSchema(EXTERNAL_VALUES_SCHEMA_PATH)
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, CHARTS),
-            ChartDependency("unknown-json-schema", "0.1.0", "@unknown")
         ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+    }
+
+    @Test
+    fun `download should ignore dependency when repository is not in repository mappings`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "@unknown"),
+        ))
+        downloader.download(chart)
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").doesNotExist()
+    }
+
+    @Test
+    fun `download should ignore dependency when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA"),
+        ))
+        downloader.download(chart)
+        assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").doesNotExist()
     }
 
     @Test

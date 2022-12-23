@@ -104,6 +104,24 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             })
     }
 
+    fun `test - aggregate should aggregate aggregated JSON schema of dependency when dependency is stored locally`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        project.initHelmChart {
+            appendText("""
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "file://sub-charts/$EXTERNAL_SCHEMA"
+            """.trimIndent())
+        }
+        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().node("properties").and({
+                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            })
+    }
+
     fun `test - aggregate should update aggregated JSON schema with values schema patch`() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))

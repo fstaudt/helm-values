@@ -93,7 +93,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
-                    { it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION") },
+                    { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME:$CHART_VERSION") },
                     { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
                 )
@@ -147,7 +147,7 @@ class GenerateJsonSchemasTest {
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
                     { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0/$VALUES_SCHEMA_FILE") },
-                    { it.node("title").isEqualTo("Configuration for chart $CHART_NAME:0.2.0") },
+                    { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME:0.2.0") },
                 )
         }
     }
@@ -301,6 +301,35 @@ class GenerateJsonSchemasTest {
         testProject.runAndFail(GENERATE_JSON_SCHEMAS).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains("Publication repository unknown not found in repository mappings.")
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should fail when publication repository is not provided`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH"),
+                  )
+                }
+            """.trimIndent()
+            )
+        }
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: "$EXTERNAL_SCHEMA"
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.runAndFail(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(FAILED)
+            assertThat(it.output).contains("Publication repository null not found in repository mappings.")
         }
     }
 

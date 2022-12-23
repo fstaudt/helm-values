@@ -64,7 +64,7 @@ open class GenerateJsonSchemas : DefaultTask() {
         val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         extension.publishedVersion?.let { chart.version = it }
         val repository = extension.publicationRepository()
-        val generator = JsonSchemaGenerator(extension.repositoryMappings, repository)
+        val generator = JsonSchemaGenerator(extension.repositoryMappings, extension.publicationRepository)
         generateValuesSchemaFile(chart, repository, generator)
     }
 

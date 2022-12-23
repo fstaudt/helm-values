@@ -41,8 +41,11 @@ internal class JsonSchemaAggregatorTest {
     fun `init test project`() {
         testProject = testProject()
         val repositoryMappings = mapOf(APPS to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"))
-        aggregator =
-            JsonSchemaAggregator(repositoryMappings, testProject.downloadSchemasDir, testProject.extractSchemasDir)
+        aggregator = JsonSchemaAggregator(
+            repositoryMappings,
+            TestSchemaLocator(),
+            testProject.downloadSchemasDir,
+            testProject.extractSchemasDir)
     }
 
     @AfterEach
@@ -111,6 +114,24 @@ internal class JsonSchemaAggregatorTest {
                 .contains("$APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
                 .contains("$REPOSITORY_URL/$APPS_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION")
                 .contains("$THIRDPARTY/$EMBEDDED_SCHEMA:$EMBEDDED_VERSION")
+        })
+    }
+
+    @Test
+    fun `aggregate should document list of dependencies in description of global values when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA")
+        ))
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            it.node("global.allOf").isArray.hasSize(3)
+            it.node("global.allOf[2].title").isEqualTo("$GLOBAL_VALUES_TITLE $CHART_NAME:$CHART_VERSION")
+            it.node("global.allOf[2].description").isString
+                .contains(GLOBAL_VALUES_DESCRIPTION)
+                .contains("- $EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
+            it.node("global.allOf[2].x-intellij-html-description").isString
+                .contains(GLOBAL_VALUES_DESCRIPTION)
+                .contains("<li>$EXTERNAL_SCHEMA:$EXTERNAL_VERSION</li>")
         })
     }
 
@@ -296,19 +317,30 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
-    fun `aggregate should set property for dependency condition in values`() {
+    fun `aggregate should set property for dependency condition`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "$EXTERNAL_SCHEMA.enabled")
         ))
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and(
-            {
-                it.node("title")
-                    .isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
-                it.node("description").isEqualTo("\\n\\\\n")
-                it.node("type").isEqualTo("boolean")
-            },
-        )
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
+    }
+
+    @Test
+    fun `aggregate should set property for dependency condition when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA",
+                condition = "$EXTERNAL_SCHEMA.enabled")
+        ))
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
     }
 
     @Test
@@ -340,6 +372,20 @@ internal class JsonSchemaAggregatorTest {
                 it.node("type").isEqualTo("boolean")
             },
         )
+    }
+
+    @Test
+    fun `aggregate should aggregate aggregated JSON schema of dependency when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub-charts/$EXTERNAL_SCHEMA")
+        ))
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            val subChartAggregatedSchemaFile = "sub-charts/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(subChartAggregatedSchemaFile)
+            it.node("global.allOf[0].\$ref").isEqualTo("$subChartAggregatedSchemaFile#/properties/global")
+            it.node("global.allOf[2]")
+        })
     }
 
     private fun jsonPatch(content: String) = JsonPatch.fromJson(jsonMapper.readTree(content))

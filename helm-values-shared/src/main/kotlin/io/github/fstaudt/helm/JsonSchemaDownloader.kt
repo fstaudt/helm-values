@@ -126,4 +126,6 @@ class JsonSchemaDownloader(
         val dirsBack = uri.path.removePrefix("/").replace(Regex("[^/]+"), "..").removePrefix("../")
         return "$dirsBack$path${fragment?.let { "#$it" } ?: ""}"
     }
+
+    private fun ChartDependency.fullName() = "${repository?.let { "$it/" } ?: ""}$name${version?.let { ":$it" } ?: ""}"
 }

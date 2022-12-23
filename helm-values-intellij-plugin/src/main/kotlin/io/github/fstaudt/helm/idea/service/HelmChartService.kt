@@ -24,7 +24,6 @@ import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.JsonSchemaRepository
-import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.DEFAULT_JSON_SCHEMA_REPOSITORY
 import java.io.File
 
 class HelmChartService {
@@ -49,13 +48,13 @@ class HelmChartService {
         val jsonSchemasDir = File(project.baseDir(), "$JSON_SCHEMAS_DIR/${chart.name}")
         val downloadSchemaDir = download(jsonSchemasDir, chart)
         val extractSchemaDir = extract(jsonSchemasDir, File(chartFile.parentFile, "charts"), chart)
-        val aggregator = JsonSchemaAggregator(mappings(), downloadSchemaDir, extractSchemaDir)
+        val aggregator = JsonSchemaAggregator(mappings(), IntellijSchemaLocator(), downloadSchemaDir, extractSchemaDir)
         val aggregatedJsonPatch = jsonPatch(chartFile, PATCH_AGGREGATED_SCHEMA_FILE)
         val valuesJsonPatch = jsonPatch(chartFile, PATCH_VALUES_SCHEMA_FILE)
         aggregator.aggregate(chart, valuesJsonPatch, aggregatedJsonPatch).also {
             jsonMapper.writeValue(File(jsonSchemasDir, AGGREGATED_SCHEMA_FILE), it)
         }
-        val generator = JsonSchemaGenerator(mappings(), DEFAULT_JSON_SCHEMA_REPOSITORY)
+        val generator = JsonSchemaGenerator(mappings(), null)
         val packagedJsonPatch = jsonPatch(chartFile, PATCH_PACKAGED_SCHEMA_FILE)
         generator.generatePackagedValuesJsonSchema(chart, packagedJsonPatch).also {
             jsonMapper.writeValue(File(jsonSchemasDir, PACKAGED_SCHEMA_FILE), it)

@@ -37,7 +37,7 @@ data class JsonSchemaRepository(
 ) : Serializable {
 
     companion object {
-        val DEFAULT_JSON_SCHEMA_REPOSITORY = JsonSchemaRepository("")
+        val DEFAULT_JSON_SCHEMA_REPOSITORY = JsonSchemaRepository("https://default")
     }
 
     fun basicAuthentication(): String? {

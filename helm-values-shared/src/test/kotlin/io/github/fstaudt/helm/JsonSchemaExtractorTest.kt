@@ -232,6 +232,15 @@ internal class JsonSchemaExtractorTest {
     }
 
     @Test
+    fun `extract should ignore dependency when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, SUBCHART_VERSION, "file://../$EMBEDDED_SCHEMA"),
+        ))
+        extractor.extract(chart)
+        assertThat(extractSchemasDir).isEmptyDirectory
+    }
+
+    @Test
     fun `extract should create empty extract directory when chart has no dependencies`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         extractor.extract(chart)

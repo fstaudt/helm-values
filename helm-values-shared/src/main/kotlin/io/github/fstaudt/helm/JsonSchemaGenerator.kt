@@ -13,6 +13,7 @@ import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.properties
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
+import io.github.fstaudt.helm.model.JsonSchemaRepository.Companion.DEFAULT_JSON_SCHEMA_REPOSITORY
 import java.net.URI
 import java.time.OffsetDateTime.now
 import java.time.ZoneOffset.UTC
@@ -20,8 +21,10 @@ import java.time.temporal.ChronoUnit.SECONDS
 
 class JsonSchemaGenerator(
     private val repositoryMappings: Map<String, JsonSchemaRepository>,
-    private val publicationRepository: JsonSchemaRepository,
+    private val publicationRepositoryName: String?,
 ) {
+
+    private val publicationRepository = repositoryMappings[publicationRepositoryName] ?: DEFAULT_JSON_SCHEMA_REPOSITORY
 
     companion object {
         const val GENERATION_DIR = "generated"
@@ -47,7 +50,7 @@ class JsonSchemaGenerator(
         jsonSchema.properties().global().putGlobalProperties(chart)
         jsonSchema.put("additionalProperties", false)
         chart.dependencies.filter { it.version != null }.forEach { dep ->
-            repositoryMappings[dep.repository]?.let {
+            dep.repository()?.let {
                 val ref = "${it.baseUri}/${dep.name}/${dep.version}/${it.valuesSchemaFile}".toRelativeUri()
                 jsonSchema.properties().objectNode(dep.aliasOrName()).put("\$ref", ref)
             }
@@ -63,11 +66,11 @@ class JsonSchemaGenerator(
 
     private fun ObjectNode.putGlobalProperties(chart: Chart) {
         put("additionalProperties", false)
-        if (chart.dependencies.any { repositoryMappings.containsKey(it.repository) }) {
+        if (chart.dependencies.any { it.repository() != null }) {
             allOf().let { allOf ->
-                chart.dependencies.forEach { dependency ->
-                    repositoryMappings[dependency.repository]?.let {
-                        val refPrefix = "${it.baseUri}/${dependency.name}/${dependency.version}".toRelativeUri()
+                chart.dependencies.forEach { dep ->
+                    dep.repository()?.let {
+                        val refPrefix = "${it.baseUri}/${dep.name}/${dep.version}".toRelativeUri()
                         val ref = "$refPrefix/${it.valuesSchemaFile}#/properties/global"
                         allOf.add(ObjectNode(nodeFactory).put("\$ref", ref))
                         val globalRef = "$refPrefix/${it.globalValuesSchemaFile}"
@@ -80,7 +83,7 @@ class JsonSchemaGenerator(
     }
 
     private fun globalPropertiesDescriptionFor(chart: Chart): ObjectNode {
-        val dependencies = chart.dependencies.filter { repositoryMappings.containsKey(it.repository) }
+        val dependencies = chart.dependencies.filter { it.repository() != null }
         val dependencyLabels = dependencies.joinToString("") { "$NEW_LINE- ${it.fullName()}" }
         val htmlDependencyLabels = dependencies.joinToString("", "<ul>", "</ul>") {
             "<li><a href='${it.fullUri()}'>${it.fullName()}</a></li>"
@@ -91,7 +94,19 @@ class JsonSchemaGenerator(
             .put("x-intellij-html-description", "<br>$GLOBAL_VALUES_DESCRIPTION: $htmlDependencyLabels")
     }
 
-    private fun ChartDependency.fullUri() = repositoryMappings[repository]?.let { "${it.baseUri}/$name/$version" }
+    private fun ChartDependency.fullUri() = repository()?.let { "${it.baseUri}/$name/$version" }
+
+    private fun ChartDependency.fullName(): String {
+        return if (isStoredLocally()) {
+            "${publicationRepositoryName?.let { "$it/" } ?: ""}$name${version?.let { ":$it" } ?: ""}"
+        } else {
+            "${repository?.let { "$it/" } ?: ""}$name${version?.let { ":$it" } ?: ""}"
+        }
+    }
+
+    private fun ChartDependency.repository(): JsonSchemaRepository? {
+        return if (isStoredLocally()) publicationRepository else repositoryMappings[repository]
+    }
 
     private fun Chart.toValuesJsonSchema(): ObjectNode {
         return ObjectNode(nodeFactory)
@@ -99,7 +114,7 @@ class JsonSchemaGenerator(
             .put("\$id", "${publicationRepository.baseUri}/$name/$version/${publicationRepository.valuesSchemaFile}")
             .put("x-generated-by", GENERATOR_LABEL)
             .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
-            .put("title", "Configuration for chart $name:$version")
+            .put("title", "Configuration for chart ${fullName()}")
             .put("description", NEW_LINE)
     }
 
@@ -109,8 +124,12 @@ class JsonSchemaGenerator(
             .put("\$id", "${publicationRepository.baseUri}/$name/$version/$PACKAGED_SCHEMA_FILE")
             .put("x-generated-by", GENERATOR_LABEL)
             .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
-            .put("title", "Configuration for packaged chart $name:$version")
+            .put("title", "Configuration for packaged chart ${fullName()}")
             .put("description", NEW_LINE)
+    }
+
+    private fun Chart.fullName(): String {
+        return "${publicationRepositoryName?.let { "$it/" } ?: ""}$name:$version"
     }
 
     private fun String.toRelativeUri(): String {
@@ -118,7 +137,7 @@ class JsonSchemaGenerator(
         val publicationUri = URI(publicationRepository.baseUri)
         return when {
             uri.host == publicationUri.host && uri.path.startsWith(publicationUri.path) ->
-                uri.path.replace(publicationUri.path, "../..")
+                uri.path.replaceFirst(publicationUri.path, "../..")
 
             uri.host == publicationUri.host ->
                 "../..${"/..".repeat(publicationUri.path.count { it == '/' })}${uri.path}"
