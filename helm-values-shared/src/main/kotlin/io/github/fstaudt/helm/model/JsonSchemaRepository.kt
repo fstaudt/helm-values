@@ -3,7 +3,7 @@ package io.github.fstaudt.helm.model
 import io.github.fstaudt.helm.GLOBAL_VALUES_DEPRECATION
 import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
-import org.apache.commons.codec.binary.Base64
+import org.apache.hc.client5.http.utils.Base64
 import java.io.Serializable
 
 /**
