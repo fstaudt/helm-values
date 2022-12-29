@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.1 - Dec 29, 2022
+
+### 🐛 Fixed
+
+- rename packaged-values.schema.json to extra-values.schema.json
+  ([#43](https://github.com/fstaudt/helm-values/issues/43))
+
+### 🔥 Removed
+
+- Since [#43](https://github.com/fstaudt/helm-values/issues/43),
+  patch file `packaged-values.schema.patch.json` must be renamed `extra-values.schema.patch.json`.
+
 ## 0.5.0 - Dec 23, 2022
 
 ### ✨ New

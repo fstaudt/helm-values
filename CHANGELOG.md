@@ -1,3 +1,16 @@
+## 0.5.1 - Dec 29, 2022
+
+- :bug: (gradle) reference to schema of inter-dependent chart should use published version over chart version
+  ([#42](https://github.com/fstaudt/helm-values/issues/42))
+- :bug: rename packaged-values.schema.json to extra-values.schema.json
+  ([#43](https://github.com/fstaudt/helm-values/issues/43))
+
+**BREAKING CHANGES**:
+
+- :boom: Since [#43](https://github.com/fstaudt/helm-values/issues/43),
+  patch file `packaged-values.schema.patch.json` must be renamed `extra-values.schema.patch.json`.\
+  Optional property `patchPackagedFile` of task `aggregateJsonSchema` must be renamed `patchExtraValuesFile`.
+
 ## 0.5.0 - Dec 23, 2022
 
 - :sparkles: support for inter-dependent charts stored in the same repository
