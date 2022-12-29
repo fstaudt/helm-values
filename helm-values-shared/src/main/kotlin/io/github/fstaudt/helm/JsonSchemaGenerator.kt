@@ -37,8 +37,8 @@ class JsonSchemaGenerator(
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
     }
 
-    fun generatePackagedValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
-        val jsonSchema = chart.toPackagedValuesJsonSchema()
+    fun generateExtraValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
+        val jsonSchema = chart.toExtraValuesJsonSchema()
         jsonSchema.properties().global().put("\$ref", "$AGGREGATED_SCHEMA_FILE#/properties/global")
         jsonSchema.properties().objectNode(chart.name).put("\$ref", AGGREGATED_SCHEMA_FILE)
         jsonSchema.put("additionalProperties", false)
@@ -118,13 +118,13 @@ class JsonSchemaGenerator(
             .put("description", NEW_LINE)
     }
 
-    private fun Chart.toPackagedValuesJsonSchema(): ObjectNode {
+    private fun Chart.toExtraValuesJsonSchema(): ObjectNode {
         return ObjectNode(nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "${publicationRepository.baseUri}/$name/$version/$PACKAGED_SCHEMA_FILE")
+            .put("\$id", "${publicationRepository.baseUri}/$name/$version/$EXTRA_VALUES_SCHEMA_FILE")
             .put("x-generated-by", GENERATOR_LABEL)
             .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
-            .put("title", "Configuration for packaged chart ${fullName()}")
+            .put("title", "Extra configuration for packaged chart ${fullName()}")
             .put("description", NEW_LINE)
     }
 

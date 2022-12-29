@@ -67,9 +67,9 @@ A fallback schema is generated if JSON schema can't be downloaded from the exter
 network failure ...).
 The description of the fallback schema provides more information on the download issue.
 
-#### packaged-values-schema.json
+#### extra-values-schema.json
 
-Schema `packaged-values.schema.json` is generated
+Schema `extra-values.schema.json` is generated
 by [Gradle task aggregateJsonSchema](helm-values-gradle-plugin/README.md#aggregatejsonschema)
 or [aggregation actions in IntelliJ plugin](helm-values-intellij-plugin/README.md#refresh-jon-schemas-for-current-chart)
 .
@@ -85,7 +85,7 @@ helm install my-chart-1.2.3.tgz -f extra-values.yaml
 
 #### values.schema.json
 
-Schema `values.shema.json` is generated
+Schema `values.schema.json` is generated
 by [Gradle task generateJsonSchemas](helm-values-gradle-plugin/README.md#generatejsonschemas).
 
 It is intended to be published in a JSON schema repository, so that it can be referenced in schemas of other charts.
@@ -94,7 +94,7 @@ This schema contains several references (`$ref`) to other schemas and shouldn't 
 
 #### global-values.schema.json (*deprecated*)
 
-Schema `global-values.shema.json` was generated
+Schema `global-values.schema.json` was generated
 by [Gradle task generateJsonSchemas](helm-values-gradle-plugin/README.md#generatejsonschemas) until version 0.3.0.
 
 It was intended to be published in a JSON schema repository, so that it can be referenced in schemas of other charts.
@@ -120,7 +120,7 @@ Patch is enabled by creation of a file in the base folder of the chart (same fol
   Since [#12 (0.4.0)](https://github.com/fstaudt/helm-values/issues/12),
   this patch file also impacts `aggregated-values.schema.json` that is based on `values.schema.json`.
 - `aggregated-values.schema.patch.json`: additional patch for `aggregated-values.schema.json`
-- `packaged-values.schema.patch.json`: patch `packaged-values.schema.json` generated
+- `extra-values.schema.patch.json`: patch `extra-values.schema.json` generated
   by [Gradle task aggregateJsonSchema](helm-values-gradle-plugin/README.md#aggregatejsonschema)
   or [aggregation actions in IntelliJ plugin](helm-values-intellij-plugin/README.md#refresh-jon-schemas-for-current-chart)
 

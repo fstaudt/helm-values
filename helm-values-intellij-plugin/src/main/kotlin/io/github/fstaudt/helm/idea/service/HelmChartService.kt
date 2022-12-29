@@ -9,15 +9,15 @@ import com.github.fge.jsonpatch.JsonPatch
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaAggregator
 import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.JsonSchemaGenerator
-import io.github.fstaudt.helm.PACKAGED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.PATCH_PACKAGED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
@@ -55,9 +55,9 @@ class HelmChartService {
             jsonMapper.writeValue(File(jsonSchemasDir, AGGREGATED_SCHEMA_FILE), it)
         }
         val generator = JsonSchemaGenerator(mappings(), null)
-        val packagedJsonPatch = jsonPatch(chartFile, PATCH_PACKAGED_SCHEMA_FILE)
-        generator.generatePackagedValuesJsonSchema(chart, packagedJsonPatch).also {
-            jsonMapper.writeValue(File(jsonSchemasDir, PACKAGED_SCHEMA_FILE), it)
+        val extraValuesJsonPatch = jsonPatch(chartFile, PATCH_EXTRA_VALUES_SCHEMA_FILE)
+        generator.generateExtraValuesJsonSchema(chart, extraValuesJsonPatch).also {
+            jsonMapper.writeValue(File(jsonSchemasDir, EXTRA_VALUES_SCHEMA_FILE), it)
         }
     }
 

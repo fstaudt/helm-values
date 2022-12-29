@@ -48,20 +48,20 @@ Action will trigger the following processing:
   *(schema not found, network failure ...).*\
   *The description of the fallback schema provides more information on the download issue.*
 - generate JSON schema `aggregated-values.schema.json` in `.idea/json-schemas`
-- generate JSON schema `packaged-values.schema.json` in `.idea/json-schemas`
+- generate JSON schema `extra-values.schema.json` in `.idea/json-schemas`
 
 The JSON schema `aggregated-values.schema.json` is used by default to validate file `values.yaml`
 in the same folder as `Chart.yaml`.\
 Additional JSON schema mappings can be configured in IntelliJ settings if required.
 
-The JSON schema `packaged-values.schema.json` is used by default to validate any file named `*-values.yaml`
+The JSON schema `extra-values.schema.json` is used by default to validate any file named `*-values.yaml`
 in the same folder as `Chart.yaml`.\
 Additional JSON schema mappings can be configured in IntelliJ settings if required.
 
 Optional file `aggregated-values.schema.patch.json` can be created in the base folder of the chart
 (same folder as Chart.yaml) to [patch aggregated JSON schema](https://jsonpatch.com/).\
-Optional file `packaged-values.schema.patch.json` can be created in the base folder of the chart
-(same folder as Chart.yaml) to [patch packaged JSON schema](https://jsonpatch.com/).\
+Optional file `extra-values.schema.patch.json` can be created in the base folder of the chart
+(same folder as Chart.yaml) to [patch extra values JSON schema](https://jsonpatch.com/).\
 For more information on patch files, check dedicated section
 on [patch for generated JSON schemas](../README.md#patch-for-generated-json-schemas).
 
@@ -76,7 +76,7 @@ Action will trigger the following processing:
 
 - clear previously extracted JSON schemas for the current chart
 - clear previously downloaded JSON schemas for the current chart
-- clear generated JSON schemas for the current chart (`aggregated-values.schema.json`, `packaged-values.schema.json`)
+- clear generated JSON schemas for the current chart (`aggregated-values.schema.json`, `extra-values.schema.json`)
 
 ### Refresh JSON schemas for all charts in project
 

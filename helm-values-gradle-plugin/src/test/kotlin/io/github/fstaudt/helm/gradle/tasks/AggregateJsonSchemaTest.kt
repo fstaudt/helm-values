@@ -1,14 +1,14 @@
 package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
-import io.github.fstaudt.helm.PACKAGED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.PATCH_PACKAGED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
@@ -40,7 +40,7 @@ import java.io.File
 class AggregateJsonSchemaTest {
     private lateinit var testProject: TestProject
     private lateinit var aggregatedSchemaFile: File
-    private lateinit var packagedSchemaFile: File
+    private lateinit var extraValuesSchemaFile: File
 
     companion object {
         private const val REPOSITORY_URL = "http://localhost:1980"
@@ -59,7 +59,7 @@ class AggregateJsonSchemaTest {
     fun `init test project`() {
         testProject = testProject()
         aggregatedSchemaFile = File(testProject.buildDir, "$HELM_VALUES/$AGGREGATED_SCHEMA_FILE")
-        packagedSchemaFile = File(testProject.buildDir, "$HELM_VALUES/$PACKAGED_SCHEMA_FILE")
+        extraValuesSchemaFile = File(testProject.buildDir, "$HELM_VALUES/$EXTRA_VALUES_SCHEMA_FILE")
         testProject.initBuildFile {
             appendText(
                 """
@@ -425,18 +425,18 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should generate packaged JSON schema`() {
+    fun `aggregateJsonSchema should generate extra values JSON schema`() {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(packagedSchemaFile).isFile.hasContent().and({
-                it.node("title").isEqualTo("Configuration for packaged chart $CHART_NAME:$CHART_VERSION")
+            assertThatJsonFile(extraValuesSchemaFile).isFile.hasContent().and({
+                it.node("title").isEqualTo("Extra configuration for packaged chart $CHART_NAME:$CHART_VERSION")
             })
         }
     }
 
     @Test
-    fun `aggregateJsonSchema should update packaged JSON schema with packaged schema patch`() {
-        File(testProject, PATCH_PACKAGED_SCHEMA_FILE).writeText(
+    fun `aggregateJsonSchema should update extra values JSON schema with extra values schema patch`() {
+        File(testProject, PATCH_EXTRA_VALUES_SCHEMA_FILE).writeText(
             """
             [
               { "op": "replace", "path": "/title", "value": "overridden value" }
@@ -445,12 +445,12 @@ class AggregateJsonSchemaTest {
         )
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(packagedSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
+            assertThatJsonFile(extraValuesSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
         }
     }
 
     @Test
-    fun `aggregateJsonSchema should update packaged JSON schema with packaged schema patch in sourcesDir`() {
+    fun `aggregateJsonSchema should update extra values JSON schema with extra values schema patch in sourcesDir`() {
         val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
         testProject.clearHelmChart()
         testProject.initHelmChart(sourcesDir)
@@ -463,7 +463,7 @@ class AggregateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        File(sourcesDir, PATCH_PACKAGED_SCHEMA_FILE).writeText(
+        File(sourcesDir, PATCH_EXTRA_VALUES_SCHEMA_FILE).writeText(
             """
             [
               { "op": "replace", "path": "/title", "value": "overridden value" }
@@ -472,17 +472,17 @@ class AggregateJsonSchemaTest {
         )
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(packagedSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
+            assertThatJsonFile(extraValuesSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
         }
     }
 
     @Test
-    fun `aggregateJsonSchema should update packaged JSON schema with provided packaged schema patch`() {
+    fun `aggregateJsonSchema should update extra values JSON schema with provided extra values schema patch`() {
         testProject.initBuildFile {
             appendText(
                 """
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
-                  patchPackagedFile = File(project.projectDir, "custom.schema.patch.json")
+                  patchExtraValuesFile = File(project.projectDir, "custom.schema.patch.json")
                 }
                 """.trimIndent()
             )
@@ -496,7 +496,7 @@ class AggregateJsonSchemaTest {
         )
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(packagedSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
+            assertThatJsonFile(extraValuesSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
         }
     }
 
@@ -505,7 +505,7 @@ class AggregateJsonSchemaTest {
         testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isIn(SUCCESS, FROM_CACHE)
         }
-        packagedSchemaFile.delete()
+        extraValuesSchemaFile.delete()
         aggregatedSchemaFile.delete()
         testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(FROM_CACHE)

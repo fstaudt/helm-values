@@ -11,7 +11,7 @@ class HelmValuesJsonSchemaProviderFactory : JsonSchemaProviderFactory {
             return emptyList()
         }
         return project.helmChartDirs().flatMap {
-            listOf(AggregatedJsonSchemaProvider(project, it), PackagedJsonSchemaProvider(project, it))
+            listOf(AggregatedJsonSchemaProvider(project, it), ExtraJsonSchemaProvider(project, it))
         }
     }
 }

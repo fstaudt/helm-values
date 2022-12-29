@@ -19,5 +19,5 @@ Global values should instead be integrated in properties/global of values.schema
 const val GLOBAL_VALUES_SCHEMA_FILE = "global-values.schema.json"
 const val AGGREGATED_SCHEMA_FILE = "aggregated-values.schema.json"
 const val PATCH_AGGREGATED_SCHEMA_FILE = "aggregated-values.schema.patch.json"
-const val PACKAGED_SCHEMA_FILE = "packaged-values.schema.json"
-const val PATCH_PACKAGED_SCHEMA_FILE = "packaged-values.schema.patch.json"
+const val EXTRA_VALUES_SCHEMA_FILE = "extra-values.schema.json"
+const val PATCH_EXTRA_VALUES_SCHEMA_FILE = "extra-values.schema.patch.json"

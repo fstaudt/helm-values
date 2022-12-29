@@ -6,13 +6,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion.SCHEMA_7
-import io.github.fstaudt.helm.PACKAGED_SCHEMA_FILE
+import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
 import java.io.File
 
-class PackagedJsonSchemaProvider(project: Project, private val chartDir: File) : JsonSchemaFileProvider {
-    private val jsonSchemaFile = File(project.baseDir(), "$JSON_SCHEMAS_DIR/${chartDir.name}/$PACKAGED_SCHEMA_FILE")
+class ExtraJsonSchemaProvider(project: Project, private val chartDir: File) : JsonSchemaFileProvider {
+    private val jsonSchemaFile = File(project.baseDir(), "$JSON_SCHEMAS_DIR/${chartDir.name}/$EXTRA_VALUES_SCHEMA_FILE")
     override fun isAvailable(file: VirtualFile): Boolean {
         return file.name.endsWith("-values.yaml") && (file.parent?.name == chartDir.name)
     }

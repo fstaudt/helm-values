@@ -3,7 +3,7 @@ package io.github.fstaudt.helm.gradle
 import io.github.fstaudt.helm.HELM_CHARTS_DIR
 import io.github.fstaudt.helm.HELM_CHARTS_FILE
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.PATCH_PACKAGED_SCHEMA_FILE
+import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.EXTENSION
 import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema
@@ -55,7 +55,7 @@ class HelmValuesPlugin : Plugin<Project> {
                 chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
                 patchValuesFile = File(sourcesDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }
                 patchAggregatedFile = File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }
-                patchPackagedFile = File(sourcesDir, PATCH_PACKAGED_SCHEMA_FILE).takeIf { it.exists() }
+                patchExtraValuesFile = File(sourcesDir, PATCH_EXTRA_VALUES_SCHEMA_FILE).takeIf { it.exists() }
                 dependsOn(downloadJsonSchemas, extractJsonSchemas)
             }
             val generateJsonSchemas = tasks.register<GenerateJsonSchemas>(GENERATE_JSON_SCHEMAS) {
