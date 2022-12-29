@@ -62,13 +62,22 @@ open class GenerateJsonSchemas : DefaultTask() {
     @TaskAction
     fun generate() {
         val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
-        extension.publishedVersion?.let { chart.version = it }
+        extension.publishedVersion?.let { publishedVersion ->
+            chart.version = publishedVersion
+            chart.dependencies.filter { it.isStoredLocally() }.forEach {
+                it.apply { version = publishedVersion }
+            }
+        }
         val repository = extension.publicationRepository()
         val generator = JsonSchemaGenerator(extension.repositoryMappings, extension.publicationRepository)
         generateValuesSchemaFile(chart, repository, generator)
     }
 
-    private fun generateValuesSchemaFile(chart: Chart, repository: JsonSchemaRepository, generator: JsonSchemaGenerator) {
+    private fun generateValuesSchemaFile(
+        chart: Chart,
+        repository: JsonSchemaRepository,
+        generator: JsonSchemaGenerator
+    ) {
         val jsonPatch = patchValuesFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
         val jsonSchema = generator.generateValuesJsonSchema(chart, jsonPatch)
         jsonMapper.writeValue(File(generatedSchemaDir, repository.valuesSchemaFile), jsonSchema)

@@ -94,8 +94,43 @@ class GenerateJsonSchemasTest {
                     { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
                     { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
                     { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME:$CHART_VERSION") },
-                    { it.node("properties").isObject.containsKey(EXTERNAL_SCHEMA) },
+                    {
+                        it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+                    },
+                    {
+                        it.node("properties.global.allOf[0].\$ref")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
+                    },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should use dependency version in local dependencies when publishedVersion is not defined`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: "$EXTERNAL_SCHEMA"
+                  version: $EXTERNAL_VERSION
+                  repository: "file://../$EXTERNAL_SCHEMA"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("properties").and(
+                    {
+                        it.node("global.allOf[0].\$ref")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
+                    },
+                    {
+                        it.node("$EXTERNAL_SCHEMA.\$ref")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+                    },
                 )
         }
     }
@@ -136,7 +171,7 @@ class GenerateJsonSchemasTest {
                     "$INFRA" to JsonSchemaRepository("$INFRA_REPOSITORY_URL"),
                   )
                   publicationRepository = "$APPS"
-                  publishedVersion = "0.2.0"
+                  publishedVersion = "0.1.1"
                 }
             """.trimIndent()
             )
@@ -146,8 +181,46 @@ class GenerateJsonSchemasTest {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
-                    { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.2.0/$VALUES_SCHEMA_FILE") },
-                    { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME:0.2.0") },
+                    { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.1.1/$VALUES_SCHEMA_FILE") },
+                    { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME:0.1.1") },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should use publishedVersion from extension in local dependencies when it is defined`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                  publishedVersion = "0.1.1"
+                }
+            """.trimIndent()
+            )
+        }
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: "$EXTERNAL_SCHEMA"
+                  version: $EXTERNAL_VERSION
+                  repository: "file://../$EXTERNAL_SCHEMA"
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().node("properties").and(
+                    {
+                        it.node("global.allOf[0].\$ref")
+                            .isEqualTo("../../$EXTERNAL_SCHEMA/0.1.1/$VALUES_SCHEMA_FILE#/properties/global")
+                    },
+                    { it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/0.1.1/$VALUES_SCHEMA_FILE") },
                 )
         }
     }

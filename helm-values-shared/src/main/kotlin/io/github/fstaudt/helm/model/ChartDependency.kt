@@ -2,7 +2,7 @@ package io.github.fstaudt.helm.model
 
 data class ChartDependency(
     val name: String,
-    val version: String? = null,
+    var version: String? = null,
     val repository: String? = null,
     val alias: String? = null,
     val condition: String? = null,
