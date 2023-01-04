@@ -137,13 +137,13 @@ class GenerateJsonSchemasTest {
 
     @Test
     fun `generateJsonSchemas should get chart configuration in sourcesDir`() {
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.initHelmChart(sourcesDir)
         testProject.initBuildFile {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH")
                   )
@@ -258,7 +258,7 @@ class GenerateJsonSchemasTest {
 
     @Test
     fun `generateJsonSchemas should update generated values schema with values schema patch in sourcesDir`() {
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.initHelmChart(sourcesDir) {
             appendText(
                 """
@@ -273,7 +273,7 @@ class GenerateJsonSchemasTest {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH")
                   )

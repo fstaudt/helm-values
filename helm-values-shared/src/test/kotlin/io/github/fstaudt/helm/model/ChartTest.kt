@@ -24,6 +24,7 @@ class ChartTest {
         assertThat(chart.apiVersion).isEqualTo("v2")
         assertThat(chart.name).isEqualTo("helm-chart")
         assertThat(chart.version).isEqualTo("0.0.0")
+        assertThat(chart.dependencies).isNotNull.isEmpty()
     }
 
     @Test
@@ -38,6 +39,7 @@ class ChartTest {
         assertThat(chart.apiVersion).isEqualTo("v2")
         assertThat(chart.name).isEqualTo("helm-chart")
         assertThat(chart.version).isEqualTo("0.0.0")
+        assertThat(chart.dependencies).isNotNull.isEmpty()
     }
 
     @Test

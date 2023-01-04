@@ -1,7 +1,7 @@
 package io.github.fstaudt.helm.gradle
 
 import io.github.fstaudt.helm.HELM_CHARTS_DIR
-import io.github.fstaudt.helm.HELM_CHARTS_FILE
+import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.HELM_SOURCES_DIR
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -60,7 +60,7 @@ fun TestProject.initHelmResources(
 }
 
 fun TestProject.initHelmChart(sourcesDir: File = this, customizeHelmChart: File.() -> Unit = {}): File {
-    return File(sourcesDir, HELM_CHARTS_FILE).apply {
+    return File(sourcesDir, HELM_CHART_FILE).apply {
         writeText(
             """
             apiVersion: v2
@@ -79,7 +79,7 @@ fun TestProject.initHelmChart(sourcesDir: File = this, customizeHelmChart: File.
 }
 
 fun TestProject.clearHelmChart(sourcesDir: File = this) {
-    File(sourcesDir, HELM_CHARTS_FILE).delete()
+    File(sourcesDir, HELM_CHART_FILE).delete()
 }
 
 fun TestProject.initHelmChart(customizeHelmChart: File.() -> Unit = {}): File {

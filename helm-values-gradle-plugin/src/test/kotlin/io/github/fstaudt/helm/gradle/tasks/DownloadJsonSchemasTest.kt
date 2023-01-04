@@ -9,6 +9,7 @@ import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.SCHEMA_VERSION
 import io.github.fstaudt.helm.gradle.TestProject
@@ -119,7 +120,7 @@ class DownloadJsonSchemasTest {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                   repositoryMappings = mapOf(
                     "$CHARTS" to JsonSchemaRepository("$REPOSITORY_URL/$CHARTS_PATH"),
                     "$PROTECTED" to JsonSchemaRepository("$REPOSITORY_URL/$PROTECTED_PATH", "$REPOSITORY_USER", "$REPOSITORY_PASSWORD")
@@ -128,7 +129,7 @@ class DownloadJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.clearHelmChart()
         testProject.initHelmChart(sourcesDir) {
             appendText(

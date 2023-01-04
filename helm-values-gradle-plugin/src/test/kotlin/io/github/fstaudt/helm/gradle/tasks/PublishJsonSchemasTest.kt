@@ -100,12 +100,12 @@ class PublishJsonSchemasTest {
 
     @Test
     fun `publishJsonSchemas should get chart configuration in sourcesDir`() {
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.initBuildFile {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )

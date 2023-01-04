@@ -24,6 +24,7 @@ import java.net.URI
 class JsonSchemaAggregator(
     private val repositoryMappings: Map<String, JsonSchemaRepository>,
     private val schemaLocator: SchemaLocator,
+    private val chartDir: File,
     private val downloadSchemasDir: File,
     private val extractSchemasDir: File,
 ) {
@@ -38,6 +39,7 @@ class JsonSchemaAggregator(
     }
 
     private val generator = JsonSchemaGenerator(repositoryMappings, null)
+    private val chartSchema = File(chartDir, HELM_SCHEMA_FILE)
 
     fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedJsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
@@ -48,6 +50,7 @@ class JsonSchemaAggregator(
         jsonSchema.removeGeneratedGlobalDescription()
         jsonSchema.setExtractedDependencyReferencesFrom(extractSchemasDir, extractSchemasDir.name)
         jsonSchema.addGlobalPropertiesDescriptionFor(chart)
+        chartSchema.takeIf { it.exists() }?.let { jsonSchema.put("\$ref", schemaLocator.schemaFor(chartDir)) }
         return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 

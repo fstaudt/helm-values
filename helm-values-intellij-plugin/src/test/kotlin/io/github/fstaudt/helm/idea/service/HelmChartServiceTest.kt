@@ -3,7 +3,8 @@ package io.github.fstaudt.helm.idea.service
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.HELM_CHARTS_FILE
+import io.github.fstaudt.helm.HELM_CHART_FILE
+import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
@@ -61,7 +62,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                   repository: "$EXTERNAL"
             """.trimIndent())
         }
-        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThat(File(project.baseDir(),
             "$CHART_DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")).isFile
     }
@@ -77,7 +78,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                   repository: "$THIRDPARTY"
             """.trimIndent())
         }
-        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThat(File(project.baseDir(), "$CHART_EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")).isFile
     }
 
@@ -95,12 +96,39 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                   repository: "$THIRDPARTY"
             """.trimIndent())
         }
-        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
-            .hasContent().node("properties").and({
-                it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
-                it.node("$EXTERNAL_SCHEMA.\$ref")
+            .hasContent().and({
+                it.isObject.doesNotContainKey("\$ref")
+                it.node("properties.$EMBEDDED_SCHEMA.\$ref")
+                    .isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
+                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
                     .isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+            })
+    }
+
+    fun `test - aggregate JSON schema of current chart when it is available`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        project.initHelmChart()
+        File(project.baseDir(), HELM_SCHEMA_FILE).writeText("{}")
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().and({
+                it.node("\$ref").isEqualTo("../../.././$HELM_SCHEMA_FILE")
+            })
+    }
+
+    fun `test - aggregate JSON schema of current chart when it is available in project subdirectory`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        val subdir = File(project.baseDir(), CHART_NAME)
+        project.initHelmChart(subdir)
+        File(subdir, HELM_SCHEMA_FILE).writeText("{}")
+        service.aggregate(project, File(subdir, HELM_CHART_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().and({
+                it.node("\$ref").isEqualTo("../../../$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
 
@@ -115,7 +143,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                   repository: "file://sub-charts/$EXTERNAL_SCHEMA"
             """.trimIndent())
         }
-        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().node("properties").and({
                 it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
@@ -140,7 +168,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             ]
             """.trimIndent()
         )
-        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
@@ -167,7 +195,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             ]
             """.trimIndent()
         )
-        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
                 it.node("title").isEqualTo("overridden value")
@@ -180,7 +208,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
         project.initHelmChart()
-        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$EXTRA_VALUES_SCHEMA_FILE")).isFile
             .hasContent().node("title").isEqualTo("Extra configuration for packaged chart $CHART_NAME:$CHART_VERSION")
     }
@@ -195,7 +223,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             ]
             """.trimIndent()
         )
-        service.aggregate(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$EXTRA_VALUES_SCHEMA_FILE")).isFile
             .hasContent().node("title").isEqualTo("overridden value")
     }
@@ -207,7 +235,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         writeEmptyJsonIn(File(chartFolder, AGGREGATED_SCHEMA_FILE))
         writeEmptyJsonIn(File(chartFolder, "$EXTRACT_DIR/$EXTERNAL_SCHEMA/$VALUES_SCHEMA_FILE"))
         writeEmptyJsonIn(File(chartFolder, "$DOWNLOADS_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE"))
-        service.clear(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.clear(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThat(chartFolder).doesNotExist()
     }
 
@@ -215,7 +243,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         reset()
         val jsonSchemasDir = File(project.baseDir(), JSON_SCHEMAS_DIR)
         project.initHelmChart()
-        service.clear(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.clear(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThat(jsonSchemasDir).doesNotExist()
     }
 
@@ -230,7 +258,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             .also { writeEmptyJsonIn(it) }
         val otherDownloadedFile = File(otherChartFolder, "$DOWNLOADS_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
             .also { writeEmptyJsonIn(it) }
-        service.clear(project, File(project.baseDir(), HELM_CHARTS_FILE))
+        service.clear(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThat(chartFolder).doesNotExist()
         assertThat(otherChartFolder).isDirectory
         assertThat(otherAggregatedFile).isFile

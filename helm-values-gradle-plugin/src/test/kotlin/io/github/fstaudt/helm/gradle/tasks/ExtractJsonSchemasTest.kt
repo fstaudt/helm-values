@@ -1,6 +1,7 @@
 package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.TestProject
 import io.github.fstaudt.helm.gradle.WITH_BUILD_CACHE
@@ -101,14 +102,14 @@ class ExtractJsonSchemasTest {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                 }
             """.trimIndent()
             )
         }
         File(testProject, "charts").deleteRecursively()
-        testProject.initHelmResources("sources")
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        testProject.initHelmResources(CHART_NAME)
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.initHelmChart(sourcesDir) {
             appendText(
                 """

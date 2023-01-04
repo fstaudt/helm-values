@@ -1,14 +1,14 @@
 package io.github.fstaudt.helm.idea
 
 import com.intellij.openapi.project.Project
-import io.github.fstaudt.helm.HELM_CHARTS_FILE
+import io.github.fstaudt.helm.HELM_CHART_FILE
 import java.io.File
 
 const val CHART_NAME = "helm-chart"
 const val CHART_VERSION = "0.1.0"
 
 fun Project.initHelmChart(sourcesDir: File = baseDir(), customizeHelmChart: File.() -> Unit = {}): File {
-    return File(sourcesDir, HELM_CHARTS_FILE).apply {
+    return File(sourcesDir, HELM_CHART_FILE).apply {
         parentFile.mkdirs()
         writeText(
             """

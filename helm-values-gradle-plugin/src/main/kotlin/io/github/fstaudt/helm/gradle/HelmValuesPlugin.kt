@@ -1,7 +1,7 @@
 package io.github.fstaudt.helm.gradle
 
 import io.github.fstaudt.helm.HELM_CHARTS_DIR
-import io.github.fstaudt.helm.HELM_CHARTS_FILE
+import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
@@ -36,14 +36,14 @@ class HelmValuesPlugin : Plugin<Project> {
                 description = "Download JSON schemas of dependencies from JSON schema repositories"
                 extension = pluginExtension
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
+                chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
             }
             val extractJsonSchemas = tasks.register<ExtractJsonSchemas>(EXTRACT_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Extract JSON schemas values.schema.json from chart dependencies"
                 extension = pluginExtension
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
+                chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
                 chartsDir = File(sourcesDir, HELM_CHARTS_DIR).takeIf { it.exists() }
             }
             tasks.register<AggregateJsonSchema>(AGGREGATE_JSON_SCHEMA) {
@@ -52,7 +52,7 @@ class HelmValuesPlugin : Plugin<Project> {
                     "Aggregate extracted and downloaded JSON schemas for assistance on Helm values in your IDE"
                 extension = pluginExtension
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
+                chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
                 patchValuesFile = File(sourcesDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }
                 patchAggregatedFile = File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }
                 patchExtraValuesFile = File(sourcesDir, PATCH_EXTRA_VALUES_SCHEMA_FILE).takeIf { it.exists() }
@@ -63,7 +63,7 @@ class HelmValuesPlugin : Plugin<Project> {
                 description = "Generate JSON schemas for publication to a repository of JSON schemas"
                 extension = pluginExtension
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
+                chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
                 patchValuesFile = File(sourcesDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }
             }
             tasks.register<PublishJsonSchemas>(PUBLISH_JSON_SCHEMAS) {
@@ -71,7 +71,7 @@ class HelmValuesPlugin : Plugin<Project> {
                 description = "Publish generated JSON schemas to a repository of JSON schemas"
                 extension = pluginExtension
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile = File(sourcesDir, HELM_CHARTS_FILE).takeIf { it.exists() }
+                chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
                 jsonSchemaPublisher = NexusRawJsonSchemaPublisher()
                 dependsOn(generateJsonSchemas)
             }

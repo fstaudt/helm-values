@@ -91,14 +91,14 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should get chart configuration in sourcesDir`() {
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
         testProject.clearHelmChart()
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.initHelmChart(sourcesDir)
         testProject.initBuildFile {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
@@ -109,9 +109,49 @@ class AggregateJsonSchemaTest {
         }
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(aggregatedSchemaFile).isFile
-                .hasContent().node("\$id").isEqualTo("$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
         }
+        assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+            it.node("\$id").isEqualTo("$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
+            it.isObject.doesNotContainKey("\$ref")
+        })
+    }
+
+    @Test
+    fun `aggregateJsonSchema should aggregate JSON schema of current chart when it is available`() {
+        File(testProject, HELM_SCHEMA_FILE).writeText("{}")
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        }
+        assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+            it.node("\$ref").isEqualTo("../.././$HELM_SCHEMA_FILE")
+        })
+    }
+
+    @Test
+    fun `aggregateJsonSchema should aggregate JSON schema of current chart when it is available in sourcesDir`() {
+        testProject.clearHelmChart()
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
+        testProject.initHelmChart(sourcesDir)
+        File(sourcesDir, HELM_SCHEMA_FILE).writeText("{}")
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "$CHART_NAME"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        }
+        assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+            it.node("\$ref").isEqualTo("../../$CHART_NAME/$HELM_SCHEMA_FILE")
+        })
     }
 
     @Test
@@ -222,7 +262,7 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should update aggregated values schema with aggregated schema patch in sourcesDir`() {
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.clearHelmChart()
         testProject.initHelmChart(sourcesDir) {
             appendText(
@@ -238,7 +278,7 @@ class AggregateJsonSchemaTest {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
@@ -340,7 +380,7 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should update aggregated values schema with values schema patch in sourcesDir`() {
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.clearHelmChart()
         testProject.initHelmChart(sourcesDir) {
             appendText(
@@ -356,7 +396,7 @@ class AggregateJsonSchemaTest {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
@@ -451,14 +491,14 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should update extra values JSON schema with extra values schema patch in sourcesDir`() {
-        val sourcesDir = File(testProject, "sources").also { it.mkdirs() }
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.clearHelmChart()
         testProject.initHelmChart(sourcesDir)
         testProject.initBuildFile {
             appendText(
                 """
                 helmValues {
-                  sourcesDir = "sources"
+                  sourcesDir = "$CHART_NAME"
                 }
                 """.trimIndent()
             )

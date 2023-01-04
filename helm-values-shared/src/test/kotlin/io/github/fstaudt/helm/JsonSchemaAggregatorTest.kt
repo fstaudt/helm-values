@@ -14,6 +14,7 @@ import net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.io.File
 
 @Suppress("NestedLambdaShadowedImplicitParameter")
 internal class JsonSchemaAggregatorTest {
@@ -44,6 +45,7 @@ internal class JsonSchemaAggregatorTest {
         aggregator = JsonSchemaAggregator(
             repositoryMappings,
             TestSchemaLocator(),
+            testProject,
             testProject.downloadSchemasDir,
             testProject.extractSchemasDir)
     }
@@ -64,6 +66,17 @@ internal class JsonSchemaAggregatorTest {
             it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")
             it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION")
             it.node("description").isEqualTo("\\n\\\\n")
+            it.isObject.doesNotContainKey("\$ref")
+        })
+    }
+
+    @Test
+    fun `aggregate should aggregate JSON schema of current chart when it is available`() {
+        File(testProject, HELM_SCHEMA_FILE).writeText("{}")
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).and({
+            it.node("\$ref").isEqualTo("${testProject.name}/$HELM_SCHEMA_FILE")
         })
     }
 

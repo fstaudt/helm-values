@@ -89,10 +89,11 @@ open class AggregateJsonSchema : DefaultTask() {
     fun aggregate() {
         val aggregator = JsonSchemaAggregator(
             extension.repositoryMappings,
-            GradleSchemaLocator(),
+            GradleSchemaLocator(extension.sourcesDir),
+            chartFile!!.parentFile,
             downloadSchemasDir,
             extractSchemasDir)
-        val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        val chart = chartFile!!.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
         val aggregatedJsonPatch = patchAggregatedFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
         val valuesJsonPatch = patchValuesFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
         aggregator.aggregate(chart, valuesJsonPatch, aggregatedJsonPatch).also {
