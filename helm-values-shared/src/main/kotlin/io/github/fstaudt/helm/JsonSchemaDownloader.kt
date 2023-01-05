@@ -97,7 +97,7 @@ class JsonSchemaDownloader(
 
     private fun HttpGet.toResponseBody(schemaName: String): String {
         return try {
-            client.execute(this).use {
+            client.execute(this) {
                 if (it.code == 200) {
                     EntityUtils.toString(it.entity)
                 } else {

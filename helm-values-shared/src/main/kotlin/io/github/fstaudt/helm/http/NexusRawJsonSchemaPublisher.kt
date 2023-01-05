@@ -22,7 +22,7 @@ class NexusRawJsonSchemaPublisher : JsonSchemaPublisher {
         repository.basicAuthentication()?.let { request.addHeader("Authorization", it) }
         request.entity = ByteArrayEntity(schemaFile.readBytes(), APPLICATION_JSON)
         try {
-            client.execute(request).use {
+            client.execute(request) {
                 if (it.code != 201)
                     throw PublicationException("${chart.name}/${chart.version}/${schemaFile.name}", it.code)
             }
