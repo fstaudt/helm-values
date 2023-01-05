@@ -114,6 +114,8 @@ internal class JsonSchemaExtractorTest {
             .hasContent().and({
                 it.node("\$schema").isEqualTo(SCHEMA_VERSION)
                 it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
+                it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                 it.node("type").isEqualTo("object")
                 it.node("additionalProperties").isBoolean.isFalse
                 it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
@@ -135,6 +137,8 @@ internal class JsonSchemaExtractorTest {
         assertThatJsonFile("$extractSchemasDir/$MISSING_ARCHIVE-alias/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
+                it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                 it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
                 it.node("description").isString
                     .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
@@ -156,6 +160,8 @@ internal class JsonSchemaExtractorTest {
             .hasContent().and({
                 it.node("\$schema").isEqualTo(SCHEMA_VERSION)
                 it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
+                it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                 it.node("type").isEqualTo("object")
                 it.node("additionalProperties").isBoolean.isFalse
                 it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
@@ -178,6 +184,8 @@ internal class JsonSchemaExtractorTest {
         assertThatJsonFile("$extractSchemasDir/$INVALID_ARCHIVE-alias/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
+                it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                 it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
                 it.node("description").isString
                     .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")

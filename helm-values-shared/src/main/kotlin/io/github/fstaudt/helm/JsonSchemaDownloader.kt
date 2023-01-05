@@ -18,6 +18,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URI
+import java.time.OffsetDateTime.now
+import java.time.ZoneOffset.UTC
+import java.time.temporal.ChronoUnit.SECONDS
 
 @Suppress("NestedLambdaShadowedImplicitParameter")
 class JsonSchemaDownloader(
@@ -112,6 +115,8 @@ class JsonSchemaDownloader(
         return ObjectNode(nodeFactory)
             .put("\$schema", SCHEMA_VERSION)
             .put("\$id", "$uri")
+            .put("x-generated-by", GENERATOR_LABEL)
+            .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
             .put("type", "object")
             .put("additionalProperties", false)
             .put("title", "Fallback schema for $schemaName")

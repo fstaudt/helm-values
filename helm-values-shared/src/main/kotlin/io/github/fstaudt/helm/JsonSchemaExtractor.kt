@@ -14,7 +14,11 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.time.OffsetDateTime.now
+import java.time.ZoneOffset.UTC
+import java.time.temporal.ChronoUnit.SECONDS
 
+@Suppress("NestedLambdaShadowedImplicitParameter")
 class JsonSchemaExtractor(
     private val chartsDir: File?,
     private val repositoryMappings: Map<String, JsonSchemaRepository>,
@@ -83,6 +87,8 @@ class JsonSchemaExtractor(
             val fallbackSchema = ObjectNode(nodeFactory)
                 .put("\$schema", SCHEMA_VERSION)
                 .put("\$id", "$name/$version/$HELM_SCHEMA_FILE")
+                .put("x-generated-by", GENERATOR_LABEL)
+                .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
                 .put("type", "object")
                 .put("additionalProperties", false)
                 .put("title", "Fallback schema for $name:$version")

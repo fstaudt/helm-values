@@ -393,6 +393,8 @@ internal class JsonSchemaDownloaderTest {
                 {
                     it.node("\$schema").isEqualTo(SCHEMA_VERSION)
                     it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                    it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
+                    it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                     it.node("type").isEqualTo("object")
                     it.node("additionalProperties").isBoolean.isFalse
                     it.node("title").isEqualTo("Fallback schema for $CHARTS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
@@ -418,6 +420,8 @@ internal class JsonSchemaDownloaderTest {
                 {
                     it.node("\$schema").isEqualTo(SCHEMA_VERSION)
                     it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                    it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
+                    it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                     it.node("type").isEqualTo("object")
                     it.node("additionalProperties").isBoolean.isFalse
                     it.node("title").isEqualTo("Fallback schema for $UNAVAILABLE/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
