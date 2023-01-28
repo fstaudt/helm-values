@@ -168,6 +168,25 @@ internal class JsonSchemaGeneratorTest {
     }
 
     @Test
+    fun `generateValuesJsonSchema should set properties for dependency condition when condition contains comma`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
+                condition = "$EXTERNAL_SCHEMA.enabled,global.$EXTERNAL_SCHEMA.enabled")
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
+        assertThatJson(json).node("properties.global.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
+    }
+
+    @Test
     fun `generateValuesJsonSchema should set property for dependency condition when dependency is stored locally`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA",

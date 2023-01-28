@@ -56,10 +56,12 @@ class JsonSchemaGenerator(
             }
         }
         chart.dependencies.forEach { dep ->
-            dep.condition?.toPropertiesObjectNodeIn(jsonSchema)
-                ?.put("title", "Enable ${dep.aliasOrName()} dependency (${dep.fullName()})")
-                ?.put("description", NEW_LINE)
-                ?.put("type", "boolean")
+            dep.condition?.toPropertiesObjectNodesIn(jsonSchema)?.forEach {
+                it.put("title", "Enable ${dep.aliasOrName()} dependency (${dep.fullName()})")
+                    .put("description", NEW_LINE)
+                    .put("type", "boolean")
+
+            }
         }
         return (jsonPatch?.apply(jsonSchema) as? ObjectNode) ?: jsonSchema
     }
@@ -146,9 +148,11 @@ class JsonSchemaGenerator(
         }
     }
 
-    private fun String.toPropertiesObjectNodeIn(jsonSchema: ObjectNode): ObjectNode {
-        return split('.').fold(jsonSchema) { node: ObjectNode, property: String ->
-            node.properties().objectNode(property)
+    private fun String.toPropertiesObjectNodesIn(jsonSchema: ObjectNode): List<ObjectNode> {
+        return split(',').map {
+            it.split('.').fold(jsonSchema) { node: ObjectNode, property: String ->
+                node.properties().objectNode(property)
+            }
         }
     }
 }
