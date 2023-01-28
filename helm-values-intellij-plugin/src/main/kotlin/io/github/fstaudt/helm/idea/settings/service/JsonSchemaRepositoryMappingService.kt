@@ -24,17 +24,19 @@ class JsonSchemaRepositoryMappingService {
         return state.jsonSchemaRepositories.map {
             val credentials = passwordSafe.get(credentialAttributes(it.key))
             it.value.toJsonSchemaRepositoryMapping(it.key, credentials)
-        }
+        }.also { list ->
+            list.forEach { it.inheritConfigurationFromReferenceRepositoryIn(list) }
+        }.sortedBy { it.name }
     }
 
     fun update(items: List<JsonSchemaRepositoryMapping>) {
         state.jsonSchemaRepositories.forEach { r ->
-            if (items.none { r.key == it.name && it.secured() }) {
+            if (items.none { r.key == it.name && it.secured() && !it.referenced() }) {
                 passwordSafe.set(credentialAttributes(r.key), null)
             }
         }
         items.forEach {
-            if (it.secured()) {
+            if (it.secured() && !it.referenced()) {
                 passwordSafe.set(credentialAttributes(it.name), Credentials(it.username, it.password))
             }
         }
@@ -48,6 +50,7 @@ class JsonSchemaRepositoryMappingService {
         return JsonSchemaRepositoryMapping(
             name,
             baseUri,
+            referenceRepositoryMapping,
             credentials?.userName.orEmpty(),
             credentials?.password?.toString().orEmpty(),
             valuesSchemaFile,
@@ -58,12 +61,22 @@ class JsonSchemaRepositoryMappingService {
     private fun JsonSchemaRepositoryMapping.toJsonSchemaRepository(): JsonSchemaRepository {
         return JsonSchemaRepository(
             baseUri,
-            valuesSchemaFile.orElse(VALUES_SCHEMA_FILE),
-            globalValuesSchemaFile.orElse(GLOBAL_VALUES_SCHEMA_FILE),
+            referenceRepositoryMapping,
+            valuesSchemaFile.takeUnless { referenced() }.orElse(VALUES_SCHEMA_FILE),
+            globalValuesSchemaFile.takeUnless { referenced() }.orElse(GLOBAL_VALUES_SCHEMA_FILE)
         )
     }
 
-    private fun String.orElse(default: String) = takeUnless { it.isBlank() } ?: default
+    private fun JsonSchemaRepositoryMapping.inheritConfigurationFromReferenceRepositoryIn(mappings: List<JsonSchemaRepositoryMapping>) {
+        mappings.firstOrNull { it.name == referenceRepositoryMapping }?.let {
+            username = it.username
+            password = it.password
+            valuesSchemaFile = it.valuesSchemaFile
+            globalValuesSchemaFile = it.globalValuesSchemaFile
+        }
+    }
+
+    private fun String?.orElse(default: String) = takeUnless { it.isNullOrBlank() } ?: default
 
     private fun credentialAttributes(key: String) = CredentialAttributes(generateServiceName("HelmValues", key))
 }

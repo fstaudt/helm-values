@@ -7,6 +7,7 @@ import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 data class JsonSchemaRepositoryMapping @JvmOverloads constructor(
     var name: String = "",
     var baseUri: String = "",
+    var referenceRepositoryMapping: String = "",
     var username: String = "",
     var password: String = "",
     var valuesSchemaFile: String = VALUES_SCHEMA_FILE,
@@ -16,11 +17,13 @@ data class JsonSchemaRepositoryMapping @JvmOverloads constructor(
     fun applyFrom(item: JsonSchemaRepositoryMapping) {
         name = item.name
         baseUri = item.baseUri
+        referenceRepositoryMapping = item.referenceRepositoryMapping
         username = item.username
         password = item.password
         valuesSchemaFile = item.valuesSchemaFile
         globalValuesSchemaFile = item.globalValuesSchemaFile
     }
 
+    fun referenced() = referenceRepositoryMapping.isNotBlank()
     fun secured() = username.isNotBlank() && password.isNotBlank()
 }

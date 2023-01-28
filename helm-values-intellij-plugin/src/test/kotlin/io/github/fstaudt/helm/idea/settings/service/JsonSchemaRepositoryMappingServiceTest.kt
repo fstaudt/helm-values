@@ -9,19 +9,30 @@ import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import org.assertj.core.api.Assertions.assertThat
-import java.util.AbstractMap.SimpleEntry
+import org.assertj.core.api.Assertions.entry
 
 class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     private lateinit var state: HelmValuesSettings
     private lateinit var passwordSafe: PasswordSafe
     private lateinit var service: JsonSchemaRepositoryMappingService
 
+    companion object {
+        private const val APPS = "@apps"
+        private const val APPS_URI = "https://nexus/apps"
+        private const val BUNDLES = "@bundles"
+        private const val BUNDLES_URI = "https://nexus/bundles"
+        private const val USERNAME = "user"
+        private const val PASSWORD = "password"
+        private const val VALUES_SCHEMA = "values.json"
+        private const val GLOBAL_SCHEMA = "global.json"
+    }
+
     private fun reset() {
         state = HelmValuesSettings.instance.state
         state.jsonSchemaRepositories = emptyMap()
         passwordSafe = PasswordSafe.instance
-        passwordSafe.set(credentialAttributes("@apps"), null)
-        passwordSafe.set(credentialAttributes("@bundles"), null)
+        passwordSafe.set(credentialAttributes(APPS), null)
+        passwordSafe.set(credentialAttributes(BUNDLES), null)
         service = JsonSchemaRepositoryMappingService.instance
     }
 
@@ -33,62 +44,120 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     fun `test - jsonSchemaRepositoryMappings should return all mappings from state`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            "@apps" to JsonSchemaRepository("https://nexus/apps"),
-            "@bundles" to JsonSchemaRepository("https://nexus/bundles"),
+            APPS to JsonSchemaRepository(APPS_URI),
+            BUNDLES to JsonSchemaRepository(BUNDLES_URI),
         )
-        assertThat(service.list()).containsExactlyInAnyOrder(
-            JsonSchemaRepositoryMapping("@apps", "https://nexus/apps"),
-            JsonSchemaRepositoryMapping("@bundles", "https://nexus/bundles"),
+        assertThat(service.list()).containsExactly(
+            JsonSchemaRepositoryMapping(APPS, APPS_URI),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI),
         )
     }
 
-    fun `test - jsonSchemaRepositoryMappings should retrieve passwords in password safe for all mappings from state`() {
+    fun `test - jsonSchemaRepositoryMappings should retrieve specific values files from state`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            "@apps" to JsonSchemaRepository("https://nexus/apps"),
-            "@bundles" to JsonSchemaRepository("https://nexus/bundles"),
+            APPS to JsonSchemaRepository(APPS_URI, valuesSchemaFile = VALUES_SCHEMA),
+            BUNDLES to JsonSchemaRepository(BUNDLES_URI, globalValuesSchemaFile = GLOBAL_SCHEMA),
         )
-        passwordSafe.set(credentialAttributes("@apps"), Credentials("user", "password"))
-        assertThat(service.list()).containsExactlyInAnyOrder(
-            JsonSchemaRepositoryMapping("@apps", "https://nexus/apps", "user", "password"),
-            JsonSchemaRepositoryMapping("@bundles", "https://nexus/bundles"),
+        assertThat(service.list()).containsExactly(
+            JsonSchemaRepositoryMapping(APPS, APPS_URI, valuesSchemaFile = VALUES_SCHEMA),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, globalValuesSchemaFile = GLOBAL_SCHEMA),
         )
+    }
+
+    fun `test - jsonSchemaRepositoryMappings should retrieve specific values files from reference repository mapping when it is provided`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(
+            APPS to JsonSchemaRepository(APPS_URI, "", VALUES_SCHEMA, GLOBAL_SCHEMA),
+            BUNDLES to JsonSchemaRepository(BUNDLES_URI, APPS),
+        )
+        assertThat(service.list()).containsExactly(
+            JsonSchemaRepositoryMapping(APPS, APPS_URI,
+                valuesSchemaFile = VALUES_SCHEMA,
+                globalValuesSchemaFile = GLOBAL_SCHEMA),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS,
+                valuesSchemaFile = VALUES_SCHEMA,
+                globalValuesSchemaFile = GLOBAL_SCHEMA),
+        )
+    }
+
+    fun `test - jsonSchemaRepositoryMappings should retrieve credentials in password safe for all mappings from state`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(
+            APPS to JsonSchemaRepository(APPS_URI),
+            BUNDLES to JsonSchemaRepository(BUNDLES_URI),
+        )
+        passwordSafe.set(credentialAttributes(APPS), Credentials(USERNAME, PASSWORD))
+        assertThat(service.list()).containsExactly(
+            JsonSchemaRepositoryMapping(APPS, APPS_URI, "", USERNAME, PASSWORD),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI),
+        )
+    }
+
+    fun `test - jsonSchemaRepositoryMappings should retrieve credentials from reference repository when it is provided`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(
+            APPS to JsonSchemaRepository(APPS_URI),
+            BUNDLES to JsonSchemaRepository(BUNDLES_URI, APPS),
+        )
+        passwordSafe.set(credentialAttributes(APPS), Credentials(USERNAME, PASSWORD))
+        assertThat(service.list()).containsExactly(
+            JsonSchemaRepositoryMapping(APPS, APPS_URI, "", USERNAME, PASSWORD),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS, USERNAME, PASSWORD),
+        )
+    }
+
+    fun `test - jsonSchemaRepositoryMappings should use default configuration when reference repository mapping is not found`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository(BUNDLES_URI, APPS))
+        assertThat(service.list()).containsExactly(JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS))
     }
 
     fun `test - update should put all mappings in state`() {
         reset()
-        service.update(
-            listOf(
-                JsonSchemaRepositoryMapping("@apps", "https://nexus/apps"),
-                JsonSchemaRepositoryMapping("@bundles", "https://nexus/bundles"),
-            )
-        )
+        service.update(listOf(
+            JsonSchemaRepositoryMapping(APPS, APPS_URI),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI),
+        ))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            SimpleEntry("@apps", JsonSchemaRepository("https://nexus/apps")),
-            SimpleEntry("@bundles", JsonSchemaRepository("https://nexus/bundles")),
+            entry(APPS, JsonSchemaRepository(APPS_URI)),
+            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI)),
         )
     }
 
     fun `test - update should overwrite existing mapping in state`() {
         reset()
-        state.jsonSchemaRepositories = mapOf("@bundles" to JsonSchemaRepository("https://nexus/previous"))
-        service.update(
-            listOf(
-                JsonSchemaRepositoryMapping(
-                    "@bundles",
-                    "https://nexus/bundles",
-                    "",
-                    "",
-                    "helm-values.json",
-                    "helm-global.json"
-                )
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository("https://nexus/previous"))
+        service.update(listOf(
+            JsonSchemaRepositoryMapping(
+                BUNDLES,
+                BUNDLES_URI,
+                valuesSchemaFile = VALUES_SCHEMA,
+                globalValuesSchemaFile = GLOBAL_SCHEMA
             )
-        )
+        ))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            SimpleEntry(
-                "@bundles",
-                JsonSchemaRepository("https://nexus/bundles", "helm-values.json", "helm-global.json")
-            )
+            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI, "", VALUES_SCHEMA, GLOBAL_SCHEMA))
+        )
+    }
+
+    fun `test - update should only keep reference repository mapping in state when it is provided`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(
+            BUNDLES to JsonSchemaRepository("https://previous", "", VALUES_SCHEMA, GLOBAL_SCHEMA)
+        )
+        service.update(listOf(
+            JsonSchemaRepositoryMapping(
+                BUNDLES,
+                BUNDLES_URI,
+                APPS,
+                "",
+                "",
+                VALUES_SCHEMA,
+                GLOBAL_SCHEMA)
+        ))
+        assertThat(state.jsonSchemaRepositories).containsExactly(
+            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI, APPS))
         )
     }
 
@@ -96,39 +165,53 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
         reset()
         service.update(
             listOf(
-                JsonSchemaRepositoryMapping("@apps", "https://nexus/apps", "user", "password"),
-                JsonSchemaRepositoryMapping("@bundles", "https://nexus/bundles"),
+                JsonSchemaRepositoryMapping(APPS, APPS_URI, "", USERNAME, PASSWORD),
+                JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI),
             )
         )
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            SimpleEntry("@apps", JsonSchemaRepository("https://nexus/apps")),
-            SimpleEntry("@bundles", JsonSchemaRepository("https://nexus/bundles")),
+            entry(APPS, JsonSchemaRepository(APPS_URI)),
+            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI)),
         )
-        assertThat(passwordSafe.get(credentialAttributes("@apps"))).isEqualTo(Credentials("user", "password"))
-        assertThat(passwordSafe.get(credentialAttributes("@bundles"))).isNull()
+        assertThat(passwordSafe.get(credentialAttributes(APPS))).isEqualTo(Credentials(USERNAME, PASSWORD))
+        assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()
     }
 
-    fun `test - update should clear passwords of removed mappings from password safe`() {
+    fun `test - update should clear credentials of removed mappings from password safe`() {
         reset()
-        state.jsonSchemaRepositories = mapOf("@bundles" to JsonSchemaRepository("https://nexus/apps"))
-        passwordSafe.set(credentialAttributes("@bundles"), Credentials("user", "password"))
-        service.update(listOf(JsonSchemaRepositoryMapping("@apps", "https://nexus/apps")))
-        assertThat(state.jsonSchemaRepositories).containsExactly(
-            SimpleEntry("@apps", JsonSchemaRepository("https://nexus/apps"))
-        )
-        assertThat(state.jsonSchemaRepositories).doesNotContainKey("@bundles")
-        assertThat(passwordSafe.get(credentialAttributes("@bundles"))).isNull()
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository(APPS_URI))
+        passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
+        service.update(listOf(JsonSchemaRepositoryMapping(APPS, APPS_URI)))
+        assertThat(state.jsonSchemaRepositories).containsExactly(entry(APPS, JsonSchemaRepository(APPS_URI)))
+        assertThat(state.jsonSchemaRepositories).doesNotContainKey(BUNDLES)
+        assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()
     }
 
-    fun `test - update should clear passwords of unsecure mappings from password safe`() {
+    fun `test - update should clear credentials of unsecure mappings from password safe`() {
         reset()
-        state.jsonSchemaRepositories = mapOf("@bundles" to JsonSchemaRepository("https://nexus/bundles"))
-        passwordSafe.set(credentialAttributes("@bundles"), Credentials("user", "password"))
-        service.update(listOf(JsonSchemaRepositoryMapping("@bundles", "https://nexus/bundles")))
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository(BUNDLES_URI))
+        passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
+        service.update(listOf(JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI)))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            SimpleEntry("@bundles", JsonSchemaRepository("https://nexus/bundles"))
+            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI))
         )
-        assertThat(passwordSafe.get(credentialAttributes("@bundles"))).isNull()
+        assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()
+    }
+
+    fun `test - update should clear credentials when reference repository mapping is provided`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository("https://previous"))
+        passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
+        service.update(listOf(
+            JsonSchemaRepositoryMapping(APPS, APPS_URI, "", USERNAME, PASSWORD),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS, USERNAME, PASSWORD)
+        ))
+        assertThat(state.jsonSchemaRepositories).containsExactly(
+            entry(APPS, JsonSchemaRepository(APPS_URI)),
+            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI, APPS))
+        )
+        assertThat(passwordSafe.get(credentialAttributes(APPS))).isEqualTo(Credentials(USERNAME, PASSWORD))
+        assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()
     }
 
     private fun credentialAttributes(key: String) = CredentialAttributes(generateServiceName("HelmValues", key))

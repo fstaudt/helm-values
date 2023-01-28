@@ -45,8 +45,7 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     }
 
     override fun isModified(): Boolean {
-        return tableEditor.model.items.sortedBy { it.name } !=
-                jsonSchemaRepositoryMappingService.list().sortedBy { it.name }
+        return tableEditor.model.items.sortedBy { it.name } != jsonSchemaRepositoryMappingService.list()
     }
 
     override fun apply() {
@@ -58,8 +57,10 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         tableEditor.reset(jsonSchemaRepositoryMappingService.list())
     }
 
-    private class Column<T, C>(private val field: KMutableProperty1<T, C>, private val preferredWidth: Int? = null) :
-        TableModelEditor.EditableColumnInfo<T, C>() {
+    private class Column<T, C>(
+        private val field: KMutableProperty1<T, C>,
+        private val preferredWidth: Int? = null,
+    ) : TableModelEditor.EditableColumnInfo<T, C>() {
         override fun getName() = message("settings.mappings.${field.name}.title")
         override fun getPreferredStringValue() = preferredWidth?.let { "".padEnd(it) }
         override fun valueOf(item: T): C = field.get(item)
@@ -70,8 +71,9 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         override fun isCellEditable(item: T) = false
     }
 
-    private class BooleanColumn<R>(private val function: KFunction<Boolean>) :
-        TableModelEditor.EditableColumnInfo<R, Boolean>() {
+    private class BooleanColumn<R>(
+        private val function: KFunction<Boolean>,
+    ) : TableModelEditor.EditableColumnInfo<R, Boolean>() {
         override fun getColumnClass() = Boolean::class.java
         override fun getWidth(table: JTable) = 50
         override fun getName() = message("settings.mappings.${function.name}.title")
