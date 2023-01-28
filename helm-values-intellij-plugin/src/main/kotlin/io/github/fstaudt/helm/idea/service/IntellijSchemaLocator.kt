@@ -8,7 +8,7 @@ import java.io.File
 
 class IntellijSchemaLocator(private val projectBaseDir: File) : SchemaLocator {
     override fun aggregatedSchemaFor(dependency: ChartDependency): String {
-        return "../${dependency.localPath()?.substringAfterLast("/")}/$AGGREGATED_SCHEMA_FILE"
+        return "../${dependency.localPath()?.removeSuffix("/")?.substringAfterLast("/")}/$AGGREGATED_SCHEMA_FILE"
     }
 
     override fun schemaFor(chartDir: File) = "../../../${chartDir.relativePath()}/$HELM_SCHEMA_FILE"

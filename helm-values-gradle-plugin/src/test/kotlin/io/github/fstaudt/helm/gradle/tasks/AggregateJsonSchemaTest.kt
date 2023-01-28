@@ -206,7 +206,7 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should aggregate aggregated JSON schema of dependency when dependency is stored locally`() {
+    fun `aggregateJsonSchema should include aggregated JSON schema of dependency when dependency is stored locally`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -214,6 +214,31 @@ class AggregateJsonSchemaTest {
                 - name: $EXTERNAL_SCHEMA
                   version: $EXTERNAL_VERSION
                   repository: "file://../$EXTERNAL_SCHEMA"
+                """.trimIndent()
+            )
+        }
+        testProject.initHelmResources(chartName = NO_SCHEMA)
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        }
+        val externalSchemaPath = "../../../$EXTERNAL_SCHEMA/build/$HELM_VALUES"
+        assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
+            it.node("global.allOf").isArray.hasSize(3)
+            it.node("global.allOf[0].\$ref")
+                .isEqualTo("$externalSchemaPath/$AGGREGATED_SCHEMA_FILE#/properties/global")
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$externalSchemaPath/$AGGREGATED_SCHEMA_FILE")
+        })
+    }
+
+    @Test
+    fun `aggregateJsonSchema should include aggregated JSON schema of dependency when local path ends with slash`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "file://../$EXTERNAL_SCHEMA/"
                 """.trimIndent()
             )
         }

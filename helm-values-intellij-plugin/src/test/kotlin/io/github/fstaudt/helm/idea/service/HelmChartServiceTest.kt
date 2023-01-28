@@ -107,7 +107,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             })
     }
 
-    fun `test - aggregate JSON schema of current chart when it is available`() {
+    fun `test - aggregate should include JSON schema of current chart when it is available`() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
         project.initHelmChart()
@@ -119,7 +119,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             })
     }
 
-    fun `test - aggregate JSON schema of current chart when it is available in project subdirectory`() {
+    fun `test - aggregate should include JSON schema of current chart when it is available in project subdirectory`() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
         val subdir = File(project.baseDir(), CHART_NAME)
@@ -132,7 +132,25 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             })
     }
 
-    fun `test - aggregate should aggregate aggregated JSON schema of dependency when dependency is stored locally`() {
+    fun `test - aggregate should include aggregated JSON schema of dependency when dependency is stored locally`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        project.initHelmChart {
+            appendText("""
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "file://../$EXTERNAL_SCHEMA"
+            """.trimIndent())
+        }
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().node("properties").and({
+                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            })
+    }
+
+    fun `test - aggregate should include aggregated JSON schema of dependency when dependency is stored in child folder`() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
         project.initHelmChart {
@@ -141,6 +159,24 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                 - name: $EXTERNAL_SCHEMA
                   version: $EXTERNAL_VERSION
                   repository: "file://sub-charts/$EXTERNAL_SCHEMA"
+            """.trimIndent())
+        }
+        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().node("properties").and({
+                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            })
+    }
+
+    fun `test - aggregate should include aggregated JSON schema of dependency when local path ends with slash`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        project.initHelmChart {
+            appendText("""
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "file://../$EXTERNAL_SCHEMA/"
             """.trimIndent())
         }
         service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))

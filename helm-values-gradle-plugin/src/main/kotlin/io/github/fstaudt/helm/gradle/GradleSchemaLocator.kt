@@ -9,7 +9,7 @@ import java.io.File
 
 class GradleSchemaLocator(private val sourcesDir: String) : SchemaLocator {
     override fun aggregatedSchemaFor(dependency: ChartDependency): String {
-        return "../../${dependency.localPath()}/build/$HELM_VALUES/$AGGREGATED_SCHEMA_FILE"
+        return "../../${dependency.localPath()?.removeSuffix("/")}/build/$HELM_VALUES/$AGGREGATED_SCHEMA_FILE"
     }
 
     override fun schemaFor(chartDir: File) = "../../$sourcesDir/$HELM_SCHEMA_FILE"
