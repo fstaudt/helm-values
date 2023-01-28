@@ -22,14 +22,15 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
     private val tableEditor = TableModelEditor(
         arrayOf(
-            Column(JsonSchemaRepositoryMapping::name),
-            Column(JsonSchemaRepositoryMapping::baseUri),
-            Column(JsonSchemaRepositoryMapping::valuesSchemaFile),
+            Column(JsonSchemaRepositoryMapping::name, 40),
+            Column(JsonSchemaRepositoryMapping::baseUri, 150),
+            Column(JsonSchemaRepositoryMapping::valuesSchemaFile, 50),
+            Column(JsonSchemaRepositoryMapping::globalValuesSchemaFile, 60),
             BooleanColumn(JsonSchemaRepositoryMapping::secured)
         ),
         JsonSchemaRepositoryMappingEditor(),
         message("settings.mappings.none")
-    )
+    ).disableUpDownActions()
 
     override fun createPanel(): DialogPanel {
         tableEditor.reset(jsonSchemaRepositoryMappingService.list())
@@ -57,9 +58,10 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         tableEditor.reset(jsonSchemaRepositoryMappingService.list())
     }
 
-    private class Column<T, C>(private val field: KMutableProperty1<T, C>) :
+    private class Column<T, C>(private val field: KMutableProperty1<T, C>, private val preferredWidth: Int? = null) :
         TableModelEditor.EditableColumnInfo<T, C>() {
         override fun getName() = message("settings.mappings.${field.name}.title")
+        override fun getPreferredStringValue() = preferredWidth?.let { "".padEnd(it) }
         override fun valueOf(item: T): C = field.get(item)
         override fun setValue(item: T, value: C) {
             field.set(item, value)
