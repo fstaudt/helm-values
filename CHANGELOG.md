@@ -1,3 +1,17 @@
+## 0.6.0 - Jan 29, 2023
+
+- :sparkles: (intellij) reuse credentials from other JSON schema repository mapping
+  ([#32](https://github.com/fstaudt/helm-values/issues/32))
+- :sparkles: include values.schema.json of chart folder in aggregated schema
+  ([#41](https://github.com/fstaudt/helm-values/issues/41))
+- :sparkles: add x-generated fields in fallback schemas
+  ([#47](https://github.com/fstaudt/helm-values/issues/47))
+- :sparkles: (intellij) preferred width for columns in settings
+- :bug: support condition with comma separated property names
+  ([#50](https://github.com/fstaudt/helm-values/issues/50))
+- :bug: aggregate should include aggregated JSON schema of dependency when local path ends with /
+  ([#52](https://github.com/fstaudt/helm-values/issues/52))
+
 ## 0.5.1 - Dec 29, 2022
 
 - :bug: (gradle) reference to schema of inter-dependent chart should use published version over chart version

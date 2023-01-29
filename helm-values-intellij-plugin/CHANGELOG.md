@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.0 - Jan 29, 2023
+
+### ✨ New
+
+- reuse credentials from other JSON schema repository mapping
+  ([#32](https://github.com/fstaudt/helm-values/issues/32))
+- include values.schema.json of chart folder in aggregated schema
+  ([#41](https://github.com/fstaudt/helm-values/issues/41))
+- add x-generated fields in fallback schemas
+  ([#47](https://github.com/fstaudt/helm-values/issues/47))
+- preferred width for columns in settings
+
+### 🐛 Fixed
+
+- support condition with comma separated property names
+  ([#50](https://github.com/fstaudt/helm-values/issues/50))
+- aggregate should include aggregated JSON schema of dependency when local path ends with /
+  ([#52](https://github.com/fstaudt/helm-values/issues/52))
+
 ## 0.5.1 - Dec 29, 2022
 
 ### 🐛 Fixed
