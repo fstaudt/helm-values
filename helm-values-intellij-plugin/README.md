@@ -143,9 +143,18 @@ JSON schema repositories can be secured with basic authentication.
 
 Each schema repository can be configured with user and password in plugin settings.
 
-![settings](screenshots/settings-security.png "Custom JSON schema file names in settings")
+![settings](screenshots/settings-security.png "Security credentials in settings")
 
 *:bulb: credentials are stored securely in IntelliJ password safe.*
+
+### Reference repository mapping
+
+A reference repository mapping can be defined for each repository in plugin settings.
+
+When selected, credentials and schema file names are inherited from the reference repository mapping.\
+Inherited configuration is displayed in read-only in editor.
+
+![settings](screenshots/settings-reference.png "Reference repository mapping in settings")
 
 ## Screenshots
 
