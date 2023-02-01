@@ -29,7 +29,7 @@ jobs:
         run: ./gradlew check
       - name: "Collect Tests Result of failed tests"
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
@@ -65,7 +65,7 @@ jobs:
         run: ./gradlew :helm-values-intellij-plugin:runPluginVerifier -Pplugin.verifier.home.dir=${{ steps.properties.outputs.pluginVerifierHomeDir }}
       - name: "Collect IntelliJ Plugin Verifier Result"
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/helm-values-intellij-plugin/build/reports/pluginVerifier
@@ -78,7 +78,7 @@ jobs:
           unzip "$FILENAME.zip" -d content
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
       - name: "Upload IntelliJ Plugin Artifact"
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: ${{ steps.artifact.outputs.filename }}
           path: ./helm-values-intellij-plugin/build/distributions/content/*/*
