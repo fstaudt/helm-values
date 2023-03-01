@@ -57,7 +57,7 @@ jobs:
 
           ./gradlew :helm-values-intellij-plugin:listProductsReleases # prepare list of IDEs for Plugin Verifier
       - name: "Setup Plugin Verifier IDEs Cache"
-        uses: actions/cache@v3.2.4
+        uses: actions/cache@v3.2.6
         with:
           path: ${{ steps.properties.outputs.pluginVerifierHomeDir }}/ides
           key: plugin-verifier-${{ hashFiles('helm-values-intellij-plugin/build/listProductsReleases.txt') }}
