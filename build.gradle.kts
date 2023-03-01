@@ -8,7 +8,7 @@ repositories {
 }
 plugins {
     kotlin("jvm") version embeddedKotlinVersion apply false
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("io.github.gradle-nexus.publish-plugin") version "1.2.0"
 }
 val sonatypeUsername: String? by project
 val sonatypePassword: String? by project
