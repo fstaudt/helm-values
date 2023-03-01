@@ -29,7 +29,7 @@ dependencies {
     api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
-    testImplementation("org.assertj:assertj-core:3.23.1")
+    testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation(projects.helmValuesTest) {
         exclude(module = "junit-jupiter-api")
         exclude(module = "wiremock-jre8")
