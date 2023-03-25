@@ -12,13 +12,14 @@ import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEM
 import java.io.File
 
 class ExtraJsonSchemaProvider(project: Project, private val chartDir: File) : JsonSchemaFileProvider {
-    private val jsonSchemaFile = File(project.baseDir(), "$JSON_SCHEMAS_DIR/${chartDir.name}/$EXTRA_VALUES_SCHEMA_FILE")
+    private val jsonSchemaPath = "$JSON_SCHEMAS_DIR/${chartDir.name}/$EXTRA_VALUES_SCHEMA_FILE"
+    private val jsonSchemaFile = findFileByIoFile(File(project.baseDir(), jsonSchemaPath), false)
     override fun isAvailable(file: VirtualFile): Boolean {
         return file.name.endsWith("-values.yaml") && (file.parent?.name == chartDir.name)
     }
 
     override fun getName() = "aggregation for packaged chart ${chartDir.name}"
-    override fun getSchemaFile() = findFileByIoFile(jsonSchemaFile, false)
+    override fun getSchemaFile() = jsonSchemaFile
     override fun getSchemaVersion() = SCHEMA_7
     override fun getSchemaType() = SchemaType.userSchema
 }
