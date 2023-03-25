@@ -43,6 +43,7 @@ class AggregateJsonSchemaTest {
     private lateinit var extraValuesSchemaFile: File
 
     companion object {
+        private const val DEFS = "#/\$defs"
         private const val REPOSITORY_URL = "http://localhost:1980"
         private const val APPS = "@apps"
         private const val APPS_PATH = "apps"
@@ -176,10 +177,10 @@ class AggregateJsonSchemaTest {
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
             it.node("global.allOf").isArray.hasSize(3)
             it.node("global.allOf[0].\$ref")
-                .isEqualTo("$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH#/properties/global")
-            it.node("global.allOf[1].\$ref").isEqualTo("$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_GLOBAL_SCHEMA_PATH")
+                .isEqualTo("$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH/properties/global")
+            it.node("global.allOf[1].\$ref").isEqualTo("$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_GLOBAL_SCHEMA_PATH")
             it.node("global.allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
-            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
             it.isObject.doesNotContainKey(NO_SCHEMA)
         })
     }
@@ -200,7 +201,7 @@ class AggregateJsonSchemaTest {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-                it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$DEFS/$EXTRACT_DIR/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
             })
         }
     }

@@ -26,6 +26,7 @@ private const val REPOSITORY_PORT = 1983
 
 class HelmChartServiceTest : BasePlatformTestCase() {
     companion object {
+        private const val DEFS = "#/\$defs"
         private const val OTHER_CHART_NAME = "other-chart"
         private const val EXTERNAL = "@external"
         private const val THIRDPARTY = "@thirdparty"
@@ -101,9 +102,9 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             .hasContent().and({
                 it.isObject.doesNotContainKey("\$ref")
                 it.node("properties.$EMBEDDED_SCHEMA.\$ref")
-                    .isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
+                    .isEqualTo("$DEFS/$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
                 it.node("properties.$EXTERNAL_SCHEMA.\$ref")
-                    .isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+                    .isEqualTo("$DEFS/$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
             })
     }
 

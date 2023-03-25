@@ -23,9 +23,36 @@ fun testProject(parentFolder: File? = File("build/tmp")): TestProject {
     }
 }
 
-fun TestProject.initExtractedSchemas(dependencyName: String) {
-    File(extractSchemasDir, dependencyName).mkdirs()
-    File(extractSchemasDir, "$dependencyName/$HELM_SCHEMA_FILE").writeText("{}")
+fun TestProject.initExtractedSchemas(
+    dependencyPath: String,
+    schemaContent: String = """
+        {
+          "${'$'}id": "$dependencyPath/$HELM_SCHEMA_FILE"
+        }
+    """.trimIndent()
+) {
+    File(extractSchemasDir, dependencyPath).mkdirs()
+    File(extractSchemasDir, "$dependencyPath/$HELM_SCHEMA_FILE").writeText(schemaContent)
+}
+
+fun TestProject.initDownloadedSchemas(
+    dependencyPath: String,
+    valuesSchemaFile: String = VALUES_SCHEMA_FILE,
+    valuesSchemaContent: String = """
+        {
+          "${'$'}id": "$dependencyPath/$valuesSchemaFile"
+        }
+    """.trimIndent(),
+    globalSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
+    globalSchemaContent: String = """
+        {
+          "${'$'}id": "$dependencyPath/$globalSchemaFile"
+        }
+    """.trimIndent()
+) {
+    File(downloadSchemasDir, dependencyPath).mkdirs()
+    File(downloadSchemasDir, "$dependencyPath/$valuesSchemaFile").writeText(valuesSchemaContent)
+    File(downloadSchemasDir, "$dependencyPath/$globalSchemaFile").writeText(globalSchemaContent)
 }
 
 fun TestProject.initHelmResources(chartName: String, chartVersion: String) {
