@@ -1,8 +1,10 @@
-import org.gradle.api.JavaVersion.VERSION_1_8
-
 plugins {
     kotlin("jvm") version embeddedKotlinVersion
     `java-library`
+}
+
+kotlin {
+    jvmToolchain(8)
 }
 
 dependencies {
@@ -19,8 +21,4 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-}
-
-java {
-    targetCompatibility = VERSION_1_8
 }

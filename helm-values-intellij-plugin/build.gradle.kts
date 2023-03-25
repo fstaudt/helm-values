@@ -20,9 +20,8 @@ plugins {
     id("org.jetbrains.changelog") version "2.0.0"
 }
 
-// Configure project's dependencies
-repositories {
-    mavenCentral()
+kotlin {
+    jvmToolchain(11)
 }
 
 dependencies {
@@ -33,13 +32,6 @@ dependencies {
     testImplementation(projects.helmValuesTest) {
         exclude(module = "junit-jupiter-api")
         exclude(module = "wiremock-jre8")
-    }
-}
-
-// Set the JVM language level used to compile sources and generate files - Java 11 is required since 2020.3
-kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
     }
 }
 
