@@ -1,10 +1,12 @@
-import org.gradle.api.JavaVersion.VERSION_1_8
-
 plugins {
     kotlin("jvm")
     id("org.jetbrains.dokka") version "1.7.20"
     `maven-publish`
     signing
+}
+
+kotlin {
+    jvmToolchain(8)
 }
 
 dependencies {
@@ -20,10 +22,6 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-}
-
-java {
-    targetCompatibility = VERSION_1_8
 }
 
 val sourcesJar = tasks.register<Jar>("sourcesJar") {

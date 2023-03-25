@@ -1,14 +1,18 @@
-import org.gradle.api.JavaVersion.VERSION_1_8
-
 plugins {
     `java-gradle-plugin`
     `kotlin-dsl`
     id("com.gradle.plugin-publish") version "1.1.0"
 }
 
+kotlin {
+    jvmToolchain(8)
+}
+
 val pluginVersion = "$version"
 val pluginName = "helm-values"
 gradlePlugin {
+    website.set("https://github.com/fstaudt/helm-values")
+    vcsUrl.set("https://github.com/fstaudt/helm-values")
     plugins {
         register(pluginName) {
             id = "io.github.fstaudt.$pluginName"
@@ -16,14 +20,9 @@ gradlePlugin {
             description = "Generate JSON schemas to help writing values for Helm charts!"
             implementationClass = "$group.gradle.HelmValuesPlugin"
             version = pluginVersion
+            tags.set(listOf("helm", "chart", "kubernetes", "json", "schema"))
         }
     }
-}
-
-pluginBundle {
-    website = "https://github.com/fstaudt/helm-values"
-    vcsUrl = "https://github.com/fstaudt/helm-values"
-    tags = listOf("helm", "chart", "kubernetes", "json", "schema")
 }
 
 dependencies {
@@ -37,8 +36,4 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-}
-
-java {
-    targetCompatibility = VERSION_1_8
 }
