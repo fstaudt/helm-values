@@ -16,6 +16,7 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
@@ -148,9 +149,9 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         comboboxFn: (Cell<ComboBox<String>>) -> Cell<ComboBox<String>> = { it }
     ): Row {
         return row(message("settings.mappings.${prop.name}.label")) {
-            comboBox((listOf("") + items).toTypedArray())
+            comboBox(listOf("") + items)
                 .accessibleName(prop.name)
-                .bindItem(prop)
+                .bindItem(prop.toNullableProperty())
                 .columns(COLUMNS_LARGE)
                 .comment(message("settings.mappings.${prop.name}.comment"))
                 .let { comboboxFn(it) }
