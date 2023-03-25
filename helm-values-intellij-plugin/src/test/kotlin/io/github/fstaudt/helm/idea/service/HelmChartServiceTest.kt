@@ -101,9 +101,9 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             .hasContent().and({
                 it.isObject.doesNotContainKey("\$ref")
                 it.node("properties.$EMBEDDED_SCHEMA.\$ref")
-                    .isEqualTo("$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
+                    .isEqualTo("#/refs/$EXTRACT_DIR/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
                 it.node("properties.$EXTERNAL_SCHEMA.\$ref")
-                    .isEqualTo("$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+                    .isEqualTo("#/refs/$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
             })
     }
 

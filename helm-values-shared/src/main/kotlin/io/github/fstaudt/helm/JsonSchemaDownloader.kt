@@ -1,12 +1,14 @@
 package io.github.fstaudt.helm
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isFullUri
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -30,8 +32,6 @@ class JsonSchemaDownloader(
 
     companion object {
         const val DOWNLOADS_DIR = "downloads"
-        private val FULL_URI_REGEX = Regex("http(s)?://.*")
-        private val URI_FILENAME_REGEX = Regex("[^/]+$")
         private val logger: Logger = LoggerFactory.getLogger(JsonSchemaDownloader::class.java)
         private val jsonMapper = ObjectMapper().also {
             it.registerModule(KotlinModule.Builder().build())
@@ -71,7 +71,7 @@ class JsonSchemaDownloader(
     private fun downloadSchemaReferences(uri: URI, downloadedSchema: File) {
         val jsonSchema = jsonMapper.readTree(downloadedSchema)
         val needsRewrite = jsonSchema.findValues("\$ref").any { it.isFullUri() }
-        jsonSchema.findParents("\$ref").map {
+        jsonSchema.findParents("\$ref").forEach {
             val ref = it.get("\$ref")
             if (!ref.isInternalReference()) {
                 try {
@@ -88,11 +88,6 @@ class JsonSchemaDownloader(
             }
         }
         if (needsRewrite) jsonMapper.writeValue(downloadedSchema, jsonSchema)
-    }
-
-    private fun JsonNode.toUriFrom(uri: URI) = when {
-        isFullUri() -> URI(textValue())
-        else -> URI("$uri".replace(URI_FILENAME_REGEX, textValue())).normalize()
     }
 
     private fun HttpGet.toResponseBody(schemaName: String): String {
@@ -125,8 +120,6 @@ class JsonSchemaDownloader(
             .toPrettyString()
     }
 
-    private fun JsonNode.isInternalReference() = textValue().startsWith("#")
-    private fun JsonNode.isFullUri() = textValue().matches(FULL_URI_REGEX)
     private fun URI.toDownloadedUriFrom(uri: URI): String {
         val dirsBack = uri.path.removePrefix("/").replace(Regex("[^/]+"), "..").removePrefix("../")
         return "$dirsBack$path${fragment?.let { "#$it" } ?: ""}"
