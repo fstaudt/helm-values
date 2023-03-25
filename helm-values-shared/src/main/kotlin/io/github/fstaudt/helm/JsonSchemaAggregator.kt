@@ -18,7 +18,6 @@ import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import java.io.File
-import java.io.FileFilter
 import java.net.URI
 
 class JsonSchemaAggregator(
@@ -71,7 +70,7 @@ class JsonSchemaAggregator(
 
     private fun ObjectNode.setExtractedDependencyReferencesFrom(schemasDir: File, refPrefix: String) {
         with(properties()) {
-            schemasDir.listFiles(FileFilter { it.isDirectory })?.forEach {
+            schemasDir.listFiles { file -> file.isDirectory }?.forEach {
                 with(objectNode(it.name)) {
                     if (it.containsFile(HELM_SCHEMA_FILE)) {
                         put("\$ref", "$refPrefix/${it.name}/$HELM_SCHEMA_FILE")
@@ -132,8 +131,8 @@ class JsonSchemaAggregator(
         }
     }
 
-    private fun File.hasSubDirectories() = listFiles(FileFilter { it.isDirectory })?.any() ?: false
-    private fun File.containsFile(fileName: String) = listFiles(FileFilter { it.name == fileName })?.any() ?: false
+    private fun File.hasSubDirectories() = listFiles { file -> file.isDirectory }?.any() ?: false
+    private fun File.containsFile(fileName: String) = listFiles { file -> file.name == fileName }?.any() ?: false
 
     private data class RefMapping(val baseUri: String, val mappedBaseUri: String) {
         fun matches(ref: JsonNode) = ref.textValue().startsWith(baseUri)
