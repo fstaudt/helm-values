@@ -26,8 +26,7 @@ More information: [Helm values documentation](https://github.com/fstaudt/helm-va
 
 ### Refresh JON schemas for current chart
 
-Action *Refresh JSON schema for current chart* is available from `Chart.yaml` or from any other file in the same
-directory.
+Action *Refresh JSON schema for current chart* is available from `Chart.yaml` or `values.yaml`.
 
 ![settings](screenshots/action-refresh.png "Refresh JON schemas for current chart")
 
@@ -67,8 +66,7 @@ on [patch for generated JSON schemas](../README.md#patch-for-generated-json-sche
 
 ### Clear JSON schemas for current chart
 
-Action *Clear JSON schema for current chart* is available from `Chart.yaml`
-or from any other file in the same directory.
+Action *Clear JSON schema for current chart* is available from `Chart.yaml` or `values.yaml`.
 
 ![settings](screenshots/action-clear.png "Clear JON schemas for current chart")
 

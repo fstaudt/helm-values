@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.1 - Mar 26, 2023
+
+### ✨ New
+- support for IntelliJ IDEA 2023.1
+- drop support for IntelliJ IDEA 2021.3
+- improve search for VirtualFile in JsonSchema providers
+- restrict actions for current chart to main Helm files
+
+### 🔥 Removed
+
+- IntelliJ IDEA 2021.3 is no more supported.\
+  Extension is only available for IntelliJ IDEA 2022.1 and above.
+- Actions for current chart are no more available from any file in chart directory.\
+  They are only available from chart directory itself, `values.yaml` or `Chart.yaml`.
+
 ## 0.6.0 - Jan 29, 2023
 
 ### ✨ New
