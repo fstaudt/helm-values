@@ -6,18 +6,17 @@ import com.intellij.openapi.vfs.VirtualFile
 
 abstract class HelmChartAction : ProjectAction() {
     override fun update(event: AnActionEvent) {
-        super.update(event)
-        event.getData(VIRTUAL_FILE)?.let {
-            event.presentation.isEnabledAndVisible = event.chartFile() != null
-        }
+        event.presentation.isEnabledAndVisible = (event.project != null && event.chartFile() != null)
     }
 
-    protected fun AnActionEvent.chartFile(): VirtualFile? {
-        return getData(VIRTUAL_FILE)?.run {
-            when (true) {
-                isDirectory -> findChild("Chart.yaml")
-                else -> findFileByRelativePath("../Chart.yaml")
-            }
+    private fun AnActionEvent.virtualFile() = getData(VIRTUAL_FILE)
+    protected fun AnActionEvent.chartFile() = virtualFile()?.chartFile()
+    private fun VirtualFile.chartFile(): VirtualFile? {
+        return when (true) {
+            (name == "Chart.yaml") -> this
+            isDirectory -> findChild("Chart.yaml")
+            (name == "values.yaml") -> findFileByRelativePath("../Chart.yaml")
+            else -> null
         }
     }
 }
