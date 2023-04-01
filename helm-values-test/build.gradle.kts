@@ -10,7 +10,7 @@ kotlin {
 dependencies {
     api("org.junit.jupiter:junit-jupiter-api:5.9.2")
     api("org.assertj:assertj-core:3.24.2")
-    api("net.javacrumbs.json-unit:json-unit-assertj:2.36.1") {
+    api("net.javacrumbs.json-unit:json-unit-assertj:2.37.0") {
         api("net.minidev:json-smart:2.4.8")
     }
     api("com.github.tomakehurst:wiremock-jre8:2.35.0")
