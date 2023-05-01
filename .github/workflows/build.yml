@@ -22,7 +22,7 @@ jobs:
       - name: "Setup gradle wrapper"
         run: chmod +x gradlew
       - name: "Setup gradle"
-        uses: gradle/gradle-build-action@v2.4.0
+        uses: gradle/gradle-build-action@v2.4.2
         with:
           gradle-home-cache-cleanup: true
       - name: "Run Tests"
