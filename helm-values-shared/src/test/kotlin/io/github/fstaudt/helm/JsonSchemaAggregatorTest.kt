@@ -2,6 +2,7 @@ package io.github.fstaudt.helm
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.JsonSchemaAggregator.Companion.EXTRACTED_GLOBAL_VALUES_TITLE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
@@ -70,7 +71,7 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).and({
             it.node("\$schema").isEqualTo(SCHEMA_VERSION)
-            it.node("\$id").isEqualTo("$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
+            it.node("\$id").isEqualTo("$BASE_URI/$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
             it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
             it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")
             it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION")

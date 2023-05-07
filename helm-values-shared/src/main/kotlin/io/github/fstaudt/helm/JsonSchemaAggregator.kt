@@ -31,6 +31,7 @@ class JsonSchemaAggregator(
 ) {
     companion object {
         const val DEFS = "\$defs"
+        const val BASE_URI = "https://helm-values.fstaudt.github.io"
         const val EXTRACTED_GLOBAL_VALUES_TITLE = "Aggregated global values for"
         private val logger: Logger = LoggerFactory.getLogger(JsonSchemaAggregator::class.java)
     }
@@ -40,7 +41,7 @@ class JsonSchemaAggregator(
 
     fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedJsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
-        jsonSchema.put("\$id", "${chart.name}/${chart.version}/${AGGREGATED_SCHEMA_FILE}")
+        jsonSchema.put("\$id", "$BASE_URI/${chart.name}/${chart.version}/${AGGREGATED_SCHEMA_FILE}")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
         jsonSchema.updateReferencesFor(chart.dependencies.toDownloadedRefMappings())
         jsonSchema.aggregateDownloadedSchemasFor(chart)
