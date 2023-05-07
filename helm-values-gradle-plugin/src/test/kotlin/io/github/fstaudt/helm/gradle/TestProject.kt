@@ -2,6 +2,7 @@ package io.github.fstaudt.helm.gradle
 
 import io.github.fstaudt.helm.HELM_CHARTS_DIR
 import io.github.fstaudt.helm.HELM_CHART_FILE
+import io.github.fstaudt.helm.HELM_VALUES_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.HELM_SOURCES_DIR
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -35,7 +36,7 @@ fun TestProject.initBuildFile(customizeBuildFile: File.() -> Unit = {}): File {
     return File(this, "build.gradle.kts").apply {
         writeText(
             """
-                import io.github.fstaudt.helm.model.JsonSchemaRepository;
+                import io.github.fstaudt.helm.model.JsonSchemaRepository
                 
                 plugins {
                   id("io.github.fstaudt.helm-values")
@@ -78,12 +79,23 @@ fun TestProject.initHelmChart(sourcesDir: File = this, customizeHelmChart: File.
     }
 }
 
+fun TestProject.initHelmValues(sourcesDir: File = this, customizeHelmValues: File.() -> Unit = {}): File {
+    return File(sourcesDir, HELM_VALUES_FILE).apply {
+        writeText("")
+        customizeHelmValues()
+    }
+}
+
 fun TestProject.clearHelmChart(sourcesDir: File = this) {
     File(sourcesDir, HELM_CHART_FILE).delete()
 }
 
 fun TestProject.initHelmChart(customizeHelmChart: File.() -> Unit = {}): File {
     return initHelmChart(this, customizeHelmChart)
+}
+
+fun TestProject.initHelmValues(customizeHelmValues: File.() -> Unit): File {
+    return initHelmValues(this, customizeHelmValues)
 }
 
 fun TestProject.runTask(vararg task: String): BuildResult {

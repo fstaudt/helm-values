@@ -2,6 +2,7 @@ package io.github.fstaudt.helm.gradle
 
 import io.github.fstaudt.helm.HELM_CHARTS_DIR
 import io.github.fstaudt.helm.HELM_CHART_FILE
+import io.github.fstaudt.helm.HELM_VALUES_FILE
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
@@ -16,6 +17,8 @@ import io.github.fstaudt.helm.gradle.tasks.GenerateJsonSchemas
 import io.github.fstaudt.helm.gradle.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.tasks.PublishJsonSchemas
 import io.github.fstaudt.helm.gradle.tasks.PublishJsonSchemas.Companion.PUBLISH_JSON_SCHEMAS
+import io.github.fstaudt.helm.gradle.tasks.ValidateHelmValues
+import io.github.fstaudt.helm.gradle.tasks.ValidateHelmValues.Companion.VALIDATE_HELM_VALUES
 import io.github.fstaudt.helm.http.NexusRawJsonSchemaPublisher
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -46,7 +49,7 @@ class HelmValuesPlugin : Plugin<Project> {
                 chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
                 chartsDir = File(sourcesDir, HELM_CHARTS_DIR).takeIf { it.exists() }
             }
-            tasks.register<AggregateJsonSchema>(AGGREGATE_JSON_SCHEMA) {
+            val aggregateJsonSchema = tasks.register<AggregateJsonSchema>(AGGREGATE_JSON_SCHEMA) {
                 group = HELM_VALUES
                 description =
                     "Aggregate extracted and downloaded JSON schemas for assistance on Helm values in your IDE"
@@ -74,6 +77,14 @@ class HelmValuesPlugin : Plugin<Project> {
                 chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
                 jsonSchemaPublisher = NexusRawJsonSchemaPublisher()
                 dependsOn(generateJsonSchemas)
+            }
+            tasks.register<ValidateHelmValues>(VALIDATE_HELM_VALUES) {
+                group = HELM_VALUES
+                description = "Validate Helm values against aggregated JSON schema"
+                extension = pluginExtension
+                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
+                valuesFile = File(sourcesDir, HELM_VALUES_FILE).takeIf { it.exists() }
+                dependsOn(aggregateJsonSchema)
             }
         }
     }
