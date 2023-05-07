@@ -26,7 +26,7 @@ class ObjectNodeExtensions {
             return get(name) as? ObjectNode ?: ObjectNode(nodeFactory).also { set<ObjectNode>(name, it) }
         }
 
-        internal fun ObjectNode.properties() = objectNode("properties")
+        internal fun ObjectNode.props() = objectNode("properties")
 
         internal fun ObjectNode.global() = objectNode("global")
 

@@ -9,7 +9,7 @@ import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.properties
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -39,20 +39,20 @@ class JsonSchemaGenerator(
 
     fun generateExtraValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
         val jsonSchema = chart.toExtraValuesJsonSchema()
-        jsonSchema.properties().global().put("\$ref", "$AGGREGATED_SCHEMA_FILE#/properties/global")
-        jsonSchema.properties().objectNode(chart.name).put("\$ref", AGGREGATED_SCHEMA_FILE)
+        jsonSchema.props().global().put("\$ref", "$AGGREGATED_SCHEMA_FILE#/properties/global")
+        jsonSchema.props().objectNode(chart.name).put("\$ref", AGGREGATED_SCHEMA_FILE)
         jsonSchema.put("additionalProperties", false)
         return (jsonPatch?.apply(jsonSchema) as? ObjectNode) ?: jsonSchema
     }
 
     fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
         val jsonSchema = chart.toValuesJsonSchema()
-        jsonSchema.properties().global().putGlobalProperties(chart)
+        jsonSchema.props().global().putGlobalProperties(chart)
         jsonSchema.put("additionalProperties", false)
         chart.dependencies.filter { it.version != null }.forEach { dep ->
             dep.repository()?.let {
                 val ref = "${it.baseUri}/${dep.name}/${dep.version}/${it.valuesSchemaFile}".toRelativeUri()
-                jsonSchema.properties().objectNode(dep.aliasOrName()).put("\$ref", ref)
+                jsonSchema.props().objectNode(dep.aliasOrName()).put("\$ref", ref)
             }
         }
         chart.dependencies.forEach { dep ->
@@ -151,7 +151,7 @@ class JsonSchemaGenerator(
     private fun String.toPropertiesObjectNodesIn(jsonSchema: ObjectNode): List<ObjectNode> {
         return split(',').map {
             it.split('.').fold(jsonSchema) { node: ObjectNode, property: String ->
-                node.properties().objectNode(property)
+                node.props().objectNode(property)
             }
         }
     }
