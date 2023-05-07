@@ -10,7 +10,7 @@ import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.properties
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
 import io.github.fstaudt.helm.model.Chart
@@ -54,7 +54,7 @@ class JsonSchemaAggregator(
     }
 
     private fun ObjectNode.removeGeneratedGlobalPropertiesDescription() {
-        properties().global().allOf().also { allOf ->
+        props().global().allOf().also { allOf ->
             allOf.removeAll { it.get("title")?.textValue()?.startsWith(GLOBAL_VALUES_TITLE) ?: false }
         }
     }
@@ -64,7 +64,7 @@ class JsonSchemaAggregator(
         refPrefix: String,
         jsonSchema: ObjectNode
     ) {
-        with(properties()) {
+        with(props()) {
             schemasDir.listFiles { file -> file.isDirectory }?.forEach {
                 with(objectNode(it.name)) {
                     val ref = "$refPrefix/${it.name}"
@@ -73,7 +73,7 @@ class JsonSchemaAggregator(
                         jsonSchema.aggregateExtractedSchemaFor(it, "$ref/$HELM_SCHEMA_FILE".removePrefix("#/"))
                     }
                     setExtractedDependencyReferencesFrom(it, ref, jsonSchema)
-                    properties().global().put("additionalProperties", false)
+                    props().global().put("additionalProperties", false)
                     addGlobalPropertiesDescriptionFor(ref.removePrefix("#/refs/${extractSchemasDir.name}/"))
                 }
                 addGlobalPropertiesFrom(it, refPrefix)
@@ -110,7 +110,7 @@ class JsonSchemaAggregator(
                 "<li>${it.fullName()}</li>"
             }
         }
-        properties().global().allOf().add(
+        props().global().allOf().add(
             objectNode()
                 .put("title", "$GLOBAL_VALUES_TITLE ${chart.name}:${chart.version}")
                 .put("description", "$NEW_LINE $GLOBAL_VALUES_DESCRIPTION: $dependencyLabels")
@@ -119,7 +119,7 @@ class JsonSchemaAggregator(
     }
 
     private fun ObjectNode.addGlobalPropertiesDescriptionFor(dependencyName: String) {
-        properties().global().allOf().add(
+        props().global().allOf().add(
             objectNode()
                 .put("title", "$EXTRACTED_GLOBAL_VALUES_TITLE $dependencyName dependency")
                 .put("description", NEW_LINE)
