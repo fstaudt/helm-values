@@ -74,7 +74,7 @@ class JsonSchemaGenerator(
     }
 
     private fun ObjectNode.putGlobalProperties(chart: Chart) {
-        put("additionalProperties", false)
+        put("unevaluatedProperties", false)
         if (chart.dependencies.any { it.repository() != null }) {
             allOf().let { allOf ->
                 chart.dependencies.forEach { dep ->

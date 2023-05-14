@@ -44,6 +44,7 @@ class JsonSchemaAggregator(
         val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
         jsonSchema.put("\$id", "$BASE_URI/${chart.name}/${chart.version}/${AGGREGATED_SCHEMA_FILE}")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
+        jsonSchema.put("unevaluatedProperties", false)
         jsonSchema.updateReferencesFor(chart.dependencies.toDownloadedRefMappings())
         jsonSchema.aggregateDownloadedSchemasFor(chart)
         jsonSchema.updateReferencesFor(chart.dependencies.toLocallyStoredRefMappings())
@@ -78,7 +79,7 @@ class JsonSchemaAggregator(
                 }
                 setExtractedDependencyReferencesFrom(file, ref, jsonSchema)
                 objectNodeOrNull("properties")?.objectNodeOrNull("global")?.let {
-                    it.put("additionalProperties", false)
+                    it.put("unevaluatedProperties", false)
                     addGlobalPropertiesDescriptionFor(ref.removePrefix("#/$DEFS/${extractSchemasDir.name}/"))
                 }
                 if (has("\$ref") && size() > 1) {
@@ -95,6 +96,8 @@ class JsonSchemaAggregator(
             .fold(this) { node, s -> node.objectNode(s) }
         val schema = File(schemaDir, HELM_SCHEMA_FILE).toObjectNode()
         schema.updateReferencesFor(listOf(schemaPath.toInternalRefMapping()))
+        schema.remove("additionalProperties")
+        schema.objectNodeOrNull("properties")?.objectNodeOrNull("global")?.remove("additionalProperties")
         schemaNode.setAll<JsonNode>(schema)
     }
 
@@ -167,6 +170,8 @@ class JsonSchemaAggregator(
                     }
                 }
             }
+            schema.remove("additionalProperties")
+            schema.objectNodeOrNull("properties")?.objectNodeOrNull("global")?.remove("additionalProperties")
             schemaNode.setAll<JsonNode>(schema)
         }
         return schemaPath
