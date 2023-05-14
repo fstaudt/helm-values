@@ -173,7 +173,7 @@ internal class JsonSchemaGeneratorTest {
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.allOf[0]").isObject.containsOnlyKeys("\$ref")
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA").node("unevaluatedProperties").isEqualTo(false)
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA").node("unevaluatedProperties").isBoolean.isFalse
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
@@ -288,7 +288,7 @@ internal class JsonSchemaGeneratorTest {
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.global").and({
             val externalSchemaRef = "../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION"
-            it.node("unevaluatedProperties").isEqualTo(false)
+            it.node("unevaluatedProperties").isBoolean.isFalse
             it.node("allOf").isArray.hasSize(3)
             it.node("allOf[0].\$ref").isEqualTo("$externalSchemaRef/$VALUES_SCHEMA_FILE#/properties/global")
             it.node("allOf[1].\$ref").isEqualTo("$externalSchemaRef/$GLOBAL_VALUES_SCHEMA_FILE")
@@ -310,7 +310,7 @@ internal class JsonSchemaGeneratorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.global").and({
-            it.node("unevaluatedProperties").isEqualTo(false)
+            it.node("unevaluatedProperties").isBoolean.isFalse
             it.isObject.doesNotContainKey("allOf")
         })
     }

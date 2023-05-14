@@ -50,7 +50,7 @@ class HelmChartService {
         val extractSchemaDir = extract(jsonSchemasDir, File(chartFile.parentFile, "charts"), chart)
         val aggregator = JsonSchemaAggregator(
             mappings(),
-            IntellijSchemaLocator(project.baseDir()),
+            IntellijSchemaLocator(chartFile.parentFile, project.baseDir()),
             chartFile.parentFile,
             downloadSchemaDir,
             extractSchemaDir)

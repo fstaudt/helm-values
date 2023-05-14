@@ -8,13 +8,8 @@ import java.io.File
  */
 interface SchemaLocator {
     /**
-     * Relative path from aggregated schema of current chart to aggregated schema of chart dependency
+     * Aggregated schema of chart dependency
      * @param dependency chart dependency
      */
-    fun aggregatedSchemaFor(dependency: ChartDependency): String
-
-    /**
-     * Relative path from aggregated schema of current chart to schema of current chart
-     */
-    fun schemaFor(chartDir: File): String
+    fun aggregatedSchemaFor(dependency: ChartDependency): File
 }

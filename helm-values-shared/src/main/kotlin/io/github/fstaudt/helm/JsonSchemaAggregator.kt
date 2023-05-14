@@ -48,13 +48,17 @@ class JsonSchemaAggregator(
         jsonSchema.updateReferencesFor(chart.dependencies.toDownloadedRefMappings())
         jsonSchema.aggregateDownloadedSchemasFor(chart)
         jsonSchema.updateReferencesFor(chart.dependencies.toLocallyStoredRefMappings())
+        jsonSchema.aggregateLocalSchemasFor(chart)
+        jsonSchema.removeGlobalValuesSchemaRefsOfLocallyStoredDependenciesFor(chart)
         jsonSchema.removeGeneratedGlobalPropertiesDescription()
         jsonSchema.setExtractedDependencyReferencesFrom(extractSchemasDir,
             "#/$DEFS/${extractSchemasDir.name}",
             jsonSchema)
         jsonSchema.addGlobalPropertiesDescriptionFor(chart)
         chartSchema.takeIf { it.exists() }?.let {
-            jsonSchema.allOf().add(jsonSchema.objectNode().put("\$ref", schemaLocator.schemaFor(chartDir)))
+            jsonSchema.allOf()
+                .add(jsonSchema.objectNode().put("\$ref", "#/$DEFS/local/${chart.name}/$HELM_SCHEMA_FILE"))
+            jsonSchema.aggregateChartSchemaFor(chart)
         }
         return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
@@ -63,6 +67,12 @@ class JsonSchemaAggregator(
         props().global().allOf().also { allOf ->
             allOf.removeAll { it.get("title")?.textValue()?.startsWith(GLOBAL_VALUES_TITLE) ?: false }
         }
+    }
+
+    private fun ObjectNode.removeGlobalValuesSchemaRefsOfLocallyStoredDependenciesFor(chart: Chart) {
+        val globalRefs = chart.dependencies.filter { it.isStoredLocally() }
+            .map { "../../${it.name}/${it.version}/$GLOBAL_VALUES_SCHEMA_FILE" }
+        props().global().allOf().removeAll { globalRefs.contains(it.get("\$ref")?.textValue()) }
     }
 
     private fun ObjectNode.setExtractedDependencyReferencesFrom(
@@ -177,6 +187,40 @@ class JsonSchemaAggregator(
         return schemaPath
     }
 
+    private fun ObjectNode.aggregateLocalSchemasFor(chart: Chart) {
+        chart.dependencies.filter { it.isStoredLocally() }.forEach {
+            aggregateLocalSchema(it, schemaLocator.aggregatedSchemaFor(it))
+        }
+    }
+
+    private fun ObjectNode.aggregateLocalSchema(dependency: ChartDependency, schemaFile: File) {
+        val schemaNode = objectNode(DEFS).objectNode("local").objectNode(dependency.name).objectNode(schemaFile.name)
+        val schemaPath = "#/$DEFS/local/${dependency.name}/${schemaFile.name}"
+        val schema = schemaFile.toObjectNode()
+        schema.findParents("\$ref").forEach { parent ->
+            val ref = parent.get("\$ref")
+            val refMapping = RefMapping("#", schemaPath)
+            (parent as ObjectNode).replace("\$ref", refMapping.map(ref))
+        }
+        schema.remove("additionalProperties")
+        schema.objectNodeOrNull("properties")?.objectNodeOrNull("global")?.remove("additionalProperties")
+        schemaNode.setAll<JsonNode>(schema)
+    }
+
+    private fun ObjectNode.aggregateChartSchemaFor(chart: Chart) {
+        val schemaNode = objectNode(DEFS).objectNode("local").objectNode(chart.name).objectNode(HELM_SCHEMA_FILE)
+        val schemaPath = "#/$DEFS/local/${chart.name}/$HELM_SCHEMA_FILE"
+        val schema = chartSchema.toObjectNode()
+        schema.findParents("\$ref").forEach { parent ->
+            val ref = parent.get("\$ref")
+            val refMapping = RefMapping("#", schemaPath)
+            (parent as ObjectNode).replace("\$ref", refMapping.map(ref))
+        }
+        schema.remove("additionalProperties")
+        schema.objectNodeOrNull("properties")?.objectNodeOrNull("global")?.remove("additionalProperties")
+        schemaNode.setAll<JsonNode>(schema)
+    }
+
     private fun ChartDependency.fullUri() = repositoryMappings[repository]?.let { URI("${it.baseUri}/$name/$version") }
 
     private fun ChartDependency.fullName(): String {
@@ -212,7 +256,7 @@ class JsonSchemaAggregator(
     private fun List<ChartDependency>.toLocallyStoredRefMappings() = mapNotNull { it.toLocallyStoredRefMapping() }
     private fun ChartDependency.toLocallyStoredRefMapping(): RefMapping? {
         return takeIf { it.isStoredLocally() }?.let {
-            RefMapping("../../$name/$version/$VALUES_SCHEMA_FILE", schemaLocator.aggregatedSchemaFor(this))
+            RefMapping("../../$name/$version/$VALUES_SCHEMA_FILE", "#/$DEFS/local/$name/$AGGREGATED_SCHEMA_FILE")
         }
     }
 

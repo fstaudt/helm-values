@@ -16,7 +16,6 @@ import net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.File
 
 @Suppress("NestedLambdaShadowedImplicitParameter")
 internal class JsonSchemaAggregatorTest {
@@ -54,7 +53,7 @@ internal class JsonSchemaAggregatorTest {
         val repositoryMappings = mapOf(APPS to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"))
         aggregator = JsonSchemaAggregator(
             repositoryMappings,
-            TestSchemaLocator(),
+            TestSchemaLocator(testProject),
             testProject,
             testProject.downloadSchemasDir,
             testProject.extractSchemasDir)
@@ -82,12 +81,64 @@ internal class JsonSchemaAggregatorTest {
 
     @Test
     fun `aggregate should aggregate JSON schema of current chart when it is available`() {
-        File(testProject, HELM_SCHEMA_FILE).writeText("{}")
+        testProject.initLocalSchema(".")
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).and({
-            it.node("allOf[0].\$ref").isEqualTo("${testProject.name}/$HELM_SCHEMA_FILE")
+            it.node("allOf[0].\$ref").isEqualTo("#/$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE")
         })
+        assertThatJson(json).node("$DEFS.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}")
+            .and({
+                it.node("\$id").isEqualTo("./$HELM_SCHEMA_FILE")
+            })
+    }
+
+    @Test
+    fun `aggregate should update internal references in JSON schema of current chart`() {
+        testProject.initLocalSchema(".",
+            schemaContent = """
+                {
+                  "${'$'}id": "./$HELM_SCHEMA_FILE",
+                  "additionalProperties": false,
+                  "allOf": [
+                    {
+                      "${'$'}ref": "#/ref"
+                    }
+                  ]
+                }
+            """.trimIndent())
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}")
+            .and({
+                it.node("\$id").isEqualTo("./$HELM_SCHEMA_FILE")
+                it.node("allOf[0].\$ref").isEqualTo("#/$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE/ref")
+            })
+    }
+
+    @Test
+    fun `aggregate should should allow additional global properties in JSON schema of current chart`() {
+        testProject.initLocalSchema(".",
+            schemaContent = """
+                {
+                  "${'$'}id": "./$HELM_SCHEMA_FILE",
+                  "properties": {
+                    "global": {
+                      "additionalProperties": false
+                    }
+                  }
+                }
+            """.trimIndent())
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).and({
+            it.node("allOf[0].\$ref").isEqualTo("#/$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE")
+        })
+        assertThatJson(json).node("$DEFS.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey("additionalProperties")
+                it.node("properties.global").isObject.doesNotContainKey("additionalProperties")
+            })
     }
 
     @Test
@@ -127,7 +178,7 @@ internal class JsonSchemaAggregatorTest {
         )
         val aggregator = JsonSchemaAggregator(
             customRepositoryMappings,
-            TestSchemaLocator(),
+            TestSchemaLocator(testProject),
             testProject,
             testProject.downloadSchemasDir,
             testProject.extractSchemasDir)
@@ -348,12 +399,12 @@ internal class JsonSchemaAggregatorTest {
         ))
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and({
-            it.node("global.allOf").isArray.hasSize(3)
-            it.node("global.allOf[2].title").isEqualTo("$GLOBAL_VALUES_TITLE $CHART_NAME:$CHART_VERSION")
-            it.node("global.allOf[2].description").isString
+            it.node("global.allOf").isArray.hasSize(2)
+            it.node("global.allOf[1].title").isEqualTo("$GLOBAL_VALUES_TITLE $CHART_NAME:$CHART_VERSION")
+            it.node("global.allOf[1].description").isString
                 .contains(GLOBAL_VALUES_DESCRIPTION)
                 .contains("- $EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
-            it.node("global.allOf[2].x-intellij-html-description").isString
+            it.node("global.allOf[1].x-intellij-html-description").isString
                 .contains(GLOBAL_VALUES_DESCRIPTION)
                 .contains("<li>$EXTERNAL_SCHEMA:$EXTERNAL_VERSION</li>")
         })
@@ -514,7 +565,7 @@ internal class JsonSchemaAggregatorTest {
                         .isEqualTo("$EXTRACTED_GLOBAL_VALUES_TITLE $EMBEDDED_SUB_SCHEMA dependency")
                     it.node("global.allOf[1].description").isEqualTo("\\n\\\\n")
                 })
-                it.node("$EMBEDDED_SUB_SCHEMA.unevaluatedProperties").isEqualTo(false)
+                it.node("$EMBEDDED_SUB_SCHEMA.unevaluatedProperties").isBoolean.isFalse
                 it.node("global.allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
             }
         )
@@ -639,7 +690,7 @@ internal class JsonSchemaAggregatorTest {
         ))
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.allOf[0]").isObject.containsOnlyKeys("\$ref")
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA").node("unevaluatedProperties").isEqualTo(false)
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA").node("unevaluatedProperties").isBoolean.isFalse
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
@@ -714,15 +765,86 @@ internal class JsonSchemaAggregatorTest {
     @Test
     fun `aggregate should aggregate aggregated JSON schema of dependency when dependency is stored locally`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub-charts/$EXTERNAL_SCHEMA")
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA")
         ))
+        testProject.initLocalSchema("sub/$EXTERNAL_SCHEMA", AGGREGATED_SCHEMA_FILE)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and({
-            val subChartAggregatedSchemaFile = "sub-charts/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+            val subChartAggregatedSchemaFile = "#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
             it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(subChartAggregatedSchemaFile)
-            it.node("global.allOf[0].\$ref").isEqualTo("$subChartAggregatedSchemaFile#/properties/global")
-            it.node("global.allOf[2]")
+            it.node("global.allOf[0].\$ref").isEqualTo("$subChartAggregatedSchemaFile/properties/global")
+            it.node("global.allOf[1].title").isString.startsWith(GLOBAL_VALUES_TITLE)
         })
+        assertThatJson(json).node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
+            .and({
+                it.node("\$id").isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            })
+    }
+
+    @Test
+    fun `aggregate should update internal references in aggregated JSON schema of locally stored dependencies`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA")
+        ))
+        testProject.initLocalSchema("sub/$EXTERNAL_SCHEMA", AGGREGATED_SCHEMA_FILE,
+            schemaContent = """
+                {
+                  "${'$'}id": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
+                  "allOf": [
+                    {
+                      "${'$'}ref": "#/ref"
+                    }
+                  ]
+                }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        val subChartAggregatedSchemaFile = "#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+        assertThatJson(json).node("properties").and({
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(subChartAggregatedSchemaFile)
+        })
+        assertThatJson(json).node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
+            .and({
+                it.node("\$id").isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("allOf[0].\$ref").isEqualTo("$subChartAggregatedSchemaFile/ref")
+            })
+    }
+
+    @Test
+    fun `aggregate should use an empty schema if aggregated JSON schema of locally stored dependency doesn't exist`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA")
+        ))
+        val json = aggregator.aggregate(chart, null, null)
+        val subChartAggregatedSchemaFile = "#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+        assertThatJson(json).node("properties").and({
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(subChartAggregatedSchemaFile)
+        })
+        assertThatJson(json).node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}").isObject
+    }
+
+    @Test
+    fun `aggregate should allow additional global properties in aggregated JSON schema of locally stored dependencies`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA")
+        ))
+        testProject.initLocalSchema("sub/$EXTERNAL_SCHEMA", AGGREGATED_SCHEMA_FILE,
+            schemaContent = """
+                {
+                  "${'$'}id": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
+                  "additionalProperties": false,
+                  "properties": {
+                    "global": {
+                      "additionalProperties": false
+                    }
+                  }
+                }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey("additionalProperties")
+                it.node("properties.global").isObject.doesNotContainKey("additionalProperties")
+            })
     }
 
     private fun jsonPatch(content: String) = JsonPatch.fromJson(jsonMapper.readTree(content))

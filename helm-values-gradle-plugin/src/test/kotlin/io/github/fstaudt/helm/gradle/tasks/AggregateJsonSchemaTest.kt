@@ -28,6 +28,7 @@ import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOA
 import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.EXTRACT_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.testProject
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
+import io.github.fstaudt.helm.test.assertions.escaped
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.TaskOutcome.FROM_CACHE
 import org.gradle.testkit.runner.TaskOutcome.NO_SOURCE
@@ -120,12 +121,19 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should aggregate JSON schema of current chart when it is available`() {
-        File(testProject, HELM_SCHEMA_FILE).writeText("{}")
+        File(testProject, HELM_SCHEMA_FILE).writeText(
+            """
+            {
+              "${'$'}id": "$CHART_NAME/$HELM_SCHEMA_FILE"
+            }
+            """.trimIndent())
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("allOf[0].\$ref").isEqualTo("../.././$HELM_SCHEMA_FILE")
+            it.node("allOf[0].\$ref").isEqualTo("$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE")
+            it.node("\$defs.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}.\$id")
+                .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
 
@@ -134,7 +142,12 @@ class AggregateJsonSchemaTest {
         testProject.clearHelmChart()
         val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.initHelmChart(sourcesDir)
-        File(sourcesDir, HELM_SCHEMA_FILE).writeText("{}")
+        File(sourcesDir, HELM_SCHEMA_FILE).writeText(
+            """
+            {
+              "${'$'}id": "$CHART_NAME/$HELM_SCHEMA_FILE"
+            }
+            """.trimIndent())
         testProject.initBuildFile {
             appendText(
                 """
@@ -152,7 +165,9 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("allOf[0].\$ref").isEqualTo("../../$CHART_NAME/$HELM_SCHEMA_FILE")
+            it.node("allOf[0].\$ref").isEqualTo("$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE")
+            it.node("\$defs.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}.\$id")
+                .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
 
@@ -209,7 +224,9 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should include aggregated JSON schema of dependency when dependency is stored locally`() {
-        testProject.initHelmChart {
+        testProject.clearHelmChart()
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
+        testProject.initHelmChart(sourcesDir) {
             appendText(
                 """
                 dependencies:
@@ -219,22 +236,43 @@ class AggregateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.initHelmResources(chartName = NO_SCHEMA)
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "$CHART_NAME"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+                """.trimIndent()
+            )
+        }
+        File(testProject, "$EXTERNAL_SCHEMA/build/$HELM_VALUES").let {
+            it.mkdirs()
+            File(it, AGGREGATED_SCHEMA_FILE).writeText(
+                """
+                {
+                  "${'$'}id": "$EXTERNAL_SCHEMA"
+                }
+                """.trimIndent())
+        }
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
-        val externalSchemaPath = "../../../$EXTERNAL_SCHEMA/build/$HELM_VALUES"
+        val externalSchemaPath = "$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("global.allOf").isArray.hasSize(3)
-            it.node("global.allOf[0].\$ref")
-                .isEqualTo("$externalSchemaPath/$AGGREGATED_SCHEMA_FILE#/properties/global")
-            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$externalSchemaPath/$AGGREGATED_SCHEMA_FILE")
+            it.node("global.allOf[0].\$ref").isEqualTo("$externalSchemaPath/properties/global")
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(externalSchemaPath)
         })
     }
 
     @Test
     fun `aggregateJsonSchema should include aggregated JSON schema of dependency when local path ends with slash`() {
-        testProject.initHelmChart {
+        testProject.clearHelmChart()
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
+        testProject.initHelmChart(sourcesDir) {
             appendText(
                 """
                 dependencies:
@@ -244,16 +282,35 @@ class AggregateJsonSchemaTest {
                 """.trimIndent()
             )
         }
-        testProject.initHelmResources(chartName = NO_SCHEMA)
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "$CHART_NAME"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+                """.trimIndent()
+            )
+        }
+        File(testProject, "$EXTERNAL_SCHEMA/build/$HELM_VALUES").let {
+            it.mkdirs()
+            File(it, AGGREGATED_SCHEMA_FILE).writeText(
+                """
+                {
+                  "${'$'}id": "$EXTERNAL_SCHEMA"
+                }
+                """.trimIndent())
+        }
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
-        val externalSchemaPath = "../../../$EXTERNAL_SCHEMA/build/$HELM_VALUES"
+        val externalSchemaPath = "$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("global.allOf").isArray.hasSize(3)
-            it.node("global.allOf[0].\$ref")
-                .isEqualTo("$externalSchemaPath/$AGGREGATED_SCHEMA_FILE#/properties/global")
-            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$externalSchemaPath/$AGGREGATED_SCHEMA_FILE")
+            it.node("global.allOf[0].\$ref").isEqualTo("$externalSchemaPath/properties/global")
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(externalSchemaPath)
         })
     }
 

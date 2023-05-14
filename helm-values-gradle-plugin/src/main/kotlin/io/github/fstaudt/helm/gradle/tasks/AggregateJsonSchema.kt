@@ -89,7 +89,7 @@ open class AggregateJsonSchema : DefaultTask() {
     fun aggregate() {
         val aggregator = JsonSchemaAggregator(
             extension.repositoryMappings,
-            GradleSchemaLocator(extension.sourcesDir),
+            GradleSchemaLocator(project.projectDir),
             chartFile!!.parentFile,
             downloadSchemasDir,
             extractSchemasDir)

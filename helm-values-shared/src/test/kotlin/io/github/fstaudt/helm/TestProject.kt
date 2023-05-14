@@ -15,12 +15,25 @@ val TestProject.downloadSchemasDir get() = File(buildDir, DOWNLOADS_DIR)
 val TestProject.extractSchemasDir get() = File(buildDir, EXTRACT_DIR)
 val TestProject.chartsDir get() = File(this, HELM_CHARTS_DIR)
 
-fun testProject(parentFolder: File? = File("build/tmp")): TestProject {
-    parentFolder?.mkdirs()
+fun testProject(parentFolder: File = File("build/tmp")): TestProject {
+    parentFolder.mkdirs()
     return File.createTempFile("junit", "", parentFolder).apply {
         delete()
         mkdir()
     }
+}
+
+fun TestProject.initLocalSchema(
+    path: String,
+    schemaFile: String = HELM_SCHEMA_FILE,
+    schemaContent: String = """
+        {
+          "${'$'}id": "$path/$schemaFile"
+        }
+    """.trimIndent()
+) {
+    File(this, path).mkdirs()
+    File(this, "$path/$schemaFile").writeText(schemaContent)
 }
 
 fun TestProject.initExtractedSchemas(

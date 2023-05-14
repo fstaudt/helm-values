@@ -19,6 +19,7 @@ import io.github.fstaudt.helm.idea.initHelmChart
 import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
+import io.github.fstaudt.helm.test.assertions.escaped
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 
@@ -112,11 +113,19 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
         project.initHelmChart()
-        File(project.baseDir(), HELM_SCHEMA_FILE).writeText("{}")
+        File(project.baseDir(), HELM_SCHEMA_FILE).writeText(
+            """
+            {
+              "${'$'}id": "$CHART_NAME/$HELM_SCHEMA_FILE"
+            }
+            """.trimIndent()
+        )
         service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("allOf[0].\$ref").isEqualTo("../../.././$HELM_SCHEMA_FILE")
+                it.node("allOf[0].\$ref").isEqualTo("$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE")
+                it.node("\$defs.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}.\$id")
+                    .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
 
@@ -125,18 +134,26 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
         val subdir = File(project.baseDir(), CHART_NAME)
         project.initHelmChart(subdir)
-        File(subdir, HELM_SCHEMA_FILE).writeText("{}")
+        File(subdir, HELM_SCHEMA_FILE).writeText(
+            """
+            {
+              "${'$'}id": "$CHART_NAME/$HELM_SCHEMA_FILE"
+            }
+            """.trimIndent()
+        )
         service.aggregate(project, File(subdir, HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("allOf[0].\$ref").isEqualTo("../../../$CHART_NAME/$HELM_SCHEMA_FILE")
+                it.node("allOf[0].\$ref").isEqualTo("$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE")
+                it.node("\$defs.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}.\$id")
+                    .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
 
     fun `test - aggregate should include aggregated JSON schema of dependency when dependency is stored locally`() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
-        project.initHelmChart {
+        project.initHelmChart(File(project.baseDir(), CHART_NAME)) {
             appendText("""
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
@@ -144,10 +161,23 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                   repository: "file://../$EXTERNAL_SCHEMA"
             """.trimIndent())
         }
-        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
+        File(project.baseDir(), "$JSON_SCHEMAS_DIR/$EXTERNAL_SCHEMA").let {
+            it.mkdirs()
+            File(it, AGGREGATED_SCHEMA_FILE).writeText(
+                """
+                {
+                  "${'$'}id": "$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+                }
+                """.trimIndent()
+            )
+        }
+        service.aggregate(project, File(project.baseDir(), "$CHART_NAME/$HELM_CHART_FILE"))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
-            .hasContent().node("properties").and({
-                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            .hasContent().and({
+                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                    .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.\$id")
+                    .isEqualTo("$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             })
     }
 
@@ -162,17 +192,30 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                   repository: "file://sub-charts/$EXTERNAL_SCHEMA"
             """.trimIndent())
         }
+        File(project.baseDir(), "$JSON_SCHEMAS_DIR/$EXTERNAL_SCHEMA").let {
+            it.mkdirs()
+            File(it, AGGREGATED_SCHEMA_FILE).writeText(
+                """
+                {
+                  "${'$'}id": "$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+                }
+                """.trimIndent()
+            )
+        }
         service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
-            .hasContent().node("properties").and({
-                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            .hasContent().and({
+                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                    .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.\$id")
+                    .isEqualTo("$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             })
     }
 
     fun `test - aggregate should include aggregated JSON schema of dependency when local path ends with slash`() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
-        project.initHelmChart {
+        project.initHelmChart(File(project.baseDir(), CHART_NAME)) {
             appendText("""
                 dependencies:
                 - name: $EXTERNAL_SCHEMA
@@ -180,10 +223,23 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                   repository: "file://../$EXTERNAL_SCHEMA/"
             """.trimIndent())
         }
-        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
+        File(project.baseDir(), "$JSON_SCHEMAS_DIR/$EXTERNAL_SCHEMA").let {
+            it.mkdirs()
+            File(it, AGGREGATED_SCHEMA_FILE).writeText(
+                """
+                {
+                  "${'$'}id": "$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+                }
+                """.trimIndent()
+            )
+        }
+        service.aggregate(project, File(project.baseDir(), "$CHART_NAME/$HELM_CHART_FILE"))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
-            .hasContent().node("properties").and({
-                it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            .hasContent().and({
+                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                    .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.\$id")
+                    .isEqualTo("$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             })
     }
 
