@@ -125,7 +125,7 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("\$ref").isEqualTo("../.././$HELM_SCHEMA_FILE")
+            it.node("allOf[0].\$ref").isEqualTo("../.././$HELM_SCHEMA_FILE")
         })
     }
 
@@ -152,7 +152,7 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("\$ref").isEqualTo("../../$CHART_NAME/$HELM_SCHEMA_FILE")
+            it.node("allOf[0].\$ref").isEqualTo("../../$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
 

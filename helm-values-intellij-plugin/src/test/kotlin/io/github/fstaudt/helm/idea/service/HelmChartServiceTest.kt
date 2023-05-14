@@ -116,7 +116,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("\$ref").isEqualTo("../../.././$HELM_SCHEMA_FILE")
+                it.node("allOf[0].\$ref").isEqualTo("../../.././$HELM_SCHEMA_FILE")
             })
     }
 
@@ -129,7 +129,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(subdir, HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("\$ref").isEqualTo("../../../$CHART_NAME/$HELM_SCHEMA_FILE")
+                it.node("allOf[0].\$ref").isEqualTo("../../../$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
 

@@ -22,8 +22,10 @@ class ObjectNodeExtensions {
 
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
 
+        internal fun ObjectNode.objectNodeOrNull(name: String) = get(name) as? ObjectNode
+
         internal fun ObjectNode.objectNode(name: String): ObjectNode {
-            return get(name) as? ObjectNode ?: ObjectNode(nodeFactory).also { set<ObjectNode>(name, it) }
+            return objectNodeOrNull(name) ?: ObjectNode(nodeFactory).also { set<ObjectNode>(name, it) }
         }
 
         internal fun ObjectNode.props() = objectNode("properties")

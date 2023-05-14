@@ -86,7 +86,7 @@ internal class JsonSchemaAggregatorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).and({
-            it.node("\$ref").isEqualTo("${testProject.name}/$HELM_SCHEMA_FILE")
+            it.node("allOf[0].\$ref").isEqualTo("${testProject.name}/$HELM_SCHEMA_FILE")
         })
     }
 
@@ -322,7 +322,6 @@ internal class JsonSchemaAggregatorTest {
         assertThatJson(json).node("properties").and(
             {
                 it.node("$EMBEDDED_SUB_SCHEMA.properties.global.additionalProperties").isBoolean.isFalse
-                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.properties.global.additionalProperties").isBoolean.isFalse
             }
         )
     }
@@ -370,15 +369,14 @@ internal class JsonSchemaAggregatorTest {
     @Test
     fun `aggregate should use alias to aggregate downloaded JSON schemas`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "alias")
         ))
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and({
             it.node("global.allOf[0].\$ref")
                 .isEqualTo("#/$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH/properties/global")
             it.node("global.allOf[1].\$ref").isEqualTo("#/$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_GLOBAL_SCHEMA_PATH")
-            it.node("$EXTERNAL_SCHEMA-alias.\$ref")
-                .isEqualTo("#/$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+            it.node("alias.\$ref").isEqualTo("#/$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
         })
     }
 
@@ -392,6 +390,7 @@ internal class JsonSchemaAggregatorTest {
         assertThatJson(json).node("properties").and({
             val extractedSchemaFile = "#/$DEFS/$EXTRACT_DIR/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE"
             it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo(extractedSchemaFile)
+            it.node(EMBEDDED_SCHEMA).isObject.containsOnlyKeys("\$ref")
             it.node("global.allOf[0].\$ref").isEqualTo("$extractedSchemaFile/properties/global")
         })
         assertThatJson(json).node("$DEFS.$EXTRACT_DIR.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.\$id")
@@ -409,11 +408,11 @@ internal class JsonSchemaAggregatorTest {
             {
                 val extractedSubSchemaFile =
                     "#/$DEFS/$EXTRACT_DIR/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE"
-                it.node(EMBEDDED_SUB_SCHEMA).isObject.doesNotContainKey("\$ref")
-                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo(extractedSubSchemaFile)
-                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.properties").isObject.containsOnlyKeys("global")
                 it.node("global.allOf").isArray.hasSize(2)
                 it.node("global.allOf[0].\$ref").isEqualTo("$extractedSubSchemaFile/properties/global")
+                it.node(EMBEDDED_SUB_SCHEMA).isObject.doesNotContainKey("\$ref")
+                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo(extractedSubSchemaFile)
+                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA").isObject.containsOnlyKeys("\$ref")
                 it.node("$EMBEDDED_SUB_SCHEMA.properties").and({
                     it.node("global.allOf").isArray.hasSize(2)
                     it.node("global.allOf[0].\$ref").isEqualTo("$extractedSubSchemaFile/properties/global")
@@ -439,26 +438,21 @@ internal class JsonSchemaAggregatorTest {
                 val extractedSchemaFile = "#/$DEFS/$EXTRACT_DIR/$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE"
                 val extractedSubSchemaFile =
                     "#/$DEFS/$EXTRACT_DIR/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE"
-                it.node("$EMBEDDED_SUB_SCHEMA.\$ref").isEqualTo(extractedSchemaFile)
-                it.node("$EMBEDDED_SUB_SCHEMA.properties").isObject.doesNotContainKey(HELM_SCHEMA_FILE)
-                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo(extractedSubSchemaFile)
-                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.properties").isObject.containsOnlyKeys("global")
                 it.node("global.allOf").isArray.hasSize(3)
                 it.node("global.allOf[0].\$ref").isEqualTo("$extractedSchemaFile/properties/global")
                 it.node("global.allOf[1].\$ref").isEqualTo("$extractedSubSchemaFile/properties/global")
+                it.node("$EMBEDDED_SUB_SCHEMA.allOf[0].\$ref").isEqualTo(extractedSchemaFile)
+                it.node("$EMBEDDED_SUB_SCHEMA.properties").isObject.doesNotContainKey(HELM_SCHEMA_FILE)
+                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo(extractedSubSchemaFile)
+                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA").isObject.containsOnlyKeys("\$ref")
                 it.node("$EMBEDDED_SUB_SCHEMA.properties").and({
                     it.node("global.allOf").isArray.hasSize(2)
                     it.node("global.allOf[0].\$ref").isEqualTo("$extractedSubSchemaFile/properties/global")
                     it.node("global.allOf[1].title")
                         .isEqualTo("$EXTRACTED_GLOBAL_VALUES_TITLE $EMBEDDED_SUB_SCHEMA dependency")
                     it.node("global.allOf[1].description").isEqualTo("\\n\\\\n")
-                    it.node("$EMBEDDED_SCHEMA.properties").and({
-                        it.node("global.allOf").isArray.hasSize(1)
-                        it.node("global.allOf[0].title")
-                            .isEqualTo("$EXTRACTED_GLOBAL_VALUES_TITLE $EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA dependency")
-                        it.node("global.allOf[0].description").isEqualTo("\\n\\\\n")
-                    })
                 })
+                it.node("$EMBEDDED_SUB_SCHEMA.unevaluatedProperties").isEqualTo(false)
                 it.node("global.allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
             }
         )
@@ -473,14 +467,14 @@ internal class JsonSchemaAggregatorTest {
     @Test
     fun `aggregate should use alias to aggregate extracted JSON schemas`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY, "$EMBEDDED_SCHEMA-alias")
+            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY, "alias")
         ))
-        testProject.initExtractedSchemas("$EMBEDDED_SCHEMA-alias")
+        testProject.initExtractedSchemas("alias")
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("properties.$EMBEDDED_SCHEMA-alias.\$ref")
-            .isEqualTo("#/$DEFS/$EXTRACT_DIR/$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE")
-        assertThatJson(json).node("$DEFS.$EXTRACT_DIR.$EMBEDDED_SCHEMA-alias.${HELM_SCHEMA_FILE.escaped()}.\$id")
-            .isEqualTo("$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE")
+        assertThatJson(json).node("properties.alias.\$ref")
+            .isEqualTo("#/$DEFS/$EXTRACT_DIR/alias/$HELM_SCHEMA_FILE")
+        assertThatJson(json).node("$DEFS.$EXTRACT_DIR.alias.${HELM_SCHEMA_FILE.escaped()}.\$id")
+            .isEqualTo("alias/$HELM_SCHEMA_FILE")
     }
 
     @Test
@@ -522,9 +516,24 @@ internal class JsonSchemaAggregatorTest {
     @Test
     fun `aggregate should set property for dependency condition`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "deps.$EXTERNAL_SCHEMA.enabled")
+        ))
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties.deps.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
+    }
+
+    @Test
+    fun `aggregate should set property for dependency condition in allOf when it conflicts with $ref`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "$EXTERNAL_SCHEMA.enabled")
         ))
         val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.allOf[0]").isObject.containsOnlyKeys("\$ref")
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA").node("unevaluatedProperties").isEqualTo(false)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
@@ -536,15 +545,15 @@ internal class JsonSchemaAggregatorTest {
     fun `aggregate should set properties for dependency condition when condition contains comma`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
-                condition = "$EXTERNAL_SCHEMA.enabled,global.$EXTERNAL_SCHEMA.enabled")
+                condition = "deps.$EXTERNAL_SCHEMA.enabled,other.$EXTERNAL_SCHEMA.enabled")
         ))
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+        assertThatJson(json).node("properties.deps.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("type").isEqualTo("boolean")
         })
-        assertThatJson(json).node("properties.global.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+        assertThatJson(json).node("properties.other.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("type").isEqualTo("boolean")
@@ -555,10 +564,10 @@ internal class JsonSchemaAggregatorTest {
     fun `aggregate should set property for dependency condition when dependency is stored locally`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA",
-                condition = "$EXTERNAL_SCHEMA.enabled")
+                condition = "deps.$EXTERNAL_SCHEMA.enabled")
         ))
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+        assertThatJson(json).node("properties.deps.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("type").isEqualTo("boolean")
@@ -584,10 +593,10 @@ internal class JsonSchemaAggregatorTest {
     @Test
     fun `aggregate should use alias to document property for dependency condition`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "alias", "alias.enabled")
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "alias", "deps.alias.enabled")
         ))
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("properties.alias.properties.enabled").and(
+        assertThatJson(json).node("properties.deps.properties.alias.properties.enabled").and(
             {
                 it.node("title").isEqualTo("Enable alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
                 it.node("description").isEqualTo("\\n\\\\n")

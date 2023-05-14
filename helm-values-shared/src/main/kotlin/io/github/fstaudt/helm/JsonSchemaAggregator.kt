@@ -10,6 +10,7 @@ import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNodeOrNull
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
@@ -51,7 +52,9 @@ class JsonSchemaAggregator(
             "#/$DEFS/${extractSchemasDir.name}",
             jsonSchema)
         jsonSchema.addGlobalPropertiesDescriptionFor(chart)
-        chartSchema.takeIf { it.exists() }?.let { jsonSchema.put("\$ref", schemaLocator.schemaFor(chartDir)) }
+        chartSchema.takeIf { it.exists() }?.let {
+            jsonSchema.allOf().add(jsonSchema.objectNode().put("\$ref", schemaLocator.schemaFor(chartDir)))
+        }
         return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 
@@ -66,20 +69,24 @@ class JsonSchemaAggregator(
         refPrefix: String,
         jsonSchema: ObjectNode
     ) {
-        with(props()) {
-            schemasDir.listFiles { file -> file.isDirectory }?.forEach {
-                with(objectNode(it.name)) {
-                    val ref = "$refPrefix/${it.name}"
-                    if (it.containsFile(HELM_SCHEMA_FILE)) {
-                        put("\$ref", "$ref/$HELM_SCHEMA_FILE")
-                        jsonSchema.aggregateExtractedSchemaFor(it, "$ref/$HELM_SCHEMA_FILE".removePrefix("#/"))
-                    }
-                    setExtractedDependencyReferencesFrom(it, ref, jsonSchema)
-                    props().global().put("additionalProperties", false)
+        schemasDir.listFiles { file -> file.isDirectory }?.forEach { file ->
+            val ref = "$refPrefix/${file.name}"
+            with(props().objectNode(file.name)) {
+                if (file.containsFile(HELM_SCHEMA_FILE)) {
+                    put("\$ref", "$ref/$HELM_SCHEMA_FILE")
+                    jsonSchema.aggregateExtractedSchemaFor(file, "$ref/$HELM_SCHEMA_FILE".removePrefix("#/"))
+                }
+                setExtractedDependencyReferencesFrom(file, ref, jsonSchema)
+                objectNodeOrNull("properties")?.objectNodeOrNull("global")?.let {
+                    it.put("additionalProperties", false)
                     addGlobalPropertiesDescriptionFor(ref.removePrefix("#/$DEFS/${extractSchemasDir.name}/"))
                 }
-                addGlobalPropertiesFrom(it, refPrefix)
+                if (has("\$ref") && size() > 1) {
+                    allOf().add(objectNode().set("\$ref", remove("\$ref")) as JsonNode)
+                    put("unevaluatedProperties", false)
+                }
             }
+            addGlobalPropertiesFrom(file, refPrefix)
         }
     }
 
@@ -94,7 +101,7 @@ class JsonSchemaAggregator(
     private fun ObjectNode.addGlobalPropertiesFrom(schemasDir: File, refPrefix: String) {
         if (schemasDir.containsFile(HELM_SCHEMA_FILE)) {
             val ref = "$refPrefix/${schemasDir.name}/$HELM_SCHEMA_FILE/properties/global"
-            global().allOf().add(objectNode().put("\$ref", ref))
+            props().global().allOf().add(objectNode().put("\$ref", ref))
         }
         if (schemasDir.hasSubDirectories()) {
             schemasDir.listFiles()?.forEach {

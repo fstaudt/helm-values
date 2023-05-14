@@ -82,13 +82,12 @@ internal class JsonSchemaGeneratorTest {
     @Test
     fun `generateValuesJsonSchema should use alias as property names`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "alias")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).and({
             it.node("properties").isObject.doesNotContainKey(EXTERNAL_SCHEMA)
-            it.node("properties.$EXTERNAL_SCHEMA-alias.\$ref")
-                .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+            it.node("properties.alias.\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
         })
     }
 
@@ -157,9 +156,24 @@ internal class JsonSchemaGeneratorTest {
     @Test
     fun `generateValuesJsonSchema should set property for dependency condition`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "deps.$EXTERNAL_SCHEMA.enabled")
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.deps.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+            it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+            it.node("description").isEqualTo("\\n\\\\n")
+            it.node("type").isEqualTo("boolean")
+        })
+    }
+
+    @Test
+    fun `generateValuesJsonSchema should set property for dependency condition in allOf when it conflicts with $ref`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, condition = "$EXTERNAL_SCHEMA.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.allOf[0]").isObject.containsOnlyKeys("\$ref")
+        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA").node("unevaluatedProperties").isEqualTo(false)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
@@ -171,15 +185,15 @@ internal class JsonSchemaGeneratorTest {
     fun `generateValuesJsonSchema should set properties for dependency condition when condition contains comma`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
-                condition = "$EXTERNAL_SCHEMA.enabled,global.$EXTERNAL_SCHEMA.enabled")
+                condition = "deps.$EXTERNAL_SCHEMA.enabled,other.$EXTERNAL_SCHEMA.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+        assertThatJson(json).node("properties.deps.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("type").isEqualTo("boolean")
         })
-        assertThatJson(json).node("properties.global.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+        assertThatJson(json).node("properties.other.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("type").isEqualTo("boolean")
@@ -190,10 +204,10 @@ internal class JsonSchemaGeneratorTest {
     fun `generateValuesJsonSchema should set property for dependency condition when dependency is stored locally`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://../$EXTERNAL_SCHEMA",
-                condition = "$EXTERNAL_SCHEMA.enabled")
+                condition = "deps.$EXTERNAL_SCHEMA.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
+        assertThatJson(json).node("properties.deps.properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("type").isEqualTo("boolean")
@@ -236,13 +250,11 @@ internal class JsonSchemaGeneratorTest {
     @Test
     fun `generateValuesJsonSchema should use alias to document property for dependency condition`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
-                "$EXTERNAL_SCHEMA-alias", "$EXTERNAL_SCHEMA-alias.enabled")
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "alias", "deps.alias.enabled")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA-alias.properties.enabled").and({
-            it.node("title")
-                .isEqualTo("Enable $EXTERNAL_SCHEMA-alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
+        assertThatJson(json).node("properties.deps.properties.alias.properties.enabled").and({
+            it.node("title").isEqualTo("Enable alias dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
             it.node("type").isEqualTo("boolean")
         })
@@ -306,7 +318,7 @@ internal class JsonSchemaGeneratorTest {
     @Test
     fun `generateValuesJsonSchema should not use alias to generate ref to external JSON schemas for global`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "$EXTERNAL_SCHEMA-alias")
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, "alias")
         ))
         val json = generator.generateValuesJsonSchema(chart, null)
         assertThatJson(json).node("properties.global").and({

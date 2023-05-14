@@ -1,5 +1,6 @@
 package io.github.fstaudt.helm
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -9,6 +10,7 @@ import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNodeOrNull
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
@@ -56,11 +58,16 @@ class JsonSchemaGenerator(
             }
         }
         chart.dependencies.forEach { dep ->
-            dep.condition?.toPropertiesObjectNodesIn(jsonSchema)?.forEach {
-                it.put("title", "Enable ${dep.aliasOrName()} dependency (${dep.fullName()})")
+            dep.condition?.toPropertiesObjectNodesIn(jsonSchema)?.forEach { condition ->
+                condition.put("title", "Enable ${dep.aliasOrName()} dependency (${dep.fullName()})")
                     .put("description", NEW_LINE)
                     .put("type", "boolean")
-
+                jsonSchema.props().objectNodeOrNull(dep.aliasOrName())?.let {
+                    if (it.has("\$ref") && it.properties().size > 1) {
+                        it.allOf().add(it.objectNode().set("\$ref", it.remove("\$ref")) as JsonNode)
+                        it.put("unevaluatedProperties", false)
+                    }
+                }
             }
         }
         return (jsonPatch?.apply(jsonSchema) as? ObjectNode) ?: jsonSchema
