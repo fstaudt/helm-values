@@ -1,3 +1,29 @@
+## 0.7.0 - May 18, 2023
+
+- :sparkles: (gradle) task to validate values.yaml against aggregated JSON schema
+  ([#18](https://github.com/fstaudt/helm-values/issues/18))
+- :sparkles: aggregate downloaded & extracted JSON schemas in a single file
+  ([#49](https://github.com/fstaudt/helm-values/issues/49))
+- :sparkles: aggregate chart & inter-dependent charts JSON schemas in a single file
+  ([#49](https://github.com/fstaudt/helm-values/issues/49))
+- :sparkles: remove additional and unevaluated properties from aggregated sub-charts
+  ([#49](https://github.com/fstaudt/helm-values/issues/49))
+- :bug: JSON schema aggregation should use unevaluatedProperties in global properties
+  ([#89](https://github.com/fstaudt/helm-values/issues/89))
+- :bug: full URI for $id of aggregated JSON schema
+  ([#90](https://github.com/fstaudt/helm-values/issues/90))
+- :bug: $ref should not be used with other properties in generated JSON schemas
+  ([#91](https://github.com/fstaudt/helm-values/issues/91))
+- :bug: use of version ranges for locally stored dependencies causes failure in JSON schemas aggregation
+  ([#93](https://github.com/fstaudt/helm-values/issues/93))
+
+**BREAKING CHANGES**:
+
+- :boom: Since [#89](https://github.com/fstaudt/helm-values/issues/89) &
+  [#91](https://github.com/fstaudt/helm-values/issues/91)
+  and due to the lack of support for Draft 2019-09 in IntelliJ IDEA,
+  some invalid values are no more identified by IntelliJ IDEA.
+
 ## 0.6.1 - Mar 26, 2023
 
 - :sparkles: (intellij) support for IntelliJ IDEA 2023.1
