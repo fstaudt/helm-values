@@ -381,6 +381,26 @@ internal class JsonSchemaGeneratorTest {
     }
 
     @Test
+    fun `generateValuesJsonSchema should add refs in global when locally stored dependency is provided with version range`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, "^$EXTERNAL_VERSION", "file://../$EXTERNAL_SCHEMA")
+        ))
+        val json = generator.generateValuesJsonSchema(chart, null)
+        assertThatJson(json).node("properties.global").and({
+            val externalSchemaRef = "../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION"
+            it.node("allOf").isArray.hasSize(3)
+            it.node("allOf[0].\$ref").isEqualTo("$externalSchemaRef/$VALUES_SCHEMA_FILE#/properties/global")
+            it.node("allOf[1].\$ref").isEqualTo("$externalSchemaRef/$GLOBAL_VALUES_SCHEMA_FILE")
+            it.node("allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
+            it.node("allOf[2].description").isString
+                .contains("$APPS/$EXTERNAL_SCHEMA:^$EXTERNAL_VERSION")
+            it.node("allOf[2].x-intellij-html-description").isString
+                .contains("$BASE_URL/$APPS_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION")
+                .contains("$APPS/$EXTERNAL_SCHEMA:^$EXTERNAL_VERSION")
+        })
+    }
+
+    @Test
     fun `generateExtraValuesJsonSchema should generate JSON schema with references to aggregated schema`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         val json = generator.generateExtraValuesJsonSchema(chart, null)

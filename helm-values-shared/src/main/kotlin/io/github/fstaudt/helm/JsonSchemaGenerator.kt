@@ -53,7 +53,7 @@ class JsonSchemaGenerator(
         jsonSchema.props().global().putGlobalProperties(chart)
         chart.dependencies.filter { it.version != null }.forEach { dep ->
             dep.repository()?.let {
-                val ref = "${it.baseUri}/${dep.name}/${dep.version}/${it.valuesSchemaFile}".toRelativeUri()
+                val ref = "${it.baseUri}/${dep.name}/${dep.sanitizedVersion()}/${it.valuesSchemaFile}".toRelativeUri()
                 jsonSchema.props().objectNode(dep.aliasOrName()).put("\$ref", ref)
             }
         }
@@ -77,7 +77,7 @@ class JsonSchemaGenerator(
             allOf().let { allOf ->
                 chart.dependencies.forEach { dep ->
                     dep.repository()?.let {
-                        val refPrefix = "${it.baseUri}/${dep.name}/${dep.version}".toRelativeUri()
+                        val refPrefix = "${it.baseUri}/${dep.name}/${dep.sanitizedVersion()}".toRelativeUri()
                         val ref = "$refPrefix/${it.valuesSchemaFile}#/properties/global"
                         allOf.add(ObjectNode(nodeFactory).put("\$ref", ref))
                         val globalRef = "$refPrefix/${it.globalValuesSchemaFile}"
@@ -101,7 +101,7 @@ class JsonSchemaGenerator(
             .put("x-intellij-html-description", "<br>$GLOBAL_VALUES_DESCRIPTION: $htmlDependencyLabels")
     }
 
-    private fun ChartDependency.fullUri() = repository()?.let { "${it.baseUri}/$name/$version" }
+    private fun ChartDependency.fullUri() = repository()?.let { "${it.baseUri}/$name/${sanitizedVersion()}" }
 
     private fun ChartDependency.fullName(): String {
         return if (isStoredLocally()) {

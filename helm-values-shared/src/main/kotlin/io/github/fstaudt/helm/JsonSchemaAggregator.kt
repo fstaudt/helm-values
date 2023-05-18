@@ -74,7 +74,7 @@ class JsonSchemaAggregator(
 
     private fun ObjectNode.removeGlobalValuesSchemaRefsOfLocallyStoredDependenciesFor(chart: Chart) {
         val globalRefs = chart.dependencies.filter { it.isStoredLocally() }
-            .map { "../../${it.name}/${it.version}/$GLOBAL_VALUES_SCHEMA_FILE" }
+            .map { "../../${it.name}/${it.sanitizedVersion()}/$GLOBAL_VALUES_SCHEMA_FILE" }
         props().global().allOf().removeAll { globalRefs.contains(it.get("\$ref")?.textValue()) }
     }
 
@@ -253,7 +253,9 @@ class JsonSchemaAggregator(
     private fun List<ChartDependency>.toLocallyStoredRefMappings() = mapNotNull { it.toLocallyStoredRefMapping() }
     private fun ChartDependency.toLocallyStoredRefMapping(): RefMapping? {
         return takeIf { it.isStoredLocally() }?.let {
-            RefMapping("../../$name/$version/$VALUES_SCHEMA_FILE", "#/$DEFS/local/$name/$AGGREGATED_SCHEMA_FILE")
+            RefMapping(
+                "../../$name/${sanitizedVersion()}/$VALUES_SCHEMA_FILE",
+                "#/$DEFS/local/$name/$AGGREGATED_SCHEMA_FILE")
         }
     }
 

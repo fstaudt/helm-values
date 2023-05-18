@@ -785,6 +785,25 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
+    fun `aggregate should aggregate aggregated JSON schema of dependency when locally stored dependency is provided with version range`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, "^$EXTERNAL_VERSION", "file://sub/$EXTERNAL_SCHEMA")
+        ))
+        testProject.initLocalSchema("sub/$EXTERNAL_SCHEMA", AGGREGATED_SCHEMA_FILE)
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            val subChartAggregatedSchemaFile = "#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(subChartAggregatedSchemaFile)
+            it.node("global.allOf[0].\$ref").isEqualTo("$subChartAggregatedSchemaFile/properties/global")
+            it.node("global.allOf[1].title").isString.startsWith(GLOBAL_VALUES_TITLE)
+        })
+        assertThatJson(json).node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
+            .and({
+                it.node("\$id").isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            })
+    }
+
+    @Test
     fun `aggregate should update internal references in aggregated JSON schema of locally stored dependencies`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA")
