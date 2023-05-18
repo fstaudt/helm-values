@@ -6,12 +6,15 @@ import com.fasterxml.jackson.databind.node.TextNode
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
+import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
+import io.github.fstaudt.helm.Keywords.Companion.UNEVALUATED_PROPERTIES
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.globalOrNull
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNodeOrNull
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
+import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.propsOrNull
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
 import io.github.fstaudt.helm.model.Chart
@@ -44,7 +47,7 @@ class JsonSchemaAggregator(
         val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
         jsonSchema.put("\$id", "$BASE_URI/${chart.name}/${chart.version}/${AGGREGATED_SCHEMA_FILE}")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
-        jsonSchema.put("unevaluatedProperties", false)
+        jsonSchema.put(UNEVALUATED_PROPERTIES, false)
         jsonSchema.updateReferencesFor(chart.dependencies.toDownloadedRefMappings())
         jsonSchema.aggregateDownloadedSchemasFor(chart)
         jsonSchema.updateReferencesFor(chart.dependencies.toLocallyStoredRefMappings())
@@ -88,13 +91,11 @@ class JsonSchemaAggregator(
                     jsonSchema.aggregateExtractedSchemaFor(file, "$ref/$HELM_SCHEMA_FILE".removePrefix("#/"))
                 }
                 setExtractedDependencyReferencesFrom(file, ref, jsonSchema)
-                objectNodeOrNull("properties")?.objectNodeOrNull("global")?.let {
-                    it.put("unevaluatedProperties", false)
+                propsOrNull()?.globalOrNull()?.let {
                     addGlobalPropertiesDescriptionFor(ref.removePrefix("#/$DEFS/${extractSchemasDir.name}/"))
                 }
                 if (has("\$ref") && size() > 1) {
                     allOf().add(objectNode().set("\$ref", remove("\$ref")) as JsonNode)
-                    put("unevaluatedProperties", false)
                 }
             }
             addGlobalPropertiesFrom(file, refPrefix)
@@ -106,8 +107,7 @@ class JsonSchemaAggregator(
             .fold(this) { node, s -> node.objectNode(s) }
         val schema = File(schemaDir, HELM_SCHEMA_FILE).toObjectNode()
         schema.updateReferencesFor(listOf(schemaPath.toInternalRefMapping()))
-        schema.remove("additionalProperties")
-        schema.objectNodeOrNull("properties")?.objectNodeOrNull("global")?.remove("additionalProperties")
+        schema.removeAdditionalAndUnevaluatedProperties()
         schemaNode.setAll<JsonNode>(schema)
     }
 
@@ -180,8 +180,7 @@ class JsonSchemaAggregator(
                     }
                 }
             }
-            schema.remove("additionalProperties")
-            schema.objectNodeOrNull("properties")?.objectNodeOrNull("global")?.remove("additionalProperties")
+            schema.removeAdditionalAndUnevaluatedProperties()
             schemaNode.setAll<JsonNode>(schema)
         }
         return schemaPath
@@ -202,8 +201,7 @@ class JsonSchemaAggregator(
             val refMapping = RefMapping("#", schemaPath)
             (parent as ObjectNode).replace("\$ref", refMapping.map(ref))
         }
-        schema.remove("additionalProperties")
-        schema.objectNodeOrNull("properties")?.objectNodeOrNull("global")?.remove("additionalProperties")
+        schema.removeAdditionalAndUnevaluatedProperties()
         schemaNode.setAll<JsonNode>(schema)
     }
 
@@ -216,8 +214,7 @@ class JsonSchemaAggregator(
             val refMapping = RefMapping("#", schemaPath)
             (parent as ObjectNode).replace("\$ref", refMapping.map(ref))
         }
-        schema.remove("additionalProperties")
-        schema.objectNodeOrNull("properties")?.objectNodeOrNull("global")?.remove("additionalProperties")
+        schema.removeAdditionalAndUnevaluatedProperties()
         schemaNode.setAll<JsonNode>(schema)
     }
 
@@ -261,4 +258,13 @@ class JsonSchemaAggregator(
     }
 
     private fun String.toInternalRefMapping() = RefMapping("#", "#/$this")
+}
+
+private fun ObjectNode.removeAdditionalAndUnevaluatedProperties() {
+    remove(ADDITIONAL_PROPERTIES)
+    remove(UNEVALUATED_PROPERTIES)
+    propsOrNull()?.globalOrNull()?.let {
+        it.remove(ADDITIONAL_PROPERTIES)
+        it.remove(UNEVALUATED_PROPERTIES)
+    }
 }

@@ -21,3 +21,13 @@ const val AGGREGATED_SCHEMA_FILE = "aggregated-values.schema.json"
 const val PATCH_AGGREGATED_SCHEMA_FILE = "aggregated-values.schema.patch.json"
 const val EXTRA_VALUES_SCHEMA_FILE = "extra-values.schema.json"
 const val PATCH_EXTRA_VALUES_SCHEMA_FILE = "extra-values.schema.patch.json"
+
+class Keywords {
+    companion object {
+        const val PROPERTIES = "properties"
+        const val GLOBAL = "global"
+        const val ALL_OF = "allOf"
+        const val ADDITIONAL_PROPERTIES = "additionalProperties"
+        const val UNEVALUATED_PROPERTIES = "unevaluatedProperties"
+    }
+}

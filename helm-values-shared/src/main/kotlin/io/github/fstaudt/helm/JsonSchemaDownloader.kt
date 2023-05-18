@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isFullUri
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
@@ -113,7 +114,7 @@ class JsonSchemaDownloader(
             .put("x-generated-by", GENERATOR_LABEL)
             .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
             .put("type", "object")
-            .put("additionalProperties", false)
+            .put(ADDITIONAL_PROPERTIES, false)
             .put("title", "Fallback schema for $schemaName")
             .put("description", "$NEW_LINE $errorLabel '$errorMessage'")
             .put("x-intellij-html-description", "<br>$htmlLabel<br><code>$errorMessage</code>")

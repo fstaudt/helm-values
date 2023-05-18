@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
@@ -43,14 +44,13 @@ class JsonSchemaGenerator(
         val jsonSchema = chart.toExtraValuesJsonSchema()
         jsonSchema.props().global().put("\$ref", "$AGGREGATED_SCHEMA_FILE#/properties/global")
         jsonSchema.props().objectNode(chart.name).put("\$ref", AGGREGATED_SCHEMA_FILE)
-        jsonSchema.put("additionalProperties", false)
+        jsonSchema.put(ADDITIONAL_PROPERTIES, false)
         return (jsonPatch?.apply(jsonSchema) as? ObjectNode) ?: jsonSchema
     }
 
     fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
         val jsonSchema = chart.toValuesJsonSchema()
         jsonSchema.props().global().putGlobalProperties(chart)
-        jsonSchema.put("additionalProperties", false)
         chart.dependencies.filter { it.version != null }.forEach { dep ->
             dep.repository()?.let {
                 val ref = "${it.baseUri}/${dep.name}/${dep.version}/${it.valuesSchemaFile}".toRelativeUri()
@@ -65,7 +65,6 @@ class JsonSchemaGenerator(
                 jsonSchema.props().objectNodeOrNull(dep.aliasOrName())?.let {
                     if (it.has("\$ref") && it.properties().size > 1) {
                         it.allOf().add(it.objectNode().set("\$ref", it.remove("\$ref")) as JsonNode)
-                        it.put("unevaluatedProperties", false)
                     }
                 }
             }
@@ -74,7 +73,6 @@ class JsonSchemaGenerator(
     }
 
     private fun ObjectNode.putGlobalProperties(chart: Chart) {
-        put("unevaluatedProperties", false)
         if (chart.dependencies.any { it.repository() != null }) {
             allOf().let { allOf ->
                 chart.dependencies.forEach { dep ->

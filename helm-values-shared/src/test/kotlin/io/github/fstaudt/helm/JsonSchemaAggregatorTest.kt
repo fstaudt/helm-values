@@ -8,6 +8,8 @@ import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
+import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
+import io.github.fstaudt.helm.Keywords.Companion.UNEVALUATED_PROPERTIES
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -99,7 +101,6 @@ internal class JsonSchemaAggregatorTest {
             schemaContent = """
                 {
                   "${'$'}id": "./$HELM_SCHEMA_FILE",
-                  "additionalProperties": false,
                   "allOf": [
                     {
                       "${'$'}ref": "#/ref"
@@ -122,9 +123,12 @@ internal class JsonSchemaAggregatorTest {
             schemaContent = """
                 {
                   "${'$'}id": "./$HELM_SCHEMA_FILE",
+                  "$ADDITIONAL_PROPERTIES": false,
+                  "$UNEVALUATED_PROPERTIES": false,
                   "properties": {
                     "global": {
-                      "additionalProperties": false
+                      "$ADDITIONAL_PROPERTIES": false,
+                      "$UNEVALUATED_PROPERTIES": false
                     }
                   }
                 }
@@ -136,8 +140,10 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}")
             .and({
-                it.isObject.doesNotContainKey("additionalProperties")
-                it.node("properties.global").isObject.doesNotContainKey("additionalProperties")
+                it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
     }
 
@@ -223,7 +229,7 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
-    fun `aggregate should allow additional global properties in downloaded schemas & sub-schemas`() {
+    fun `aggregate should allow additional and unevaluated global properties in downloaded schemas & sub-schemas`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
         ))
@@ -241,10 +247,12 @@ internal class JsonSchemaAggregatorTest {
                           "${'$'}ref": "../../$EXTERNAL_SUB_GLOBAL_SCHEMA_PATH"
                         }
                       ],
-                      "additionalProperties": false
+                      "$ADDITIONAL_PROPERTIES": false,
+                      "$UNEVALUATED_PROPERTIES": false
                     }
                   },
-                  "additionalProperties": false
+                  "$ADDITIONAL_PROPERTIES": false,
+                  "$UNEVALUATED_PROPERTIES": false
               }
             """.trimIndent())
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SUB_SCHEMAS_PATH",
@@ -253,7 +261,8 @@ internal class JsonSchemaAggregatorTest {
                   "${'$'}id": "$APPS_PATH/$EXTERNAL_SUB_SCHEMAS_PATH/$VALUES_SCHEMA_FILE",
                   "properties": {
                     "global": {
-                      "additionalProperties": false
+                      "$ADDITIONAL_PROPERTIES": false,
+                      "$UNEVALUATED_PROPERTIES": false
                     }
                   }
               }
@@ -261,25 +270,30 @@ internal class JsonSchemaAggregatorTest {
             globalSchemaContent = """
                 {
                   "${'$'}id": "$APPS_PATH/$EXTERNAL_SUB_SCHEMAS_PATH/$GLOBAL_VALUES_SCHEMA_FILE",
-                  "additionalProperties": false
+                  "$ADDITIONAL_PROPERTIES": false,
+                  "$UNEVALUATED_PROPERTIES": false
                 }
             """.trimIndent())
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("$DEFS.$DOWNLOADS_DIR.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
             .and({
                 it.node("\$id").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
-                it.isObject.doesNotContainKey("additionalProperties")
-                it.node("properties.global").isObject.doesNotContainKey("additionalProperties")
+                it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
         assertThatJson(json).node("$DEFS.$DOWNLOADS_DIR.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
             .and({
                 it.node("\$id").isEqualTo("$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH")
-                it.node("properties.global").isObject.doesNotContainKey("additionalProperties")
+                it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
         assertThatJson(json).node("$DEFS.$DOWNLOADS_DIR.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${GLOBAL_VALUES_SCHEMA_FILE.escaped()}")
             .and({
                 it.node("\$id").isEqualTo("$APPS_PATH/$EXTERNAL_SUB_GLOBAL_SCHEMA_PATH")
-                it.isObject.doesNotContainKey("additionalProperties")
+                it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
     }
 
@@ -411,32 +425,15 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
-    fun `aggregate should disable additional and unevaluated properties`() {
+    fun `aggregate should disable unevaluated properties`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
             ChartDependency(NO_SCHEMA, EMBEDDED_VERSION, THIRDPARTY),
         ))
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).and({
-            it.node("additionalProperties").isBoolean.isFalse
             it.node("unevaluatedProperties").isBoolean.isFalse
-            it.node("properties.global.unevaluatedProperties").isBoolean.isFalse
         })
-    }
-
-    @Test
-    fun `aggregate should disable unevaluated global properties for extracted charts`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EMBEDDED_SUB_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
-        ))
-        testProject.initExtractedSchemas(EMBEDDED_SUB_SCHEMA)
-        testProject.initExtractedSchemas("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA")
-        val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("properties").and(
-            {
-                it.node("$EMBEDDED_SUB_SCHEMA.properties.global.unevaluatedProperties").isBoolean.isFalse
-            }
-        )
     }
 
     @Test
@@ -565,7 +562,6 @@ internal class JsonSchemaAggregatorTest {
                         .isEqualTo("$EXTRACTED_GLOBAL_VALUES_TITLE $EMBEDDED_SUB_SCHEMA dependency")
                     it.node("global.allOf[1].description").isEqualTo("\\n\\\\n")
                 })
-                it.node("$EMBEDDED_SUB_SCHEMA.unevaluatedProperties").isBoolean.isFalse
                 it.node("global.allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
             }
         )
@@ -578,7 +574,7 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
-    fun `aggregate should allow additional global properties in extracted JSON schemas from chart & sub-chart`() {
+    fun `aggregate should allow additional and unevaluated global properties in extracted JSON schemas from chart & sub-chart`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SUB_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
         ))
@@ -586,10 +582,12 @@ internal class JsonSchemaAggregatorTest {
             schemaContent = """
                 {
                   "${'$'}id": "$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE",
-                  "additionalProperties": false,
+                  "$ADDITIONAL_PROPERTIES": false,
+                  "$UNEVALUATED_PROPERTIES": false,
                   "properties": {
                     "global": {
-                      "additionalProperties": false
+                      "$ADDITIONAL_PROPERTIES": false,
+                      "$UNEVALUATED_PROPERTIES": false
                     }
                   }
                 }
@@ -598,10 +596,12 @@ internal class JsonSchemaAggregatorTest {
             schemaContent = """
                 {
                   "${'$'}id": "$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
-                  "additionalProperties": false,
+                  "$ADDITIONAL_PROPERTIES": false,
+                  "$UNEVALUATED_PROPERTIES": false,
                   "properties": {
                     "global": {
-                      "additionalProperties": false
+                      "$ADDITIONAL_PROPERTIES": false,
+                      "$UNEVALUATED_PROPERTIES": false
                     }
                   }
                 }
@@ -610,13 +610,17 @@ internal class JsonSchemaAggregatorTest {
         assertThatJson(json).node("$DEFS.$EXTRACT_DIR").and({
             it.node("$EMBEDDED_SUB_SCHEMA.${HELM_SCHEMA_FILE.escaped()}").and({
                 it.node("\$id").isEqualTo("$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE")
-                it.isObject.doesNotContainKey("additionalProperties")
-                it.node("properties.global").isObject.doesNotContainKey("additionalProperties")
+                it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
             it.node("$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}").and({
                 it.node("\$id").isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
-                it.isObject.doesNotContainKey("additionalProperties")
-                it.node("properties.global").isObject.doesNotContainKey("additionalProperties")
+                it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
         })
     }
@@ -690,7 +694,6 @@ internal class JsonSchemaAggregatorTest {
         ))
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.allOf[0]").isObject.containsOnlyKeys("\$ref")
-        assertThatJson(json).node("properties.$EXTERNAL_SCHEMA").node("unevaluatedProperties").isBoolean.isFalse
         assertThatJson(json).node("properties.$EXTERNAL_SCHEMA.properties.enabled").and({
             it.node("title").isEqualTo("Enable $EXTERNAL_SCHEMA dependency ($APPS/$EXTERNAL_SCHEMA:$EXTERNAL_VERSION)")
             it.node("description").isEqualTo("\\n\\\\n")
@@ -823,7 +826,7 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
-    fun `aggregate should allow additional global properties in aggregated JSON schema of locally stored dependencies`() {
+    fun `aggregate should allow additional and unevaluated global properties in aggregated JSON schema of locally stored dependencies`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA")
         ))
@@ -831,10 +834,12 @@ internal class JsonSchemaAggregatorTest {
             schemaContent = """
                 {
                   "${'$'}id": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
-                  "additionalProperties": false,
+                  "$ADDITIONAL_PROPERTIES": false,
+                  "$UNEVALUATED_PROPERTIES": false,
                   "properties": {
                     "global": {
-                      "additionalProperties": false
+                      "$ADDITIONAL_PROPERTIES": false,
+                      "$UNEVALUATED_PROPERTIES": false
                     }
                   }
                 }
@@ -842,8 +847,10 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
             .and({
-                it.isObject.doesNotContainKey("additionalProperties")
-                it.node("properties.global").isObject.doesNotContainKey("additionalProperties")
+                it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
+                it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
     }
 

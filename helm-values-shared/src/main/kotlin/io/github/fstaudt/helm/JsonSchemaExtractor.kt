@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -90,7 +91,7 @@ class JsonSchemaExtractor(
                 .put("x-generated-by", GENERATOR_LABEL)
                 .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
                 .put("type", "object")
-                .put("additionalProperties", false)
+                .put(ADDITIONAL_PROPERTIES, false)
                 .put("title", "Fallback schema for $name:$version")
                 .put("description", "$NEW_LINE $errorLabel: '$errorMessage'")
                 .put("x-intellij-html-description", "<br>$errorLabel:<br> <code>$errorMessage</code>")

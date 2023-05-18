@@ -74,8 +74,8 @@ class ValidateHelmValuesTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThat(it.task(":$VALIDATE_HELM_VALUES")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains(ValuesValidationException::class.java.name)
-            assertThat(it.output).contains("- \$.invalid: is not defined in the schema and the schema does not allow additional properties\n" +
-                    "   (from #/additionalProperties)")
+            assertThat(it.output).contains("- There are unevaluated properties at following paths \$.invalid\n" +
+                    "   (from #/unevaluatedProperties)")
         }
     }
 
@@ -83,18 +83,16 @@ class ValidateHelmValuesTest {
     fun `validateHelmValues should report multiple errors at once`() {
         testProject.initHelmValues {
             appendText("""
-                value: invalid
-                other: invalid
+                invalid: value
+                other: invalid value
             """.trimIndent())
         }
         testProject.runAndFail(VALIDATE_HELM_VALUES).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThat(it.task(":$VALIDATE_HELM_VALUES")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains(ValuesValidationException::class.java.name)
-            assertThat(it.output).contains("- \$.value: is not defined in the schema and the schema does not allow additional properties\n" +
-                    "   (from #/additionalProperties)")
-            assertThat(it.output).contains("- \$.other: is not defined in the schema and the schema does not allow additional properties\n" +
-                    "   (from #/additionalProperties)")
+            assertThat(it.output).contains("- There are unevaluated properties at following paths \$.invalid, \$.other\n" +
+                    "   (from #/unevaluatedProperties)")
         }
     }
 

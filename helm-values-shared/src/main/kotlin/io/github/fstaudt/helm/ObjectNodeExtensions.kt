@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import io.github.fstaudt.helm.Keywords.Companion.ALL_OF
+import io.github.fstaudt.helm.Keywords.Companion.GLOBAL
+import io.github.fstaudt.helm.Keywords.Companion.PROPERTIES
 import java.io.File
 import java.net.URI
 
@@ -28,12 +31,14 @@ class ObjectNodeExtensions {
             return objectNodeOrNull(name) ?: ObjectNode(nodeFactory).also { set<ObjectNode>(name, it) }
         }
 
-        internal fun ObjectNode.props() = objectNode("properties")
+        internal fun ObjectNode.props() = objectNode(PROPERTIES)
+        internal fun ObjectNode.propsOrNull() = objectNodeOrNull(PROPERTIES)
 
-        internal fun ObjectNode.global() = objectNode("global")
+        internal fun ObjectNode.global() = objectNode(GLOBAL)
+        internal fun ObjectNode.globalOrNull() = objectNodeOrNull(GLOBAL)
 
         internal fun ObjectNode.allOf(): ArrayNode {
-            return get("allOf") as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ArrayNode>("allOf", it) }
+            return get(ALL_OF) as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ArrayNode>(ALL_OF, it) }
         }
 
         internal fun JsonNode.isInternalReference() = textValue().startsWith("#")
