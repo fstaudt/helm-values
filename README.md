@@ -124,6 +124,36 @@ Patch is enabled by creation of a file in the base folder of the chart (same fol
   by [Gradle task aggregateJsonSchema](helm-values-gradle-plugin/README.md#aggregatejsonschema)
   or [aggregation actions in IntelliJ plugin](helm-values-intellij-plugin/README.md#refresh-jon-schemas-for-current-chart)
 
+## JSON schema validation
+
+Generated JSON schemas can be used in multiple ways to validate content of `values.yaml` of a Helm chart:
+
+- in **IntelliJ IDEA** using JSON schema validation features provided by IntelliJ IDEA,
+- in **Visual Studio code** using JSON schema validation features provided by VS code plugins,
+- with **Gradle** using [new Gradle task `validateHelmValues`](helm-values-gradle-plugin/README.md#validatehelmvalues)
+  introduced in 0.7.0.
+
+### JSON schema validation results
+
+It is important to be aware that IntelliJ IDEA, VS code & Gradle plugins use different JSON schema validators.\
+The same generated JSON schemas may therefore produce different validation results depending on the tool used to
+validate it.
+
+As an example, generated JSON schemas
+use [keyword `unevaluatedProperties`]((https://json-schema.org/understanding-json-schema/reference/object.html#unevaluated-properties))
+introduced in Draft 2019-09.\
+IntelliJ IDEA only supports JSON schema specification up to Draft-07 and therefore ignores this keyword.\
+Validation errors linked to this keyword are therefore not correctly identified by IntelliJ IDEA.\
+On the other hand, Gradle plugin
+uses [JSON schema validator from networknt](https://github.com/networknt/json-schema-validator) and fully supports 
+Draft 2020-12.\
+Validation errors linked to keyword `unevaluatedProperties` are therefore be correctly identified by Gradle plugin.
+
+Usage of `unevaluatedProperties` keyword in generated JSON schemas is required to allow correct JSON schema composition,
+as explained
+in [JSON schema specification](https://json-schema.org/understanding-json-schema/reference/object.html#unevaluated-properties).\
+Validation differences should disappear when Draft 2019-09 is supported by JSON schema validators of all IDE.
+
 ## JSON schema repositories
 
 Gradle and IntelliJ plugins can be configured to download JSON schemas from external JSON schema repositories.
@@ -213,3 +243,4 @@ Each schema repository can be configured with user and password.
 More information to configure security for repositories is provided in
 [Gradle plugin](helm-values-gradle-plugin/README.md#json-schema-repository-security) and
 [IntelliJ plugin](helm-values-intellij-plugin/README.md#json-schema-repository-security) documentation.
+
