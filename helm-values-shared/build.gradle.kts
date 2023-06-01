@@ -14,7 +14,7 @@ dependencies {
     api("org.apache.commons:commons-compress:1.23.0")
     api("com.fasterxml.jackson.core:jackson-databind:2.15.0")
     api("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.0")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2")
     api("com.github.java-json-tools:json-patch:1.13")
     testImplementation(projects.helmValuesTest)
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
