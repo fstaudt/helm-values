@@ -1,7 +1,16 @@
 package io.github.fstaudt.helm.idea
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.intellij.openapi.project.Project
+import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHART_FILE
+import io.github.fstaudt.helm.idea.model.HelmChartMetadata
+import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.CHART_METADATA_FILE
+import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
 import java.io.File
 
 const val CHART_NAME = "helm-chart"
@@ -24,5 +33,18 @@ fun Project.initHelmChart(sourcesDir: File = baseDir(), customizeHelmChart: File
         """.trimIndent()
         )
         customizeHelmChart()
+    }
+}
+
+fun Project.initJsonSchemas(sourcesDir: File = baseDir()): File {
+    val yamlMapper = ObjectMapper(YAMLFactory()).also {
+        it.registerModule(KotlinModule.Builder().build())
+        it.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
+    return File(baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME").also {
+        it.mkdirs()
+        yamlMapper.writeValue(File(it, CHART_METADATA_FILE), HelmChartMetadata(sourcesDir))
+        File(it, AGGREGATED_SCHEMA_FILE).writeText("{}")
+        File(it, EXTRA_VALUES_SCHEMA_FILE).writeText("{}")
     }
 }

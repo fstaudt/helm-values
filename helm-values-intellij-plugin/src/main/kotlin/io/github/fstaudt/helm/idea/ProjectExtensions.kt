@@ -2,13 +2,19 @@ package io.github.fstaudt.helm.idea
 
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
+import io.github.fstaudt.helm.HELM_CHART_FILE
+import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.CHART_METADATA_FILE
+import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
 import java.io.File
 
 internal fun Project.baseDir() = stateStore.projectBasePath.toFile()
 
 internal fun Project.helmChartDirs() = baseDir().helmChartDirs()
 
-internal fun File.chartFile() = File(this, "Chart.yaml")
+internal fun File.chartFile() = File(this, HELM_CHART_FILE)
+internal fun Project.jsonSchemasDirs(): List<File> {
+    return File(baseDir(), JSON_SCHEMAS_DIR).directories().filter { it.isJsonSchemasDir() }
+}
 
 private fun File.helmChartDirs(): List<File> {
     return listOf(this).filter { it.isHelmChartDir() } + directories().flatMap { dir -> dir.helmChartDirs() }
@@ -16,3 +22,4 @@ private fun File.helmChartDirs(): List<File> {
 
 private fun File.directories() = listFiles { file -> file.isDirectory }?.toList() ?: emptyList()
 private fun File.isHelmChartDir(): Boolean = chartFile().exists()
+private fun File.isJsonSchemasDir(): Boolean = File(this, CHART_METADATA_FILE).exists()

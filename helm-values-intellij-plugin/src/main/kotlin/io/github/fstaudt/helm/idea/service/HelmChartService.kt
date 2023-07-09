@@ -20,6 +20,7 @@ import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.baseDir
+import io.github.fstaudt.helm.idea.model.HelmChartMetadata
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService
 import io.github.fstaudt.helm.model.Chart
@@ -29,6 +30,7 @@ import java.io.File
 class HelmChartService {
     companion object {
         const val JSON_SCHEMAS_DIR = ".idea/json-schemas"
+        const val CHART_METADATA_FILE = "metadata.yaml"
         val instance: HelmChartService = ApplicationManager.getApplication().getService(HelmChartService::class.java)
     }
 
@@ -63,6 +65,9 @@ class HelmChartService {
         val extraValuesJsonPatch = jsonPatch(chartFile, PATCH_EXTRA_VALUES_SCHEMA_FILE)
         generator.generateExtraValuesJsonSchema(chart, extraValuesJsonPatch).also {
             jsonMapper.writeValue(File(jsonSchemasDir, EXTRA_VALUES_SCHEMA_FILE), it)
+        }
+        HelmChartMetadata(chartFile.parentFile).also {
+            yamlMapper.writeValue(File(jsonSchemasDir, CHART_METADATA_FILE), it)
         }
     }
 

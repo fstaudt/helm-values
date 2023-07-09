@@ -1,5 +1,9 @@
 package io.github.fstaudt.helm.idea.service
 
+import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
@@ -16,6 +20,8 @@ import io.github.fstaudt.helm.idea.CHART_VERSION
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.initHelmChart
+import io.github.fstaudt.helm.idea.model.HelmChartMetadata
+import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.CHART_METADATA_FILE
 import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
@@ -38,6 +44,10 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         private const val EMBEDDED_VERSION = "0.1.0"
         private const val CHART_DOWNLOADS_DIR = "$JSON_SCHEMAS_DIR/$CHART_NAME/$DOWNLOADS_DIR"
         private const val CHART_EXTRACT_DIR = "$JSON_SCHEMAS_DIR/$CHART_NAME/$EXTRACT_DIR"
+        private val yamlMapper = ObjectMapper(YAMLFactory()).also {
+            it.registerModule(KotlinModule.Builder().build())
+            it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+        }
     }
 
     private lateinit var state: HelmValuesSettings
@@ -107,6 +117,20 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                 it.node("properties.$EXTERNAL_SCHEMA.\$ref")
                     .isEqualTo("$DEFS/$DOWNLOADS_DIR/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
             })
+    }
+
+    fun `test - aggregate should generate metadata file with chart dir`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        val subdir = File(project.baseDir(), CHART_NAME)
+        project.initHelmChart(subdir)
+        service.aggregate(project, File(subdir, HELM_CHART_FILE))
+        val chartMetadataFile = File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$CHART_METADATA_FILE")
+        assertThat(chartMetadataFile).isFile.exists()
+        val chartMetadata = chartMetadataFile.inputStream().use {
+            yamlMapper.readValue(it, HelmChartMetadata::class.java)
+        }
+        assertThat(chartMetadata.dir.path).isEqualTo("$subdir")
     }
 
     fun `test - aggregate should include JSON schema of current chart when it is available`() {
