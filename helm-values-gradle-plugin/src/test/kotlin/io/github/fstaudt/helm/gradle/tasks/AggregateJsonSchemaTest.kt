@@ -2,12 +2,10 @@ package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
-import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
@@ -53,7 +51,6 @@ class AggregateJsonSchemaTest {
         private const val EXTERNAL_SCHEMA = "external-json-schema"
         private const val EXTERNAL_VERSION = "0.2.0"
         private const val EXTERNAL_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE"
-        private const val EXTERNAL_GLOBAL_SCHEMA_PATH = "$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$GLOBAL_VALUES_SCHEMA_FILE"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
         private const val NO_SCHEMA = "no-json-schema"
     }
@@ -191,11 +188,6 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("global.allOf").isArray.hasSize(3)
-            it.node("global.allOf[0].\$ref")
-                .isEqualTo("$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH/properties/global")
-            it.node("global.allOf[1].\$ref").isEqualTo("$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_GLOBAL_SCHEMA_PATH")
-            it.node("global.allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
             it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
             it.isObject.doesNotContainKey(NO_SCHEMA)
         })
@@ -263,7 +255,6 @@ class AggregateJsonSchemaTest {
         }
         val externalSchemaPath = "$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("global.allOf[0].\$ref").isEqualTo("$externalSchemaPath/properties/global")
             it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(externalSchemaPath)
         })
     }
@@ -309,7 +300,6 @@ class AggregateJsonSchemaTest {
         }
         val externalSchemaPath = "$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("global.allOf[0].\$ref").isEqualTo("$externalSchemaPath/properties/global")
             it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(externalSchemaPath)
         })
     }

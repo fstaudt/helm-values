@@ -28,7 +28,10 @@ fun TestProject.initLocalSchema(
     schemaFile: String = HELM_SCHEMA_FILE,
     schemaContent: String = """
         {
-          "${'$'}id": "$path/$schemaFile"
+          "${'$'}id": "$path/$schemaFile",
+          "properties": {
+            "global": {}
+          }
         }
     """.trimIndent()
 ) {
@@ -40,7 +43,10 @@ fun TestProject.initExtractedSchemas(
     dependencyPath: String,
     schemaContent: String = """
         {
-          "${'$'}id": "$dependencyPath/$HELM_SCHEMA_FILE"
+          "${'$'}id": "$dependencyPath/$HELM_SCHEMA_FILE",
+          "properties": {
+            "global": {}
+          }
         }
     """.trimIndent()
 ) {
@@ -51,15 +57,20 @@ fun TestProject.initExtractedSchemas(
 fun TestProject.initDownloadedSchemas(
     dependencyPath: String,
     valuesSchemaFile: String = VALUES_SCHEMA_FILE,
-    valuesSchemaContent: String = """
-        {
-          "${'$'}id": "$dependencyPath/$valuesSchemaFile"
-        }
-    """.trimIndent(),
     globalSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
     globalSchemaContent: String = """
         {
           "${'$'}id": "$dependencyPath/$globalSchemaFile"
+        }
+    """.trimIndent(),
+    valuesSchemaContent: String = """
+        {
+          "${'$'}id": "$dependencyPath/$valuesSchemaFile",
+          "properties": {
+            "global": {
+              "${'$'}ref": "$globalSchemaFile"
+            }
+          }
         }
     """.trimIndent()
 ) {

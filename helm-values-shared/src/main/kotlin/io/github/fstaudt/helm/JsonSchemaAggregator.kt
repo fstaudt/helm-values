@@ -1,6 +1,7 @@
 package io.github.fstaudt.helm
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.MissingNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.github.fge.jsonpatch.JsonPatch
@@ -37,6 +38,7 @@ class JsonSchemaAggregator(
         const val DEFS = "\$defs"
         const val BASE_URI = "https://helm-values.fstaudt.github.io"
         const val EXTRACTED_GLOBAL_VALUES_TITLE = "Aggregated global values for"
+        private val MISSING_NODE = MissingNode.getInstance()
         private val logger: Logger = LoggerFactory.getLogger(JsonSchemaAggregator::class.java)
     }
 
@@ -63,19 +65,20 @@ class JsonSchemaAggregator(
                 .add(jsonSchema.objectNode().put("\$ref", "#/$DEFS/local/${chart.name}/$HELM_SCHEMA_FILE"))
             jsonSchema.aggregateChartSchemaFor(chart)
         }
+        jsonSchema.removeInvalidRefs()
         return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 
     private fun ObjectNode.removeGeneratedGlobalPropertiesDescription() {
         props().global().allOf().also { allOf ->
-            allOf.removeAll { it.get("title")?.textValue()?.startsWith(GLOBAL_VALUES_TITLE) ?: false }
+            allOf.removeAll { it["title"]?.textValue()?.startsWith(GLOBAL_VALUES_TITLE) ?: false }
         }
     }
 
     private fun ObjectNode.removeGlobalValuesSchemaRefsOfLocallyStoredDependenciesFor(chart: Chart) {
         val globalRefs = chart.dependencies.filter { it.isStoredLocally() }
             .map { "../../${it.name}/${it.sanitizedVersion()}/$GLOBAL_VALUES_SCHEMA_FILE" }
-        props().global().allOf().removeAll { globalRefs.contains(it.get("\$ref")?.textValue()) }
+        props().global().allOf().removeAll { globalRefs.contains(it["\$ref"]?.textValue()) }
     }
 
     private fun ObjectNode.setExtractedDependencyReferencesFrom(
@@ -166,7 +169,7 @@ class JsonSchemaAggregator(
         if (schemaNode.isEmpty) {
             val schema = File(downloadSchemasDir, schemaUri.path).toObjectNode()
             schema.findParents("\$ref").forEach { parent ->
-                val ref = parent.get("\$ref")
+                val ref = parent["\$ref"]
                 if (ref.isInternalReference()) {
                     val refMapping = RefMapping("#", schemaPath)
                     (parent as ObjectNode).replace("\$ref", refMapping.map(ref))
@@ -197,7 +200,7 @@ class JsonSchemaAggregator(
         val schemaPath = "#/$DEFS/local/${dependency.name}/${schemaFile.name}"
         val schema = schemaFile.toObjectNode()
         schema.findParents("\$ref").forEach { parent ->
-            val ref = parent.get("\$ref")
+            val ref = parent["\$ref"]
             val refMapping = RefMapping("#", schemaPath)
             (parent as ObjectNode).replace("\$ref", refMapping.map(ref))
         }
@@ -210,7 +213,7 @@ class JsonSchemaAggregator(
         val schemaPath = "#/$DEFS/local/${chart.name}/$HELM_SCHEMA_FILE"
         val schema = chartSchema.toObjectNode()
         schema.findParents("\$ref").forEach { parent ->
-            val ref = parent.get("\$ref")
+            val ref = parent["\$ref"]
             val refMapping = RefMapping("#", schemaPath)
             (parent as ObjectNode).replace("\$ref", refMapping.map(ref))
         }
@@ -233,7 +236,7 @@ class JsonSchemaAggregator(
 
     private fun ObjectNode.updateReferencesFor(refMappings: List<RefMapping>) {
         findParents("\$ref").forEach { parent ->
-            val ref = parent.get("\$ref")
+            val ref = parent["\$ref"]
             refMappings.firstOrNull { it.matches(ref) }?.let {
                 (parent as ObjectNode).replace("\$ref", it.map(ref))
             }
@@ -260,13 +263,23 @@ class JsonSchemaAggregator(
     }
 
     private fun String.toInternalRefMapping() = RefMapping("#", "#/$this")
-}
 
-private fun ObjectNode.removeAdditionalAndUnevaluatedProperties() {
-    remove(ADDITIONAL_PROPERTIES)
-    remove(UNEVALUATED_PROPERTIES)
-    propsOrNull()?.globalOrNull()?.let {
-        it.remove(ADDITIONAL_PROPERTIES)
-        it.remove(UNEVALUATED_PROPERTIES)
+    private fun ObjectNode.removeInvalidRefs() {
+        findParents("\$ref").forEach { parent ->
+            val pointer = parent["\$ref"].textValue().removePrefix("#")
+            if (runCatching { at(pointer) }.getOrDefault(MISSING_NODE).isMissingNode) {
+                (parent as ObjectNode).put("_comment", "removed invalid \$ref ${parent["\$ref"].textValue()}")
+                parent.remove("\$ref")
+            }
+        }
+    }
+
+    private fun ObjectNode.removeAdditionalAndUnevaluatedProperties() {
+        remove(ADDITIONAL_PROPERTIES)
+        remove(UNEVALUATED_PROPERTIES)
+        propsOrNull()?.globalOrNull()?.let {
+            it.remove(ADDITIONAL_PROPERTIES)
+            it.remove(UNEVALUATED_PROPERTIES)
+        }
     }
 }
