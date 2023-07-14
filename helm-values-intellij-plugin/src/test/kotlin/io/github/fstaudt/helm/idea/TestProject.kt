@@ -16,13 +16,17 @@ import java.io.File
 const val CHART_NAME = "helm-chart"
 const val CHART_VERSION = "0.1.0"
 
-fun Project.initHelmChart(sourcesDir: File = baseDir(), customizeHelmChart: File.() -> Unit = {}): File {
+fun Project.initHelmChart(
+    sourcesDir: File = baseDir(),
+    chartName: String = CHART_NAME,
+    customizeHelmChart: File.() -> Unit = {}
+): File {
     return File(sourcesDir, HELM_CHART_FILE).apply {
         parentFile.mkdirs()
         writeText(
             """
             apiVersion: v2
-            name: $CHART_NAME
+            name: $chartName
             version: $CHART_VERSION
             description: Test helm chart
             maintainers:

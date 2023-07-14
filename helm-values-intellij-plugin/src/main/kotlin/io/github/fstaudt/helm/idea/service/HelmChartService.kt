@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.JsonSchemaAggregator
 import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
@@ -47,6 +48,9 @@ class HelmChartService {
 
     fun aggregate(project: Project, chartFile: File) {
         val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        chart.dependencies.filter { it.isStoredLocally() }.forEach {
+            aggregate(project, File(chartFile.parentFile, "${it.localPath()}/$HELM_CHART_FILE"))
+        }
         val jsonSchemasDir = File(project.baseDir(), "$JSON_SCHEMAS_DIR/${chart.name}")
         val downloadSchemaDir = download(jsonSchemasDir, chart)
         val extractSchemaDir = extract(jsonSchemasDir, File(chartFile.parentFile, "charts"), chart)
