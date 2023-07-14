@@ -1,3 +1,12 @@
+## 0.7.1 - Jul 14, 2023
+- :sparkles: (intellij) support for IntelliJ IDEA 2023.2
+- :zap: (intellij) avoid full project scanning in JSON schema provider factory
+  ([#64](https://github.com/fstaudt/helm-values/issues/64))
+- :bug: invalid $ref in aggregated JSON schemas should be removed
+  ([#103](https://github.com/fstaudt/helm-values/issues/103))
+- :bug: (intellij) refresh JSON schemas of dependent charts before current chart
+  ([#104](https://github.com/fstaudt/helm-values/issues/104))
+
 ## 0.7.0 - May 18, 2023
 
 - :sparkles: (gradle) task to validate values.yaml against aggregated JSON schema

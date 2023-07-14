@@ -2,7 +2,7 @@ package io.github.fstaudt.helm
 
 const val SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
 
-const val GENERATOR_LABEL = "helm-values 0.7.0"
+const val GENERATOR_LABEL = "helm-values 0.7.1"
 
 const val NEW_LINE = "\n\\n"
 
