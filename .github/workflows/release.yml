@@ -22,7 +22,7 @@ jobs:
       - name: "Setup gradle wrapper"
         run: chmod +x gradlew
       - name: "Setup gradle"
-        uses: gradle/gradle-build-action@v2.5.1
+        uses: gradle/gradle-build-action@v2.8.0
       - name: "Get version from tag"
         id: version
         run: echo "version=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
