@@ -25,7 +25,7 @@ abstract class BaseJsonSchemaProvider(jsonSchemasDir: File) : JsonSchemaFileProv
     }
 
     override fun isAvailable(file: VirtualFile): Boolean {
-        return "${file.parent.toNioPath()}" == "${chartMetadata.dir}"
+        return "${file.parent?.toNioPath()}" == "${chartMetadata.dir}"
     }
 
     override fun getSchemaVersion() = SCHEMA_7

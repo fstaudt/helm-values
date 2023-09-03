@@ -1,5 +1,7 @@
 package io.github.fstaudt.helm.idea.providers
 
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.jsonSchema.extension.SchemaType.userSchema
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion.SCHEMA_7
@@ -12,10 +14,22 @@ import io.github.fstaudt.helm.idea.initJsonSchemas
 import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.name
 
 class HelmValuesJsonSchemaProviderFactoryTest : BasePlatformTestCase() {
 
     private lateinit var factory: HelmValuesJsonSchemaProviderFactory
+
+    private class MockVirtualFile(
+        private val path: Path = File("values.yaml").toPath(),
+        private val parent: VirtualFile? = null,
+    ) : StubVirtualFile() {
+        override fun getName() = path.name
+        override fun getPath() = "$path"
+        override fun getParent() = parent
+        override fun toNioPath() = path
+    }
 
     private fun reset() {
         factory = HelmValuesJsonSchemaProviderFactory()
@@ -40,6 +54,17 @@ class HelmValuesJsonSchemaProviderFactoryTest : BasePlatformTestCase() {
         assertThat(provider.schemaType).isEqualTo(userSchema)
         assertThat(provider.name).isEqualTo("aggregation for chart $CHART_NAME")
         assertThat(provider.schemaFile?.path).endsWith("$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")
+        assertThat(provider.isAvailable(MockVirtualFile(parent = MockVirtualFile(project.baseDir().toPath())))).isTrue
+        assertThat(provider.isAvailable(MockVirtualFile(
+            parent = MockVirtualFile(project.baseDir().toPath()),
+            path = File("packaged-values.yaml").toPath()
+        ))).isFalse
+        assertThat(provider.isAvailable(MockVirtualFile(
+            parent = MockVirtualFile(project.baseDir().toPath()),
+            path = File("other.yaml").toPath()
+        ))).isFalse
+        assertThat(provider.isAvailable(MockVirtualFile(parent = MockVirtualFile(File(CHART_NAME).toPath())))).isFalse
+        assertThat(provider.isAvailable(MockVirtualFile(parent = null))).isFalse
     }
 
     fun `test - getProviders should return extra provider for each directory with helm chart metadata`() {
@@ -49,10 +74,24 @@ class HelmValuesJsonSchemaProviderFactoryTest : BasePlatformTestCase() {
         val providers = factory.getProviders(project)
         assertThat(providers).hasSize(2)
         val provider = providers[1]
+        val packagedValuesFile = File("packaged-values.yaml").toPath()
         assertThat(provider).isInstanceOf(ExtraJsonSchemaProvider::class.java)
         assertThat(provider.schemaVersion).isEqualTo(SCHEMA_7)
         assertThat(provider.schemaType).isEqualTo(userSchema)
         assertThat(provider.name).isEqualTo("aggregation for packaged chart $CHART_NAME")
         assertThat(provider.schemaFile?.path).endsWith("$JSON_SCHEMAS_DIR/$CHART_NAME/$EXTRA_VALUES_SCHEMA_FILE")
+        assertThat(provider.isAvailable(MockVirtualFile(parent = MockVirtualFile(File(CHART_NAME).toPath())))).isFalse
+        assertThat(provider.isAvailable(MockVirtualFile(
+            parent = MockVirtualFile(project.baseDir().toPath()),
+            path = packagedValuesFile
+        ))).isTrue
+        assertThat(provider.isAvailable(MockVirtualFile(
+            parent = MockVirtualFile(project.baseDir().toPath()),
+            path = File("other.yaml").toPath()
+        ))).isFalse
+        assertThat(provider.isAvailable(MockVirtualFile(
+            parent = null,
+            path = packagedValuesFile
+        ))).isFalse
     }
 }
