@@ -9,6 +9,8 @@ jobs:
     name: "Build"
     runs-on: ubuntu-latest
     steps:
+      - name: "Check disk space before workflow"
+        run: df -h
       - name: "Fetch Sources"
         uses: actions/checkout@v3.6.0
       - name: "Validate Gradle Wrapper"
@@ -88,3 +90,6 @@ jobs:
         run: |
           rm -rf ${GRADLE_USER_HOME:-~/.gradle}/caches/modules-*/files-*/com.jetbrains.intellij.idea
           rm -rf ${GRADLE_USER_HOME:-~/.gradle}/caches/modules-*/files-*/com.jetbrains
+      - name: "Check disk space after workflow"
+        if: ${{ always() }}
+        run: df -h
