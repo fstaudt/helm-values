@@ -12,7 +12,7 @@ jobs:
       - name: "Check disk space before workflow"
         run: df -h
       - name: "Fetch Sources"
-        uses: actions/checkout@v3.6.0
+        uses: actions/checkout@v4.1.0
       - name: "Validate Gradle Wrapper"
         uses: gradle/wrapper-validation-action@v1.1.0
       - name: "Setup Java 11"
