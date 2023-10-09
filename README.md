@@ -1,6 +1,6 @@
 # Helm values
 
-![Build](https://github.com/fstaudt/helm-values/workflows/Build/badge.svg)
+![Build](https://github.com/fstaudt/helm-values/workflows/Build/badge.svg?branch=main)
 ![Maven Central](https://img.shields.io/maven-central/v/io.github.fstaudt.helm/helm-values-shared)
 
 **IntelliJ**\
