@@ -13,7 +13,7 @@ updates:
     schedule:
       interval: "monthly"
     ignore:
-      - dependency-name: "json-unit-assertj"
+      - dependency-name: "net.javacrumbs.json-unit:json-unit-assertj"
         versions: ["3.x"]
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
