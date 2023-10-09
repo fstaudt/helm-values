@@ -15,6 +15,7 @@ updates:
     ignore:
       - dependency-name: "net.javacrumbs.json-unit:json-unit-assertj"
         versions: ["3.x"]
+      - dependency-name: "org.jetbrains.intellij"
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
