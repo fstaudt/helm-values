@@ -472,14 +472,15 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
-    fun `aggregate should disable unevaluated properties`() {
+    fun `aggregate should disable additional and unevaluated properties`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
             ChartDependency(NO_SCHEMA, EMBEDDED_VERSION, THIRDPARTY),
         ))
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).and({
-            it.node("unevaluatedProperties").isBoolean.isFalse
+            it.node(ADDITIONAL_PROPERTIES).isBoolean.isFalse
+            it.node(UNEVALUATED_PROPERTIES).isBoolean.isFalse
         })
     }
 

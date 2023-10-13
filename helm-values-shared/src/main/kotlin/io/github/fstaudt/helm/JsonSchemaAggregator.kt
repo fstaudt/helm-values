@@ -50,6 +50,7 @@ class JsonSchemaAggregator(
         jsonSchema.put("\$id", "$BASE_URI/${chart.name}/${chart.version}/${AGGREGATED_SCHEMA_FILE}")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
         jsonSchema.put(UNEVALUATED_PROPERTIES, false)
+        jsonSchema.put(ADDITIONAL_PROPERTIES, false)
         jsonSchema.updateReferencesFor(chart.dependencies.toDownloadedRefMappings())
         jsonSchema.aggregateDownloadedSchemasFor(chart)
         jsonSchema.updateReferencesFor(chart.dependencies.toLocallyStoredRefMappings())
