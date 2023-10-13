@@ -88,14 +88,6 @@ Optional file `aggregated-values.schema.patch.json` can be created in the base f
 Chart.yaml)
 to [patch aggregated JSON schema](https://jsonpatch.com/).
 
-Task also generates JSON schema `extra-values.schema.json` with a reference to `aggregated-values.schema.json`.\
-This other schema is intended to provide auto-completion, documentation and validation in your IDE on extra values
-applied on a packaged chart.
-
-Optional file `extra-values.schema.patch.json` can be created in the base folder of the chart (same folder as
-Chart.yaml)
-to [patch extra values JSON schema](https://jsonpatch.com/).
-
 For more information on patch files, check dedicated section
 on [patch for generated JSON schemas](../README.md#patch-for-generated-json-schemas).
 

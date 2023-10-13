@@ -400,40 +400,5 @@ internal class JsonSchemaGeneratorTest {
         })
     }
 
-    @Test
-    fun `generateExtraValuesJsonSchema should generate JSON schema with references to aggregated schema`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
-        val json = generator.generateExtraValuesJsonSchema(chart, null)
-        assertThatJson(json).and({
-            it.node("\$schema").isEqualTo(SCHEMA_VERSION)
-            it.node("\$id").isEqualTo("$BASE_CHART_URL/$EXTRA_VALUES_SCHEMA_FILE")
-            it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
-            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
-            it.node("title").isEqualTo("Extra configuration for packaged chart $APPS/$CHART_NAME:$CHART_VERSION")
-            it.node("description").isEqualTo("\\n\\\\n")
-            it.node("properties.global.\$ref").isEqualTo("$AGGREGATED_SCHEMA_FILE#/properties/global")
-            it.node("properties.$CHART_NAME.\$ref").isEqualTo(AGGREGATED_SCHEMA_FILE)
-        })
-    }
-
-    @Test
-    fun `generateExtraValuesJsonSchema should disable additional properties`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
-        val json = generator.generateExtraValuesJsonSchema(chart, null)
-        assertThatJson(json).node("additionalProperties").isBoolean.isFalse
-    }
-
-    @Test
-    fun `generateExtraValuesJsonSchema should update generated JSON schema with patch when it is provided`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
-        val jsonPatch = jsonPatch("""
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" }
-            ]
-            """)
-        val json = generator.generateExtraValuesJsonSchema(chart, jsonPatch)
-        assertThatJson(json).node("title").isEqualTo("overridden value")
-    }
-
     private fun jsonPatch(content: String) = JsonPatch.fromJson(jsonMapper.readTree(content))
 }

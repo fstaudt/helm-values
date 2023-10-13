@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
-import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
@@ -38,14 +37,6 @@ class JsonSchemaGenerator(
             it.enable(SerializationFeature.INDENT_OUTPUT)
         }
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
-    }
-
-    fun generateExtraValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
-        val jsonSchema = chart.toExtraValuesJsonSchema()
-        jsonSchema.props().global().put("\$ref", "$AGGREGATED_SCHEMA_FILE#/properties/global")
-        jsonSchema.props().objectNode(chart.name).put("\$ref", AGGREGATED_SCHEMA_FILE)
-        jsonSchema.put(ADDITIONAL_PROPERTIES, false)
-        return (jsonPatch?.apply(jsonSchema) as? ObjectNode) ?: jsonSchema
     }
 
     fun generateValuesJsonSchema(chart: Chart, jsonPatch: JsonPatch?): ObjectNode {
@@ -122,16 +113,6 @@ class JsonSchemaGenerator(
             .put("x-generated-by", GENERATOR_LABEL)
             .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
             .put("title", "Configuration for chart ${fullName()}")
-            .put("description", NEW_LINE)
-    }
-
-    private fun Chart.toExtraValuesJsonSchema(): ObjectNode {
-        return ObjectNode(nodeFactory)
-            .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "${publicationRepository.baseUri}/$name/$version/$EXTRA_VALUES_SCHEMA_FILE")
-            .put("x-generated-by", GENERATOR_LABEL)
-            .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
-            .put("title", "Extra configuration for packaged chart ${fullName()}")
             .put("description", NEW_LINE)
     }
 

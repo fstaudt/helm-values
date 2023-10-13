@@ -6,7 +6,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
 import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.CHART_METADATA_FILE
@@ -49,6 +48,5 @@ fun Project.initJsonSchemas(sourcesDir: File = baseDir()): File {
         it.mkdirs()
         yamlMapper.writeValue(File(it, CHART_METADATA_FILE), HelmChartMetadata(sourcesDir))
         File(it, AGGREGATED_SCHEMA_FILE).writeText("{}")
-        File(it, EXTRA_VALUES_SCHEMA_FILE).writeText("{}")
     }
 }

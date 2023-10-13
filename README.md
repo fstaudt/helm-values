@@ -15,8 +15,8 @@
 The project provides several plugins to generate [JSON schemas](https://json-schema.org/) for a Helm chart.\
 These schemas can then be used to document, validate and auto-complete Helm values in your IDE:
 
-- [Gradle plugin](helm-values-gradle-plugin/README.md)
 - [IntelliJ plugin](helm-values-intellij-plugin/README.md)
+- [Gradle plugin](helm-values-gradle-plugin/README.md)
 
 Since Helm v3, Helm charts can package a [JSON schema](https://helm.sh/docs/topics/charts/#schema-files)
 named `values.schema.json` to validate values when Helm chart is installed.\
@@ -28,9 +28,7 @@ The aggregated JSON schema can then be used to provide auto-completion and docum
 
 Finally, the gradle plugin can also be used to generate and publish JSON schemas to external JSON schema repositories.
 
-All business logic of the plugins is maintained in a [java shared library](helm-values-shared/README.md) published on
-maven
-Central.\
+All business logic of the plugins is maintained in a [java shared library](helm-values-shared/README.md) published on maven Central repository.\
 This java library can be used to provide JSON schema generation for other IDE or build tools (e.g. Maven plugin).
 
 *The project only supports Helm3: Helm dependencies are only retrieved in `Chart.yaml`.*\
@@ -67,18 +65,9 @@ A fallback schema is generated if JSON schema can't be downloaded from the exter
 network failure ...).
 The description of the fallback schema provides more information on the download issue.
 
-#### extra-values-schema.json
-
-Schema `extra-values.schema.json` is generated
-by [Gradle task aggregateJsonSchema](helm-values-gradle-plugin/README.md#aggregatejsonschema)
-or [aggregation actions in IntelliJ plugin](helm-values-intellij-plugin/README.md#refresh-jon-schemas-for-current-chart)
-.
-
-It is intended to provide auto-completion, documentation and validation in your IDE on extra values applied on a
-packaged chart.
-
+It is also intended to provide auto-completion, documentation and validation in your IDE on extra values applied on a
+packaged chart.\
 e.g.:
-
 ```shell
 helm install my-chart-1.2.3.tgz -f extra-values.yaml
 ```
@@ -120,9 +109,6 @@ Patch is enabled by creation of a file in the base folder of the chart (same fol
   Since [#12 (0.4.0)](https://github.com/fstaudt/helm-values/issues/12),
   this patch file also impacts `aggregated-values.schema.json` that is based on `values.schema.json`.
 - `aggregated-values.schema.patch.json`: additional patch for `aggregated-values.schema.json`
-- `extra-values.schema.patch.json`: patch `extra-values.schema.json` generated
-  by [Gradle task aggregateJsonSchema](helm-values-gradle-plugin/README.md#aggregatejsonschema)
-  or [aggregation actions in IntelliJ plugin](helm-values-intellij-plugin/README.md#refresh-jon-schemas-for-current-chart)
 
 ## JSON schema validation
 

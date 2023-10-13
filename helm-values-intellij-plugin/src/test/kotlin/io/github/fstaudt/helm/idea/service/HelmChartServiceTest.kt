@@ -6,14 +6,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.CHART_NAME
@@ -61,7 +59,6 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
         File(project.baseDir(), PATCH_AGGREGATED_SCHEMA_FILE).delete()
         File(project.baseDir(), PATCH_VALUES_SCHEMA_FILE).delete()
-        File(project.baseDir(), PATCH_EXTRA_VALUES_SCHEMA_FILE).delete()
     }
 
     fun `test - aggregate should download JSON schemas from external repositories`() {
@@ -321,30 +318,6 @@ class HelmChartServiceTest : BasePlatformTestCase() {
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
                 it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
             })
-    }
-
-    fun `test - aggregate should generate extra values JSON schema`() {
-        reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
-        project.initHelmChart()
-        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
-        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$EXTRA_VALUES_SCHEMA_FILE")).isFile
-            .hasContent().node("title").isEqualTo("Extra configuration for packaged chart $CHART_NAME:$CHART_VERSION")
-    }
-
-    fun `test - aggregate should update extra values JSON schema with extra values schema patch`() {
-        reset()
-        project.initHelmChart()
-        File(project.baseDir(), PATCH_EXTRA_VALUES_SCHEMA_FILE).writeText(
-            """
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" }
-            ]
-            """.trimIndent()
-        )
-        service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
-        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$EXTRA_VALUES_SCHEMA_FILE")).isFile
-            .hasContent().node("title").isEqualTo("overridden value")
     }
 
     fun `test - clear should delete JSON schemas directory for current chart`() {

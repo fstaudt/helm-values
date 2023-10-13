@@ -10,8 +10,6 @@ class HelmValuesJsonSchemaProviderFactory : JsonSchemaProviderFactory {
         if (project.isDisposed) {
             return emptyList()
         }
-        return project.jsonSchemasDirs().flatMap {
-            listOf(AggregatedJsonSchemaProvider(it), ExtraJsonSchemaProvider(it))
-        }
+        return project.jsonSchemasDirs().map { AggregatedJsonSchemaProvider(it) }
     }
 }

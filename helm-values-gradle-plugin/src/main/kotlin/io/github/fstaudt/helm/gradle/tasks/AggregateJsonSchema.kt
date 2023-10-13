@@ -7,11 +7,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaAggregator
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
-import io.github.fstaudt.helm.JsonSchemaGenerator
 import io.github.fstaudt.helm.gradle.GradleSchemaLocator
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
@@ -54,11 +52,6 @@ open class AggregateJsonSchema : DefaultTask() {
     @PathSensitive(RELATIVE)
     var patchValuesFile: File? = null
 
-    @InputFile
-    @Optional
-    @PathSensitive(RELATIVE)
-    var patchExtraValuesFile: File? = null
-
     @InputDirectory
     @PathSensitive(RELATIVE)
     val downloadSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS_DIR")
@@ -69,9 +62,6 @@ open class AggregateJsonSchema : DefaultTask() {
 
     @OutputFile
     val aggregatedSchemaFile: File = File(project.buildDir, "$HELM_VALUES/$AGGREGATED_SCHEMA_FILE")
-
-    @OutputFile
-    val extraValuesSchemaFile: File = File(project.buildDir, "$HELM_VALUES/$EXTRA_VALUES_SCHEMA_FILE")
 
     @Internal
     protected val yamlMapper = ObjectMapper(YAMLFactory()).also {
@@ -98,11 +88,6 @@ open class AggregateJsonSchema : DefaultTask() {
         val valuesJsonPatch = patchValuesFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
         aggregator.aggregate(chart, valuesJsonPatch, aggregatedJsonPatch).also {
             jsonMapper.writeValue(aggregatedSchemaFile, it)
-        }
-        val generator = JsonSchemaGenerator(extension.repositoryMappings, null)
-        val extraValuesJsonPatch = patchExtraValuesFile?.let { JsonPatch.fromJson(jsonMapper.readTree(it)) }
-        generator.generateExtraValuesJsonSchema(chart, extraValuesJsonPatch).also {
-            jsonMapper.writeValue(extraValuesSchemaFile, it)
         }
     }
 }

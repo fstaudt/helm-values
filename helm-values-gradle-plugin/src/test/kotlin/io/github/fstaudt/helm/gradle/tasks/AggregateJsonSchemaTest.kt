@@ -1,13 +1,11 @@
 package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.PATCH_EXTRA_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
@@ -40,7 +38,6 @@ import java.io.File
 class AggregateJsonSchemaTest {
     private lateinit var testProject: TestProject
     private lateinit var aggregatedSchemaFile: File
-    private lateinit var extraValuesSchemaFile: File
 
     companion object {
         private const val DEFS = "#/\$defs"
@@ -59,7 +56,6 @@ class AggregateJsonSchemaTest {
     fun `init test project`() {
         testProject = testProject()
         aggregatedSchemaFile = File(testProject.buildDir, "$HELM_VALUES/$AGGREGATED_SCHEMA_FILE")
-        extraValuesSchemaFile = File(testProject.buildDir, "$HELM_VALUES/$EXTRA_VALUES_SCHEMA_FILE")
         testProject.initBuildFile {
             appendText(
                 """
@@ -539,87 +535,10 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should generate extra values JSON schema`() {
-        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(extraValuesSchemaFile).isFile.hasContent().and({
-                it.node("title").isEqualTo("Extra configuration for packaged chart $CHART_NAME:$CHART_VERSION")
-            })
-        }
-    }
-
-    @Test
-    fun `aggregateJsonSchema should update extra values JSON schema with extra values schema patch`() {
-        File(testProject, PATCH_EXTRA_VALUES_SCHEMA_FILE).writeText(
-            """
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" }
-            ]
-            """.trimIndent()
-        )
-        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(extraValuesSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
-        }
-    }
-
-    @Test
-    fun `aggregateJsonSchema should update extra values JSON schema with extra values schema patch in sourcesDir`() {
-        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
-        testProject.clearHelmChart()
-        testProject.initHelmChart(sourcesDir)
-        testProject.initBuildFile {
-            appendText(
-                """
-                helmValues {
-                  sourcesDir = "$CHART_NAME"
-                }
-                """.trimIndent()
-            )
-        }
-        File(sourcesDir, PATCH_EXTRA_VALUES_SCHEMA_FILE).writeText(
-            """
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" }
-            ]
-            """.trimIndent()
-        )
-        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(extraValuesSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
-        }
-    }
-
-    @Test
-    fun `aggregateJsonSchema should update extra values JSON schema with provided extra values schema patch`() {
-        testProject.initBuildFile {
-            appendText(
-                """
-                tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
-                  patchExtraValuesFile = File(project.projectDir, "custom.schema.patch.json")
-                }
-                """.trimIndent()
-            )
-        }
-        File(testProject, "custom.schema.patch.json").writeText(
-            """
-            [
-              { "op": "replace", "path": "/title", "value": "overridden value" }
-            ]
-            """.trimIndent()
-        )
-        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
-            assertThatJsonFile(extraValuesSchemaFile).isFile.hasContent().node("title").isEqualTo("overridden value")
-        }
-    }
-
-    @Test
     fun `aggregateJsonSchema should retrieve JSON schemas from cache on second run`() {
         testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isIn(SUCCESS, FROM_CACHE)
         }
-        extraValuesSchemaFile.delete()
         aggregatedSchemaFile.delete()
         testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(FROM_CACHE)
