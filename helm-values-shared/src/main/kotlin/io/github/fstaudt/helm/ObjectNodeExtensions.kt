@@ -53,5 +53,14 @@ class ObjectNodeExtensions {
         internal fun File.toObjectNode(): ObjectNode {
             return runCatching { jsonMapper.readTree(this) as ObjectNode }.getOrDefault(nodeFactory.objectNode())
         }
+
+        internal fun ObjectNode.removeAdditionalAndUnevaluatedProperties() {
+            remove(Keywords.ADDITIONAL_PROPERTIES)
+            remove(Keywords.UNEVALUATED_PROPERTIES)
+            propsOrNull()?.globalOrNull()?.let {
+                it.remove(Keywords.ADDITIONAL_PROPERTIES)
+                it.remove(Keywords.UNEVALUATED_PROPERTIES)
+            }
+        }
     }
 }
