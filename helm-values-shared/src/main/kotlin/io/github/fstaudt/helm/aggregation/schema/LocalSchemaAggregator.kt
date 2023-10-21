@@ -10,7 +10,7 @@ import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.removeAdditionalAnd
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
 import io.github.fstaudt.helm.SchemaLocator
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.JsonSchemaAggregator.Companion.DEFS
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.RefMapping

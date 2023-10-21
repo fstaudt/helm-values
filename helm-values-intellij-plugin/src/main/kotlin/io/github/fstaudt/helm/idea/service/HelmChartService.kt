@@ -10,11 +10,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHART_FILE
-import io.github.fstaudt.helm.JsonSchemaAggregator
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator
 import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
-import io.github.fstaudt.helm.JsonSchemaExtractor
-import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.HelmDependencyExtractor
+import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.baseDir
@@ -76,8 +76,8 @@ class HelmChartService {
         JsonSchemaDownloader(mappings(), it).download(chart)
     }
 
-    private fun extract(jsonSchemasDir: File, chartsDir: File, chart: Chart) = File(jsonSchemasDir, EXTRACT_DIR).also {
-        JsonSchemaExtractor(chartsDir, mappings(), it).extract(chart)
+    private fun extract(jsonSchemasDir: File, chartsDir: File, chart: Chart) = File(jsonSchemasDir, EXTRACTS_DIR).also {
+        HelmDependencyExtractor(chartsDir, it).extract(chart)
     }
 
     private fun jsonPatch(chartFile: File, patchFile: String): JsonPatch? {

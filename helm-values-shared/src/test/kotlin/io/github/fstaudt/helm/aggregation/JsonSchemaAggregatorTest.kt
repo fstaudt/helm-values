@@ -1,20 +1,36 @@
-package io.github.fstaudt.helm
+package io.github.fstaudt.helm.aggregation
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonpatch.JsonPatch
-import io.github.fstaudt.helm.JsonSchemaAggregator.Companion.BASE_URI
+import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.CHART_NAME
+import io.github.fstaudt.helm.CHART_VERSION
+import io.github.fstaudt.helm.GENERATOR_LABEL
+import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
 import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
 import io.github.fstaudt.helm.Keywords.Companion.UNEVALUATED_PROPERTIES
+import io.github.fstaudt.helm.SCHEMA_VERSION
+import io.github.fstaudt.helm.TestProject
+import io.github.fstaudt.helm.TestSchemaLocator
+import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator.Companion.DOWNLOADS
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator.Companion.EXTRACTED_GLOBAL_VALUES_TITLE
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator.Companion.EXTRACTS
 import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator.Companion.LOCAL
+import io.github.fstaudt.helm.downloadSchemasDir
+import io.github.fstaudt.helm.extractsDir
+import io.github.fstaudt.helm.initDownloadedSchemas
+import io.github.fstaudt.helm.initExtractedHelmDependency
+import io.github.fstaudt.helm.initLocalSchema
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import io.github.fstaudt.helm.test.assertions.escaped
+import io.github.fstaudt.helm.testProject
 import net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -59,7 +75,7 @@ internal class JsonSchemaAggregatorTest {
             TestSchemaLocator(testProject),
             testProject,
             testProject.downloadSchemasDir,
-            testProject.extractSchemasDir)
+            testProject.extractsDir)
     }
 
     @AfterEach
@@ -156,6 +172,7 @@ internal class JsonSchemaAggregatorTest {
             ChartDependency(NO_SCHEMA, EMBEDDED_VERSION, THIRDPARTY),
         ))
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH")
+        testProject.initExtractedHelmDependency(NO_SCHEMA, schema = null)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and({
             it.node("global.allOf").isArray.hasSize(3)
@@ -165,7 +182,7 @@ internal class JsonSchemaAggregatorTest {
             it.node("global.allOf[2].title").isString.startsWith(GLOBAL_VALUES_TITLE)
             it.node("$EXTERNAL_SCHEMA.\$ref")
                 .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
-            it.isObject.doesNotContainKey(NO_SCHEMA)
+            it.node(NO_SCHEMA).isObject.isEmpty()
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
@@ -189,7 +206,7 @@ internal class JsonSchemaAggregatorTest {
             TestSchemaLocator(testProject),
             testProject,
             testProject.downloadSchemasDir,
-            testProject.extractSchemasDir)
+            testProject.extractsDir)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and({
             it.node("global.allOf").isArray.hasSize(3)
@@ -425,11 +442,10 @@ internal class JsonSchemaAggregatorTest {
     @Test
     fun `aggregate should skip dependencies without version`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EXTERNAL_SCHEMA, null, APPS, "no-version")
+            ChartDependency(EMBEDDED_SCHEMA, null, APPS, "no-version")
         ))
-        testProject.initExtractedSchemas(EMBEDDED_SCHEMA)
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("properties").isObject.doesNotContainKeys(EXTERNAL_SCHEMA, "no-version")
+        assertThatJson(json).node("properties").isObject.doesNotContainKeys(EMBEDDED_SCHEMA, "no-version")
     }
 
     @Test
@@ -545,7 +561,7 @@ internal class JsonSchemaAggregatorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
         ))
-        testProject.initExtractedSchemas(EMBEDDED_SCHEMA)
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and({
             val extractedSchemaFile = "#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE"
@@ -562,7 +578,14 @@ internal class JsonSchemaAggregatorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SUB_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
         ))
-        testProject.initExtractedSchemas("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA")
+        testProject.initExtractedHelmDependency(EMBEDDED_SUB_SCHEMA,
+            chartDependencies = """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: $CHART_VERSION
+            """.trimIndent(),
+            schema = null)
+        testProject.initExtractedHelmDependency("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA")
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and(
             {
@@ -586,12 +609,46 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
+    fun `aggregate should aggregate extracted JSON schemas from sub-chart when sub-chart dependency was stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SUB_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_SUB_SCHEMA,
+            chartDependencies = """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: $CHART_VERSION
+                  repository: "file://../$EMBEDDED_SCHEMA"
+            """.trimIndent(),
+            schema = null)
+        testProject.initExtractedHelmDependency("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA")
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and(
+            {
+                val extractedSubSchemaFile =
+                    "#/$DEFS/$EXTRACTS/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE"
+                it.node("global.allOf").isArray.hasSize(2)
+                it.node("global.allOf[0].\$ref").isEqualTo("$extractedSubSchemaFile/properties/global")
+                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA.\$ref").isEqualTo(extractedSubSchemaFile)
+                it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA").isObject.containsOnlyKeys("\$ref")
+            }
+        )
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.\$id")
+            .isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+    }
+
+    @Test
     fun `aggregate should aggregate extracted JSON schemas from chart & sub-chart`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SUB_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
         ))
-        testProject.initExtractedSchemas(EMBEDDED_SUB_SCHEMA)
-        testProject.initExtractedSchemas("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA")
+        testProject.initExtractedHelmDependency(EMBEDDED_SUB_SCHEMA,
+            chartDependencies = """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: $CHART_VERSION
+            """.trimIndent())
+        testProject.initExtractedHelmDependency("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA")
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and(
             {
@@ -628,8 +685,13 @@ internal class JsonSchemaAggregatorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SUB_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
         ))
-        testProject.initExtractedSchemas(EMBEDDED_SUB_SCHEMA,
-            schemaContent = """
+        testProject.initExtractedHelmDependency(EMBEDDED_SUB_SCHEMA,
+            chartDependencies = """
+                dependencies:
+                - name: $EMBEDDED_SCHEMA
+                  version: $CHART_VERSION
+            """.trimIndent(),
+            schema = """
                 {
                   "${'$'}id": "$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE",
                   "$ADDITIONAL_PROPERTIES": false,
@@ -642,8 +704,8 @@ internal class JsonSchemaAggregatorTest {
                   }
                 }
             """.trimIndent())
-        testProject.initExtractedSchemas("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA",
-            schemaContent = """
+        testProject.initExtractedHelmDependency("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA",
+            schema = """
                 {
                   "${'$'}id": "$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
                   "$ADDITIONAL_PROPERTIES": false,
@@ -676,16 +738,63 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
+    fun `aggregate should aggregate fallback schema when dependency archive is missing or invalid`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA,
+            chartDependencies = null,
+            schema = """
+                {
+                  "${'$'}id": "fallback"
+                }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties.$EMBEDDED_SCHEMA.\$ref")
+            .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.\$id")
+            .isEqualTo("fallback")
+    }
+
+    @Test
     fun `aggregate should use alias to aggregate extracted JSON schemas`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY, "alias")
         ))
-        testProject.initExtractedSchemas("alias")
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.alias.\$ref")
             .isEqualTo("#/$DEFS/$EXTRACTS/alias/$HELM_SCHEMA_FILE")
         assertThatJson(json).node("$DEFS.$EXTRACTS.alias.${HELM_SCHEMA_FILE.escaped()}.\$id")
-            .isEqualTo("alias/$HELM_SCHEMA_FILE")
+            .isEqualTo("$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+        assertThatJson(json).node("properties.global.allOf[0].\$ref")
+            .isEqualTo("#/$DEFS/$EXTRACTS/alias/$HELM_SCHEMA_FILE/properties/global")
+    }
+
+    @Test
+    fun `aggregate should use alias to aggregate extracted JSON schemas from sub-charts`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SUB_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_SUB_SCHEMA,
+            chartDependencies = """
+            dependencies:
+            - name: $EMBEDDED_SCHEMA
+              version: $CHART_VERSION
+              alias: alias
+            """.trimIndent())
+        testProject.initExtractedHelmDependency("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA")
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties.$EMBEDDED_SUB_SCHEMA.properties.alias.\$ref")
+            .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SUB_SCHEMA/alias/$HELM_SCHEMA_FILE")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SUB_SCHEMA.alias.${HELM_SCHEMA_FILE.escaped()}.\$id")
+            .isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+        assertThatJson(json).node("properties.global.allOf[0].\$ref")
+            .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE/properties/global")
+        assertThatJson(json).node("properties.global.allOf[1].\$ref")
+            .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SUB_SCHEMA/alias/$HELM_SCHEMA_FILE/properties/global")
+        assertThatJson(json).node("properties.$EMBEDDED_SUB_SCHEMA.properties.global.allOf[0].\$ref")
+            .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SUB_SCHEMA/alias/$HELM_SCHEMA_FILE/properties/global")
     }
 
     @Test
@@ -693,7 +802,7 @@ internal class JsonSchemaAggregatorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, null)
         ))
-        testProject.initExtractedSchemas(EMBEDDED_SCHEMA)
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.$EMBEDDED_SCHEMA.\$ref")
             .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
@@ -706,7 +815,8 @@ internal class JsonSchemaAggregatorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
         ))
-        testProject.initExtractedSchemas(EMBEDDED_SCHEMA, """
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA,
+            schema = """
             {
               "${'$'}id": "$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
               "properties": {
@@ -718,7 +828,7 @@ internal class JsonSchemaAggregatorTest {
               },
               "internal": {}
             }
-        """.trimIndent())
+            """.trimIndent())
         val json = aggregator.aggregate(chart, null, null)
         val extractedSchemaFile = "#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE"
         assertThatJson(json).node("properties").and({
@@ -825,6 +935,7 @@ internal class JsonSchemaAggregatorTest {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA")
         ))
+        testProject.initExtractedHelmDependency(EXTERNAL_SCHEMA)
         testProject.initLocalSchema("sub/$EXTERNAL_SCHEMA", AGGREGATED_SCHEMA_FILE)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties").and({

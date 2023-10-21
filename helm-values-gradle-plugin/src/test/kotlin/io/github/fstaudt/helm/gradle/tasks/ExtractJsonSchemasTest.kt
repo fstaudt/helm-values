@@ -1,6 +1,6 @@
 package io.github.fstaudt.helm.gradle.tasks
 
-import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.TestProject
@@ -38,7 +38,7 @@ class ExtractJsonSchemasTest {
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
-        extractSchemasDir = File(testProject.buildDir, "$HELM_VALUES/$EXTRACT_DIR")
+        extractSchemasDir = File(testProject.buildDir, "$HELM_VALUES/$EXTRACTS_DIR")
         testProject.initHelmResources()
         testProject.initBuildFile()
     }
@@ -64,35 +64,6 @@ class ExtractJsonSchemasTest {
             assertThat(it.task(":$EXTRACT_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/values.schema.json").isFile
                 .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/values.schema.json")
-        }
-    }
-
-    @Test
-    fun `extractJsonSchemas should not extract JSON schemas when dependency repository is in repository mappings`() {
-        testProject.initHelmChart {
-            appendText(
-                """
-                dependencies:
-                - name: $EMBEDDED_SCHEMA
-                  version: 0.1.0
-                  repository: "$CHARTS"
-                """.trimIndent()
-            )
-        }
-        testProject.initBuildFile {
-            appendText(
-                """
-                helmValues {
-                  repositoryMappings = mapOf(
-                    "$CHARTS" to JsonSchemaRepository("$CHARTS_URL")
-                  )
-                }
-                """.trimIndent()
-            )
-        }
-        testProject.runTask(EXTRACT_JSON_SCHEMAS).also {
-            assertThat(it.task(":$EXTRACT_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(extractSchemasDir).isEmptyDirectory
         }
     }
 

@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PRO
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import io.github.fstaudt.helm.JsonSchemaExtractor
-import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.HelmDependencyExtractor
+import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.model.Chart
@@ -42,7 +42,7 @@ open class ExtractJsonSchemas : DefaultTask() {
     var chartFile: File? = null
 
     @OutputDirectory
-    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACT_DIR")
+    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACTS_DIR")
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
         it.registerModule(KotlinModule.Builder().build())
@@ -52,7 +52,7 @@ open class ExtractJsonSchemas : DefaultTask() {
     @TaskAction
     fun extract() {
         val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
-        val extractor = JsonSchemaExtractor(chartsDir, extension.repositoryMappings, extractSchemasDir)
+        val extractor = HelmDependencyExtractor(chartsDir, extractSchemasDir)
         extractor.extract(chart)
     }
 }

@@ -7,9 +7,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.JsonSchemaAggregator
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
-import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.gradle.GradleSchemaLocator
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
@@ -58,7 +58,7 @@ open class AggregateJsonSchema : DefaultTask() {
 
     @InputDirectory
     @PathSensitive(RELATIVE)
-    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACT_DIR")
+    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACTS_DIR")
 
     @OutputFile
     val aggregatedSchemaFile: File = File(project.buildDir, "$HELM_VALUES/$AGGREGATED_SCHEMA_FILE")

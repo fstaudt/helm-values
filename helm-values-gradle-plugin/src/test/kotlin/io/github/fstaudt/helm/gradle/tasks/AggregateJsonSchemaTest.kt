@@ -2,12 +2,13 @@ package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
-import io.github.fstaudt.helm.JsonSchemaAggregator.Companion.BASE_URI
-import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
-import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator.Companion.DOWNLOADS
+import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator.Companion.EXTRACTS
+import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator.Companion.LOCAL
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.CHART_VERSION
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
@@ -124,8 +125,8 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("allOf[0].\$ref").isEqualTo("$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE")
-            it.node("\$defs.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}.\$id")
+            it.node("allOf[0].\$ref").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+            it.node("\$defs.local.${HELM_SCHEMA_FILE.escaped()}.\$id")
                 .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
@@ -158,8 +159,8 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("allOf[0].\$ref").isEqualTo("$DEFS/local/$CHART_NAME/$HELM_SCHEMA_FILE")
-            it.node("\$defs.local.$CHART_NAME.${HELM_SCHEMA_FILE.escaped()}.\$id")
+            it.node("allOf[0].\$ref").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+            it.node("\$defs.local.${HELM_SCHEMA_FILE.escaped()}.\$id")
                 .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
@@ -184,8 +185,8 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DEFS/$DOWNLOADS_DIR/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
-            it.isObject.doesNotContainKey(NO_SCHEMA)
+            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
+            it.node(NO_SCHEMA).isObject.isEmpty()
         })
     }
 
@@ -205,7 +206,7 @@ class AggregateJsonSchemaTest {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-                it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$DEFS/$EXTRACT_DIR/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
             })
         }
     }

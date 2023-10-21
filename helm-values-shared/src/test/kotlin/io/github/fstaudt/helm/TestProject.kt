@@ -1,7 +1,7 @@
 package io.github.fstaudt.helm
 
+import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
-import io.github.fstaudt.helm.JsonSchemaExtractor.Companion.EXTRACT_DIR
 import java.io.File
 
 const val CHART_NAME = "helm-chart"
@@ -12,7 +12,7 @@ typealias TestProject = File
 val TestProject.buildDir get() = File(this, "build")
 
 val TestProject.downloadSchemasDir get() = File(buildDir, DOWNLOADS_DIR)
-val TestProject.extractSchemasDir get() = File(buildDir, EXTRACT_DIR)
+val TestProject.extractsDir get() = File(buildDir, EXTRACTS_DIR)
 val TestProject.chartsDir get() = File(this, HELM_CHARTS_DIR)
 
 fun testProject(parentFolder: File = File("build/tmp")): TestProject {
@@ -39,19 +39,33 @@ fun TestProject.initLocalSchema(
     File(this, "$path/$schemaFile").writeText(schemaContent)
 }
 
-fun TestProject.initExtractedSchemas(
+fun TestProject.initExtractedHelmDependency(
     dependencyPath: String,
-    schemaContent: String = """
-        {
-          "${'$'}id": "$dependencyPath/$HELM_SCHEMA_FILE",
-          "properties": {
-            "global": {}
-          }
-        }
+    chartDependencies: String? = "",
+    values: String? = "",
+    schema: String? = """
+    {
+      "${'$'}id": "$dependencyPath/$HELM_SCHEMA_FILE",
+      "properties": {
+        "global": {}
+      }
+    }
     """.trimIndent()
 ) {
-    File(extractSchemasDir, dependencyPath).mkdirs()
-    File(extractSchemasDir, "$dependencyPath/$HELM_SCHEMA_FILE").writeText(schemaContent)
+    File(extractsDir, dependencyPath).mkdirs()
+    chartDependencies?.let {
+        File(extractsDir, "$dependencyPath/$HELM_CHART_FILE").writeText("""
+        apiVersion: v2
+        type: application
+        version: $CHART_VERSION
+        description: $dependencyPath
+        name: ${dependencyPath.substringAfterLast("/")}
+        
+        """.trimIndent())
+        File(extractsDir, "$dependencyPath/$HELM_CHART_FILE").appendText(it)
+    }
+    values?.let { File(extractsDir, "$dependencyPath/$HELM_VALUES_FILE").writeText(it) }
+    schema?.let { File(extractsDir, "$dependencyPath/$HELM_SCHEMA_FILE").writeText(it) }
 }
 
 fun TestProject.initDownloadedSchemas(

@@ -1,16 +1,20 @@
-package io.github.fstaudt.helm
+package io.github.fstaudt.helm.aggregation
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.MissingNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaGenerator
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
 import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
 import io.github.fstaudt.helm.Keywords.Companion.UNEVALUATED_PROPERTIES
+import io.github.fstaudt.helm.NEW_LINE
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
+import io.github.fstaudt.helm.SchemaLocator
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator
 import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator
@@ -35,7 +39,7 @@ class JsonSchemaAggregator(
 
     private val generator = JsonSchemaGenerator(repositoryMappings, null)
     private val downloadedSchemaAggregator = DownloadedSchemaAggregator(repositoryMappings, downloadedSchemasDir)
-    private val extractedSchemaAggregator = ExtractedSchemaAggregator(extractedSchemasDir)
+    private val extractedSchemaAggregator = ExtractedSchemaAggregator(repositoryMappings, extractedSchemasDir)
     private val localSchemaAggregator = LocalSchemaAggregator(chartDir, schemaLocator)
 
     fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedJsonPatch: JsonPatch?): JsonNode {
@@ -43,7 +47,7 @@ class JsonSchemaAggregator(
         jsonSchema.put("\$id", "$BASE_URI/${chart.name}/${chart.version}/$AGGREGATED_SCHEMA_FILE")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
         downloadedSchemaAggregator.aggregateFor(chart, jsonSchema)
-        extractedSchemaAggregator.aggregateFor(jsonSchema)
+        extractedSchemaAggregator.aggregateFor(chart, jsonSchema)
         localSchemaAggregator.aggregateFor(chart, jsonSchema)
         jsonSchema.addGlobalPropertiesDescriptionFor(chart)
         jsonSchema.removeInvalidRefs()

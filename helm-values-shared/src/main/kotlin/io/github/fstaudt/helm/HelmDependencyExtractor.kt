@@ -8,7 +8,6 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
-import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
@@ -20,32 +19,27 @@ import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.SECONDS
 
 @Suppress("NestedLambdaShadowedImplicitParameter")
-class JsonSchemaExtractor(
+class HelmDependencyExtractor(
     private val chartsDir: File?,
-    private val repositoryMappings: Map<String, JsonSchemaRepository>,
-    private val extractSchemasDir: File,
+    private val extractsDir: File,
 ) {
     companion object {
-        const val EXTRACT_DIR = "extract"
+        const val EXTRACTS_DIR = "extract"
         private val jsonMapper = ObjectMapper().also {
             it.registerModule(KotlinModule.Builder().build())
             it.enable(SerializationFeature.INDENT_OUTPUT)
         }
         private val nodeFactory: JsonNodeFactory = jsonMapper.nodeFactory
-        private val logger: Logger = LoggerFactory.getLogger(JsonSchemaExtractor::class.java)
+        private val logger: Logger = LoggerFactory.getLogger(HelmDependencyExtractor::class.java)
     }
 
     fun extract(chart: Chart) {
-        extractSchemasDir.deleteRecursively()
-        extractSchemasDir.mkdirs()
-        chart.dependencies.filter { it.version != null && !it.isStoredLocally() }.forEach { dependency ->
-            if (!repositoryMappings.contains(dependency.repository)) {
-                extractSchema(dependency)
-            }
-        }
+        extractsDir.deleteRecursively()
+        extractsDir.mkdirs()
+        chart.dependencies.filter { it.version != null }.forEach { extractFrom(it) }
     }
 
-    private fun extractSchema(dependency: ChartDependency) {
+    private fun extractFrom(dependency: ChartDependency) {
         val archive = File(chartsDir, "${dependency.name}-${dependency.version}.tgz")
         if (archive.exists()) {
             try {
@@ -54,9 +48,12 @@ class JsonSchemaExtractor(
                         TarArchiveInputStream(it).use {
                             var entry: TarArchiveEntry? = it.nextTarEntry
                             while (entry != null) {
-                                logger.info("entry ${entry.name}: $entry")
-                                if (entry.name.endsWith("/$HELM_SCHEMA_FILE")) {
-                                    with(dependency.toSchemaFileFor(entry)) {
+                                logger.debug("entry {}: {}", entry.name, entry)
+                                if (entry.name.endsWith("/$HELM_CHART_FILE")
+                                    || entry.name.endsWith("/$HELM_VALUES_FILE")
+                                    || entry.name.endsWith("/$HELM_SCHEMA_FILE")
+                                ) {
+                                    with(entry.toFile()) {
                                         parentFile.mkdirs()
                                         writeBytes(it.readAllBytes())
                                     }
@@ -67,22 +64,21 @@ class JsonSchemaExtractor(
                     }
                 }
             } catch (e: Exception) {
-                dependency.fallbackSchemaFor("${e.javaClass.simpleName} - ${e.localizedMessage}")
+                logger.warn("${dependency.name}:${dependency.version}: archive invalid - skipping dependency.")
+                File(extractsDir, dependency.name).deleteRecursively()
+                dependency.writeFallbackSchemaFor("${e.javaClass.simpleName} - ${e.localizedMessage}")
             }
         } else {
             logger.warn("${dependency.name}:${dependency.version}: archive not found - skipping dependency.")
             logger.warn("Please run `helm dependency update .` in chart folder to download chart dependencies.")
-            dependency.fallbackSchemaFor("Archive not found")
+            dependency.writeFallbackSchemaFor("Archive not found")
         }
     }
 
-    private fun ChartDependency.toSchemaFileFor(entry: TarArchiveEntry): File {
-        val basePath = File("$extractSchemasDir/${aliasOrName()}")
-        return File(basePath, entry.name.removePrefix("${name}/").replace("$HELM_CHARTS_DIR/", ""))
-    }
+    private fun TarArchiveEntry.toFile() = File(extractsDir, name.replace("$HELM_CHARTS_DIR/", ""))
 
-    private fun ChartDependency.fallbackSchemaFor(errorMessage: String) {
-        File("$extractSchemasDir/${alias ?: name}/$HELM_SCHEMA_FILE").also {
+    private fun ChartDependency.writeFallbackSchemaFor(errorMessage: String) {
+        File("$extractsDir/$name/$HELM_SCHEMA_FILE").also {
             it.parentFile.mkdirs()
             val errorLabel = "An error occurred during extraction from archive $HELM_CHARTS_DIR/$name-$version.tgz"
             val fallbackSchema = ObjectNode(nodeFactory)
@@ -90,11 +86,11 @@ class JsonSchemaExtractor(
                 .put("\$id", "$name/$version/$HELM_SCHEMA_FILE")
                 .put("x-generated-by", GENERATOR_LABEL)
                 .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
-                .put("type", "object")
-                .put(ADDITIONAL_PROPERTIES, false)
                 .put("title", "Fallback schema for $name:$version")
                 .put("description", "$NEW_LINE $errorLabel: '$errorMessage'")
                 .put("x-intellij-html-description", "<br>$errorLabel:<br> <code>$errorMessage</code>")
+                .put("type", "object")
+                .put(ADDITIONAL_PROPERTIES, false)
             jsonMapper.writeValue(it, fallbackSchema)
         }
     }

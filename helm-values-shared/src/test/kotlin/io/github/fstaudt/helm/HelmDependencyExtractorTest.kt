@@ -2,7 +2,6 @@ package io.github.fstaudt.helm
 
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
-import io.github.fstaudt.helm.model.JsonSchemaRepository
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -10,14 +9,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 
-internal class JsonSchemaExtractorTest {
+internal class HelmDependencyExtractorTest {
     private lateinit var testProject: TestProject
-    private lateinit var extractSchemasDir: File
-    private lateinit var extractor: JsonSchemaExtractor
+    private lateinit var extractsDir: File
+    private lateinit var extractor: HelmDependencyExtractor
 
     companion object {
-        private const val CHARTS = "@charts"
-        private const val CHARTS_URL = "http://localhost/charts"
         private const val THIRDPARTY = "@thirdparty"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
         private const val EMBEDDED_SUB_SCHEMA = "embedded-sub-json-schema"
@@ -25,17 +22,15 @@ internal class JsonSchemaExtractorTest {
         private const val INVALID_ARCHIVE = "invalid-archive"
         private const val MISSING_ARCHIVE = "missing-archive"
         private const val NO_SCHEMA = "no-json-schema"
+        private const val NO_VALUES = "no-values"
         private const val SUBCHART_VERSION = "0.2.0"
     }
 
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
-        extractSchemasDir = testProject.extractSchemasDir
-        val repositoryMappings = mapOf(
-            CHARTS to JsonSchemaRepository(CHARTS_URL),
-        )
-        extractor = JsonSchemaExtractor(File(testProject, "charts"), repositoryMappings, extractSchemasDir)
+        extractsDir = testProject.extractsDir
+        extractor = HelmDependencyExtractor(testProject.chartsDir, extractsDir)
     }
 
     @AfterEach
@@ -44,13 +39,17 @@ internal class JsonSchemaExtractorTest {
     }
 
     @Test
-    fun `extract should extract JSON schemas from dependency archives`() {
+    fun `extract should extract metadata, values and JSON schema from dependency archives`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SCHEMA, SUBCHART_VERSION, THIRDPARTY)
         ))
         testProject.initHelmResources(EMBEDDED_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+        assertThat(File("$extractsDir/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
+            .content().contains("name: $EMBEDDED_SCHEMA")
+        assertThat(File("$extractsDir/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
+            .hasContent("key: $EMBEDDED_SCHEMA")
+        assertThatJsonFile("$extractsDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
@@ -58,27 +57,19 @@ internal class JsonSchemaExtractorTest {
     }
 
     @Test
-    fun `extract should use alias to extract JSON schemas from dependency archives`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EMBEDDED_SCHEMA, SUBCHART_VERSION, THIRDPARTY, "$EMBEDDED_SCHEMA-alias")
-        ))
-        testProject.initHelmResources(EMBEDDED_SCHEMA, SUBCHART_VERSION)
-        extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA-alias/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and({
-                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
-                it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
-            })
-    }
-
-    @Test
-    fun `extract should extract sub-charts JSON schemas from dependency archives`() {
+    fun `extract should extract sub-chart metadata, values and JSON schema from dependency archives`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SUB_SCHEMA, SUBCHART_VERSION, THIRDPARTY)
         ))
         testProject.initHelmResources(EMBEDDED_SUB_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+        assertThat(File("$extractsDir/$EMBEDDED_SUB_SCHEMA/$HELM_CHART_FILE")).isFile
+            .content().contains("name: $EMBEDDED_SUB_SCHEMA")
+        assertThat(File("$extractsDir/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
+            .content().contains("name: $EMBEDDED_SCHEMA")
+        assertThat(File("$extractsDir/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
+            .hasContent("key: $EMBEDDED_SUB_SCHEMA")
+        assertThatJsonFile("$extractsDir/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
@@ -86,22 +77,55 @@ internal class JsonSchemaExtractorTest {
     }
 
     @Test
-    fun `extract should extract charts & sub-charts JSON schemas from dependency archives`() {
+    fun `extract should extract charts & sub-charts metadata, values and JSON schemas from dependency archives`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(MULTIPLE_EMBEDDED_SCHEMA, SUBCHART_VERSION, THIRDPARTY)
         ))
         testProject.initHelmResources(MULTIPLE_EMBEDDED_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$MULTIPLE_EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+        assertThat(File("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
+            .content().contains("name: $MULTIPLE_EMBEDDED_SCHEMA")
+        assertThat(File("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
+            .hasContent("""
+                $EMBEDDED_SCHEMA:
+                  key: $MULTIPLE_EMBEDDED_SCHEMA
+            """.trimIndent())
+        assertThatJsonFile("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$id").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA $SUBCHART_VERSION")
             })
-        assertThatJsonFile("$extractSchemasDir/$MULTIPLE_EMBEDDED_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+        assertThat(File("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
+            .content().contains("name: $EMBEDDED_SCHEMA")
+        assertThat(File("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
+            .hasContent("key: $MULTIPLE_EMBEDDED_SCHEMA")
+        assertThatJsonFile("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
             })
+    }
+
+    @Test
+    fun `extract should not create values when dependencies contain no values`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(NO_VALUES, SUBCHART_VERSION, THIRDPARTY)
+        ))
+        testProject.initHelmResources(NO_VALUES, SUBCHART_VERSION)
+        extractor.extract(chart)
+        assertThat(File("$extractsDir/$NO_VALUES/$HELM_CHART_FILE")).isFile
+            .content().contains("name: $NO_VALUES")
+        assertThat(File("$extractsDir/$NO_VALUES/$HELM_VALUES_FILE")).doesNotExist()
+    }
+
+    @Test
+    fun `extract should not extract chart metadata and values when archive is not found for dependency`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(MISSING_ARCHIVE, SUBCHART_VERSION, THIRDPARTY)
+        ))
+        extractor.extract(chart)
+        assertThat(File("$extractsDir/$MISSING_ARCHIVE/$HELM_CHART_FILE")).doesNotExist()
+        assertThat(File("$extractsDir/$MISSING_ARCHIVE/$HELM_VALUES_FILE")).doesNotExist()
     }
 
     @Test
@@ -110,7 +134,7 @@ internal class JsonSchemaExtractorTest {
             ChartDependency(MISSING_ARCHIVE, SUBCHART_VERSION, THIRDPARTY)
         ))
         extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$MISSING_ARCHIVE/$HELM_SCHEMA_FILE").isFile
+        assertThatJsonFile("$extractsDir/$MISSING_ARCHIVE/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$schema").isEqualTo(SCHEMA_VERSION)
                 it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
@@ -129,34 +153,24 @@ internal class JsonSchemaExtractorTest {
     }
 
     @Test
-    fun `extract should use alias to generate fallback JSON schema with error when archive is not found for dependency`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(MISSING_ARCHIVE, SUBCHART_VERSION, THIRDPARTY, "$MISSING_ARCHIVE-alias")
-        ))
-        extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$MISSING_ARCHIVE-alias/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and({
-                it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
-                it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
-                it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
-                it.node("title").isEqualTo("Fallback schema for $MISSING_ARCHIVE:$SUBCHART_VERSION")
-                it.node("description").isString
-                    .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
-                    .contains("Archive not found")
-                it.node("x-intellij-html-description").isString
-                    .contains("$MISSING_ARCHIVE-$SUBCHART_VERSION.tgz")
-                    .contains("Archive not found")
-            })
-    }
-
-    @Test
-    fun `extract should generate fallback JSON schema with error when archive is invalid`() {
+    fun `extract should not extract chart metadata and values when archive is invalid for dependency`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(INVALID_ARCHIVE, SUBCHART_VERSION, THIRDPARTY)
         ))
         testProject.initHelmResources(INVALID_ARCHIVE, SUBCHART_VERSION)
         extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$INVALID_ARCHIVE/values.schema.json").isFile
+        assertThat(File("$extractsDir/$INVALID_ARCHIVE/$HELM_CHART_FILE")).doesNotExist()
+        assertThat(File("$extractsDir/$INVALID_ARCHIVE/$HELM_VALUES_FILE")).doesNotExist()
+    }
+
+    @Test
+    fun `extract should generate fallback JSON schema with error when archive is invalid for dependency`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(INVALID_ARCHIVE, SUBCHART_VERSION, THIRDPARTY)
+        ))
+        testProject.initHelmResources(INVALID_ARCHIVE, SUBCHART_VERSION)
+        extractor.extract(chart)
+        assertThatJsonFile("$extractsDir/$INVALID_ARCHIVE/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$schema").isEqualTo(SCHEMA_VERSION)
                 it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
@@ -175,55 +189,31 @@ internal class JsonSchemaExtractorTest {
     }
 
     @Test
-    fun `extract should use alias to generate fallback JSON schema with error when archive is invalid`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(INVALID_ARCHIVE, SUBCHART_VERSION, THIRDPARTY, "$INVALID_ARCHIVE-alias")
-        ))
-        testProject.initHelmResources(INVALID_ARCHIVE, SUBCHART_VERSION)
-        extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$INVALID_ARCHIVE-alias/$HELM_SCHEMA_FILE").isFile
-            .hasContent().and({
-                it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
-                it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
-                it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
-                it.node("title").isEqualTo("Fallback schema for $INVALID_ARCHIVE:$SUBCHART_VERSION")
-                it.node("description").isString
-                    .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
-                    .contains("IOException - ")
-                it.node("x-intellij-html-description").isString
-                    .contains("$INVALID_ARCHIVE-$SUBCHART_VERSION.tgz")
-                    .contains("IOException - ")
-            })
-    }
-
-    @Test
-    fun `extract should create empty extract directory when dependencies contain no JSON schema`() {
+    fun `extract should not create JSON schema when dependencies contain no JSON schema`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(NO_SCHEMA, SUBCHART_VERSION, THIRDPARTY)
         ))
         testProject.initHelmResources(NO_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
-        assertThat(extractSchemasDir).isEmptyDirectory
+        assertThatJsonFile("$extractsDir/$NO_SCHEMA/$HELM_CHART_FILE").isFile
+            .content().contains("name: $NO_SCHEMA")
+        assertThatJsonFile("$extractsDir/$NO_SCHEMA/$HELM_VALUES_FILE").isFile
+            .hasContent("key: $NO_SCHEMA")
+        assertThatJsonFile("$extractsDir/$NO_SCHEMA/$HELM_SCHEMA_FILE").doesNotExist()
     }
 
     @Test
-    fun `extract should ignore dependency when repository is in repository mappings`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(NO_SCHEMA, SUBCHART_VERSION, CHARTS)
-        ))
-        testProject.initHelmResources(NO_SCHEMA, SUBCHART_VERSION)
-        extractor.extract(chart)
-        assertThat(extractSchemasDir).isEmptyDirectory
-    }
-
-    @Test
-    fun `extract should extract JSON schemas when dependency has no repository`() {
+    fun `extract should extract chart metadata, values and JSON schemas when dependency has no repository`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SCHEMA, SUBCHART_VERSION, null),
         ))
         testProject.initHelmResources(EMBEDDED_SCHEMA, SUBCHART_VERSION)
         extractor.extract(chart)
-        assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+        assertThat(File("$extractsDir/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
+            .content().contains("name: $EMBEDDED_SCHEMA")
+        assertThat(File("$extractsDir/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
+            .hasContent("key: $EMBEDDED_SCHEMA")
+        assertThatJsonFile("$extractsDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
                 it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
@@ -236,22 +226,13 @@ internal class JsonSchemaExtractorTest {
             ChartDependency(EMBEDDED_SCHEMA, null, THIRDPARTY, "no-version"),
         ))
         extractor.extract(chart)
-        assertThat(extractSchemasDir).isEmptyDirectory
-    }
-
-    @Test
-    fun `extract should ignore dependency when dependency is stored locally`() {
-        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
-            ChartDependency(EMBEDDED_SCHEMA, SUBCHART_VERSION, "file://../$EMBEDDED_SCHEMA"),
-        ))
-        extractor.extract(chart)
-        assertThat(extractSchemasDir).isEmptyDirectory
+        assertThat(extractsDir).isEmptyDirectory
     }
 
     @Test
     fun `extract should create empty extract directory when chart has no dependencies`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         extractor.extract(chart)
-        assertThat(extractSchemasDir).isEmptyDirectory
+        assertThat(extractsDir).isEmptyDirectory
     }
 }
