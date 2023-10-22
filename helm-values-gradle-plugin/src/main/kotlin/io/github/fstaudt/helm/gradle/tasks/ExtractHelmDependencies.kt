@@ -23,9 +23,9 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 @CacheableTask
-open class ExtractJsonSchemas : DefaultTask() {
+open class ExtractHelmDependencies : DefaultTask() {
     companion object {
-        const val EXTRACT_JSON_SCHEMAS = "extractJsonSchemas"
+        const val EXTRACT_HELM_DEPENDENCIES = "extractHelmDependencies"
     }
 
     @Nested

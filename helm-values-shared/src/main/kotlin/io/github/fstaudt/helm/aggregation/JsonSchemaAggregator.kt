@@ -18,6 +18,7 @@ import io.github.fstaudt.helm.SchemaLocator
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator
 import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator
+import io.github.fstaudt.helm.aggregation.values.RequiredPropertyCleaner
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -29,7 +30,7 @@ class JsonSchemaAggregator(
     schemaLocator: SchemaLocator,
     chartDir: File,
     downloadedSchemasDir: File,
-    extractedSchemasDir: File,
+    extractsDir: File,
 ) {
     companion object {
         const val DEFS = "\$defs"
@@ -39,8 +40,9 @@ class JsonSchemaAggregator(
 
     private val generator = JsonSchemaGenerator(repositoryMappings, null)
     private val downloadedSchemaAggregator = DownloadedSchemaAggregator(repositoryMappings, downloadedSchemasDir)
-    private val extractedSchemaAggregator = ExtractedSchemaAggregator(repositoryMappings, extractedSchemasDir)
+    private val extractedSchemaAggregator = ExtractedSchemaAggregator(repositoryMappings, extractsDir)
     private val localSchemaAggregator = LocalSchemaAggregator(chartDir, schemaLocator)
+    private val requiredPropertyCleaner = RequiredPropertyCleaner(extractsDir)
 
     fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedJsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
@@ -49,8 +51,9 @@ class JsonSchemaAggregator(
         downloadedSchemaAggregator.aggregateFor(chart, jsonSchema)
         extractedSchemaAggregator.aggregateFor(chart, jsonSchema)
         localSchemaAggregator.aggregateFor(chart, jsonSchema)
-        jsonSchema.addGlobalPropertiesDescriptionFor(chart)
         jsonSchema.removeInvalidRefs()
+        requiredPropertyCleaner.discardRequiredPropertiesFor(chart, jsonSchema)
+        jsonSchema.addGlobalPropertiesDescriptionFor(chart)
         jsonSchema.put(UNEVALUATED_PROPERTIES, false)
         jsonSchema.put(ADDITIONAL_PROPERTIES, false)
         return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema

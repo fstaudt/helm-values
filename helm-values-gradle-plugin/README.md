@@ -49,9 +49,12 @@ to [Configure JSON schema repositories](#configure-json-schema-repositories).
 
 ## Tasks
 
-### extractJsonSchemas
+### extractHelmDependencies
 
-Extract JSON schemas `values.schema.json` from chart dependencies (including sub-charts in dependencies).
+Extract files from chart dependencies (including sub-charts of dependencies):
+- JSON schemas `values.schema.json`
+- Chart metadata `chart.yaml`
+- Chart values `values.yaml`
 
 Task only attempts to extract file `values.schema.json` from archive of each dependency
 if a repository mapping is **not** defined for the Helm repository of the dependency.\

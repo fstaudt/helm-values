@@ -11,6 +11,7 @@ import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
 import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import io.github.fstaudt.helm.Keywords.Companion.UNEVALUATED_PROPERTIES
 import io.github.fstaudt.helm.SCHEMA_VERSION
 import io.github.fstaudt.helm.TestProject
@@ -748,7 +749,8 @@ internal class JsonSchemaAggregatorTest {
                 {
                   "${'$'}id": "fallback"
                 }
-            """.trimIndent())
+            """.trimIndent(),
+            values = null)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.$EMBEDDED_SCHEMA.\$ref")
             .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
@@ -837,6 +839,101 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.properties.global.refs.\$ref")
             .isEqualTo("$extractedSchemaFile/internal")
+    }
+
+    @Test
+    fun `aggregate should discard required property when property is set in extracted values`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA,
+            values = """
+            key: value
+            """.trimIndent(),
+            schema = """
+            {
+              "${'$'}id": "$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
+              "properties": {
+                "key": {},
+                "content": {}
+              },
+              "required": ["key", "content"]
+            }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.required")
+            .isArray.containsOnly("content")
+    }
+
+    @Test
+    fun `aggregate should discard required property in allOf when property is set in extracted values`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA,
+            values = """
+            key: value
+            """.trimIndent(),
+            schema = """
+            {
+              "${'$'}id": "$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
+              "allOf": [ {
+                "$REF": "#/$DEFS/entry"
+              }],
+              "$DEFS": {
+                "entry": {
+                  "properties": {
+                    "key": {},
+                    "content": {}
+                  },
+                  "required": ["key", "content"]
+                }
+              }
+            }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$DEFS.entry.required")
+            .isArray.containsOnly("content")
+    }
+
+    @Test
+    fun `aggregate should keep required property in array when property is set in extracted values`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA,
+            values = """
+            keys:
+            - key: value
+            """.trimIndent(),
+            schema = """
+            {
+              "${'$'}id": "$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
+              "properties": {
+                "keys": {
+                  "type": "array",
+                  "items": {
+                    "$REF": "#/$DEFS/entry"
+                  }
+                }
+              },
+              "required": ["keys"],
+              "$DEFS": {
+                "entry": {
+                  "properties": {
+                    "key": {},
+                    "content": {}
+                  },
+                  "required": ["key", "content"]
+                }
+              }
+            }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.required")
+            .isArray.isEmpty()
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$DEFS.entry.required")
+            .isArray.containsOnly("key", "content")
     }
 
     @Test

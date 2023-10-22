@@ -10,8 +10,8 @@ import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema
 import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
 import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas
 import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
-import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas
-import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.EXTRACT_JSON_SCHEMAS
+import io.github.fstaudt.helm.gradle.tasks.ExtractHelmDependencies
+import io.github.fstaudt.helm.gradle.tasks.ExtractHelmDependencies.Companion.EXTRACT_HELM_DEPENDENCIES
 import io.github.fstaudt.helm.gradle.tasks.GenerateJsonSchemas
 import io.github.fstaudt.helm.gradle.tasks.GenerateJsonSchemas.Companion.GENERATE_JSON_SCHEMAS
 import io.github.fstaudt.helm.gradle.tasks.PublishJsonSchemas
@@ -40,9 +40,9 @@ class HelmValuesPlugin : Plugin<Project> {
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
                 chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
             }
-            val extractJsonSchemas = tasks.register<ExtractJsonSchemas>(EXTRACT_JSON_SCHEMAS) {
+            val extractHelmDependencies = tasks.register<ExtractHelmDependencies>(EXTRACT_HELM_DEPENDENCIES) {
                 group = HELM_VALUES
-                description = "Extract JSON schemas values.schema.json from chart dependencies"
+                description = "Extract JSON schemas, values and chart metadata from chart dependencies"
                 extension = pluginExtension
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
                 chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
@@ -57,7 +57,7 @@ class HelmValuesPlugin : Plugin<Project> {
                 chartFile = File(sourcesDir, HELM_CHART_FILE).takeIf { it.exists() }
                 patchValuesFile = File(sourcesDir, PATCH_VALUES_SCHEMA_FILE).takeIf { it.exists() }
                 patchAggregatedFile = File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE).takeIf { it.exists() }
-                dependsOn(downloadJsonSchemas, extractJsonSchemas)
+                dependsOn(downloadJsonSchemas, extractHelmDependencies)
             }
             val generateJsonSchemas = tasks.register<GenerateJsonSchemas>(GENERATE_JSON_SCHEMAS) {
                 group = HELM_VALUES

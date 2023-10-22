@@ -22,7 +22,7 @@ import io.github.fstaudt.helm.gradle.initHelmResources
 import io.github.fstaudt.helm.gradle.runTask
 import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema.Companion.AGGREGATE_JSON_SCHEMA
 import io.github.fstaudt.helm.gradle.tasks.DownloadJsonSchemas.Companion.DOWNLOAD_JSON_SCHEMAS
-import io.github.fstaudt.helm.gradle.tasks.ExtractJsonSchemas.Companion.EXTRACT_JSON_SCHEMAS
+import io.github.fstaudt.helm.gradle.tasks.ExtractHelmDependencies.Companion.EXTRACT_HELM_DEPENDENCIES
 import io.github.fstaudt.helm.gradle.testProject
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.test.assertions.escaped
@@ -78,10 +78,10 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should depend on downloadJsonSchemas and extractJsonSchemas`() {
+    fun `aggregateJsonSchema should depend on downloadJsonSchemas and extractHelmDependencies`() {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
-            assertThat(it.task(":$EXTRACT_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isEqualTo(SUCCESS)
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
     }

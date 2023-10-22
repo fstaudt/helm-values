@@ -6,10 +6,13 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.Keywords.Companion.ALL_OF
 import io.github.fstaudt.helm.Keywords.Companion.GLOBAL
 import io.github.fstaudt.helm.Keywords.Companion.PROPERTIES
+import io.github.fstaudt.helm.Keywords.Companion.REQUIRED
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import java.io.File
 import java.net.URI
 
@@ -37,9 +40,14 @@ class ObjectNodeExtensions {
         internal fun ObjectNode.global() = objectNode(GLOBAL)
         internal fun ObjectNode.globalOrNull() = objectNodeOrNull(GLOBAL)
 
+        internal fun ObjectNode.allOfOrNull(): ArrayNode? = get(ALL_OF) as? ArrayNode
+
         internal fun ObjectNode.allOf(): ArrayNode {
-            return get(ALL_OF) as? ArrayNode ?: ArrayNode(nodeFactory).also { set<ArrayNode>(ALL_OF, it) }
+            return allOfOrNull() ?: ArrayNode(nodeFactory).also { set<ArrayNode>(ALL_OF, it) }
         }
+
+        internal fun ObjectNode.requiredOrNull(): ArrayNode? = get(REQUIRED) as? ArrayNode
+        internal fun ObjectNode.refOrNull(): TextNode? = get(REF) as? TextNode
 
         internal fun JsonNode.isInternalReference() = textValue().startsWith("#")
 

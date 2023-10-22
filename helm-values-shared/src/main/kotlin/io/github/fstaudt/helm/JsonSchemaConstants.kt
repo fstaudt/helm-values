@@ -25,6 +25,8 @@ class Keywords {
         const val PROPERTIES = "properties"
         const val GLOBAL = "global"
         const val ALL_OF = "allOf"
+        const val REQUIRED = "required"
+        const val REF = "\$ref"
         const val ADDITIONAL_PROPERTIES = "additionalProperties"
         const val UNEVALUATED_PROPERTIES = "unevaluatedProperties"
     }
