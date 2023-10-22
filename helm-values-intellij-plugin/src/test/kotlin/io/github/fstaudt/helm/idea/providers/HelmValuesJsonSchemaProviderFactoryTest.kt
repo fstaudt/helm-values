@@ -30,6 +30,18 @@ class HelmValuesJsonSchemaProviderFactoryTest : BasePlatformTestCase() {
         override fun toNioPath() = path
     }
 
+    private class TgzVirtualFile(
+        private val fileName: String = "values.yaml",
+        private val parent: VirtualFile? = null,
+    ) : StubVirtualFile() {
+        override fun getName() = fileName
+        override fun getPath() = fileName
+        override fun getParent() = parent
+        override fun toNioPath(): Path {
+            throw UnsupportedOperationException()
+        }
+    }
+
     private fun reset() {
         factory = HelmValuesJsonSchemaProviderFactory()
         File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
@@ -64,5 +76,6 @@ class HelmValuesJsonSchemaProviderFactoryTest : BasePlatformTestCase() {
         ))).isFalse
         assertThat(provider.isAvailable(MockVirtualFile(parent = MockVirtualFile(File(CHART_NAME).toPath())))).isFalse
         assertThat(provider.isAvailable(MockVirtualFile(parent = null))).isFalse
+        assertThat(provider.isAvailable(TgzVirtualFile(parent = TgzVirtualFile("chart")))).isFalse
     }
 }
