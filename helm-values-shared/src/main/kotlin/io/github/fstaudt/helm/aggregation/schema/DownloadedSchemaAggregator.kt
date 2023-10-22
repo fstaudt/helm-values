@@ -3,12 +3,13 @@ package io.github.fstaudt.helm.aggregation.schema
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
-import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.removeAdditionalAndUnevaluatedProperties
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -48,16 +49,16 @@ class DownloadedSchemaAggregator(
             .fold("#/$DEFS/${DOWNLOADS}") { basePath, dir -> "$basePath/$dir" }
         if (schemaNode.isEmpty) {
             val schema = File(downloadSchemasDir, schemaUri.path).toObjectNode()
-            schema.findParents("\$ref").forEach { parent ->
-                val ref = parent["\$ref"]
+            schema.findParents(REF).forEach { parent ->
+                val ref = parent[REF]
                 if (ref.isInternalReference()) {
                     val refMapping = RefMapping("#", schemaPath)
-                    (parent as ObjectNode).replace("\$ref", refMapping.map(ref))
+                    (parent as ObjectNode).replace(REF, refMapping.map(ref))
                 } else {
                     try {
                         val refUri = ref.toUriFrom(schemaUri)
                         val refPath = aggregateDownloadedSchemaFor(refUri)
-                        (parent as ObjectNode).replace("\$ref", TextNode(refPath + (refUri.fragment ?: "")))
+                        (parent as ObjectNode).replace(REF, TextNode(refPath + (refUri.fragment ?: "")))
                     } catch (e: Exception) {
                         logger.warn("Failed to aggregate schema for ref \"${ref.textValue()}\"", e)
                     }

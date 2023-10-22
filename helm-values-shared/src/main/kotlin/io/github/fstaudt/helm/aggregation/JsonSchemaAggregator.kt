@@ -9,6 +9,8 @@ import io.github.fstaudt.helm.JsonSchemaGenerator
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
 import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import io.github.fstaudt.helm.Keywords.Companion.UNEVALUATED_PROPERTIES
 import io.github.fstaudt.helm.NEW_LINE
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
@@ -46,7 +48,7 @@ class JsonSchemaAggregator(
 
     fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedJsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
-        jsonSchema.put("\$id", "$BASE_URI/${chart.name}/${chart.version}/$AGGREGATED_SCHEMA_FILE")
+        jsonSchema.put(ID, "$BASE_URI/${chart.name}/${chart.version}/$AGGREGATED_SCHEMA_FILE")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
         downloadedSchemaAggregator.aggregateFor(chart, jsonSchema)
         extractedSchemaAggregator.aggregateFor(chart, jsonSchema)
@@ -90,11 +92,11 @@ class JsonSchemaAggregator(
     }
 
     private fun ObjectNode.removeInvalidRefs() {
-        findParents("\$ref").forEach { parent ->
-            val pointer = parent["\$ref"].textValue().removePrefix("#")
+        findParents(REF).forEach { parent ->
+            val pointer = parent[REF].textValue().removePrefix("#")
             if (runCatching { at(pointer) }.getOrDefault(MISSING_NODE).isMissingNode) {
-                (parent as ObjectNode).put("_comment", "removed invalid \$ref ${parent["\$ref"].textValue()}")
-                parent.remove("\$ref")
+                (parent as ObjectNode).put("_comment", "removed invalid $REF ${parent[REF].textValue()}")
+                parent.remove(REF)
             }
         }
     }

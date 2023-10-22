@@ -3,15 +3,16 @@ package io.github.fstaudt.helm.model
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import io.github.fstaudt.helm.Keywords.Companion.REF
 
 data class RefMapping(val baseUri: String, val mappedBaseUri: String) {
 
     companion object {
         fun ObjectNode.updateReferencesFor(refMappings: List<RefMapping>) {
-            findParents("\$ref").forEach { parent ->
-                val ref = parent["\$ref"]
+            findParents(REF).forEach { parent ->
+                val ref = parent[REF]
                 refMappings.firstOrNull { it.matches(ref) }?.let {
-                    (parent as ObjectNode).replace("\$ref", it.map(ref))
+                    (parent as ObjectNode).replace(REF, it.map(ref))
                 }
             }
         }

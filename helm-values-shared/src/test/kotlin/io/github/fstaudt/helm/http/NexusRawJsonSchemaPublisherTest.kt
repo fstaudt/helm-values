@@ -10,6 +10,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
+import io.github.fstaudt.helm.Keywords.Companion.ID
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.exceptions.PublicationException
@@ -48,7 +49,7 @@ internal class NexusRawJsonSchemaPublisherTest {
         schemaFile = File(testProject, VALUES_SCHEMA_FILE).also {
             it.writeText("""
             {
-              "${'$'}id": "$BASE_CHART_PATH/$VALUES_SCHEMA_FILE"
+              "$ID": "$BASE_CHART_PATH/$VALUES_SCHEMA_FILE"
             }
         """.trimIndent())
         }

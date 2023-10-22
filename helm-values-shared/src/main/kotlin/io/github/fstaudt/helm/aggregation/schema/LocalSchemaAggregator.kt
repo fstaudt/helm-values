@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.removeAdditionalAndUnevaluatedProperties
@@ -32,7 +33,7 @@ class LocalSchemaAggregator(private val chartDir: File, private val schemaLocato
 
     private fun ObjectNode.aggregateCurrentChartSchema() {
         File(chartDir, HELM_SCHEMA_FILE).takeIf { it.exists() }?.let {
-            allOf().add(objectNode().put("\$ref", "#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE"))
+            allOf().add(objectNode().put(REF, "#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE"))
             val schemaNode = objectNode(DEFS).objectNode(LOCAL).objectNode(HELM_SCHEMA_FILE)
             val schemaPath = "#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE"
             val schema = it.toObjectNode()

@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.REF
+import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
@@ -45,7 +48,7 @@ class JsonSchemaGenerator(
         chart.dependencies.filter { it.version != null }.forEach { dep ->
             dep.repository()?.let {
                 val ref = "${it.baseUri}/${dep.name}/${dep.sanitizedVersion()}/${it.valuesSchemaFile}".toRelativeUri()
-                jsonSchema.props().objectNode(dep.aliasOrName()).put("\$ref", ref)
+                jsonSchema.props().objectNode(dep.aliasOrName()).put(REF, ref)
             }
         }
         chart.dependencies.forEach { dep ->
@@ -54,8 +57,8 @@ class JsonSchemaGenerator(
                     .put("description", NEW_LINE)
                     .put("type", "boolean")
                 jsonSchema.props().objectNodeOrNull(dep.aliasOrName())?.let {
-                    if (it.has("\$ref") && it.properties().size > 1) {
-                        it.allOf().add(it.objectNode().set("\$ref", it.remove("\$ref")) as JsonNode)
+                    if (it.has(REF) && it.properties().size > 1) {
+                        it.allOf().add(it.objectNode().set(REF, it.remove(REF)) as JsonNode)
                     }
                 }
             }
@@ -70,9 +73,9 @@ class JsonSchemaGenerator(
                     dep.repository()?.let {
                         val refPrefix = "${it.baseUri}/${dep.name}/${dep.sanitizedVersion()}".toRelativeUri()
                         val ref = "$refPrefix/${it.valuesSchemaFile}#/properties/global"
-                        allOf.add(ObjectNode(nodeFactory).put("\$ref", ref))
+                        allOf.add(ObjectNode(nodeFactory).put(REF, ref))
                         val globalRef = "$refPrefix/${it.globalValuesSchemaFile}"
-                        allOf.add(ObjectNode(nodeFactory).put("\$ref", globalRef))
+                        allOf.add(ObjectNode(nodeFactory).put(REF, globalRef))
                     }
                 }
                 allOf.add(globalPropertiesDescriptionFor(chart))
@@ -108,8 +111,8 @@ class JsonSchemaGenerator(
 
     private fun Chart.toValuesJsonSchema(): ObjectNode {
         return ObjectNode(nodeFactory)
-            .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "${publicationRepository.baseUri}/$name/$version/${publicationRepository.valuesSchemaFile}")
+            .put(SCHEMA, SCHEMA_VERSION)
+            .put(ID, "${publicationRepository.baseUri}/$name/$version/${publicationRepository.valuesSchemaFile}")
             .put("x-generated-by", GENERATOR_LABEL)
             .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
             .put("title", "Configuration for chart ${fullName()}")

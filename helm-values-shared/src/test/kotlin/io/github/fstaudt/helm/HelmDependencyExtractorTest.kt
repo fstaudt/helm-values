@@ -1,5 +1,7 @@
 package io.github.fstaudt.helm
 
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
@@ -51,7 +53,7 @@ internal class HelmDependencyExtractorTest {
             .hasContent("key: $EMBEDDED_SCHEMA")
         assertThatJsonFile("$extractsDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node(ID).isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
             })
     }
@@ -71,7 +73,7 @@ internal class HelmDependencyExtractorTest {
             .hasContent("key: $EMBEDDED_SUB_SCHEMA")
         assertThatJsonFile("$extractsDir/$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node(ID).isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
             })
     }
@@ -92,7 +94,7 @@ internal class HelmDependencyExtractorTest {
             """.trimIndent())
         assertThatJsonFile("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node(ID).isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$MULTIPLE_EMBEDDED_SCHEMA $SUBCHART_VERSION")
             })
         assertThat(File("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
@@ -101,7 +103,7 @@ internal class HelmDependencyExtractorTest {
             .hasContent("key: $MULTIPLE_EMBEDDED_SCHEMA")
         assertThatJsonFile("$extractsDir/$MULTIPLE_EMBEDDED_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node(ID).isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
             })
     }
@@ -136,8 +138,8 @@ internal class HelmDependencyExtractorTest {
         extractor.extract(chart)
         assertThatJsonFile("$extractsDir/$MISSING_ARCHIVE/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
-                it.node("\$schema").isEqualTo(SCHEMA_VERSION)
-                it.node("\$id").isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node(SCHEMA).isEqualTo(SCHEMA_VERSION)
+                it.node(ID).isEqualTo("$MISSING_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
                 it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                 it.node("type").isEqualTo("object")
@@ -172,8 +174,8 @@ internal class HelmDependencyExtractorTest {
         extractor.extract(chart)
         assertThatJsonFile("$extractsDir/$INVALID_ARCHIVE/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
-                it.node("\$schema").isEqualTo(SCHEMA_VERSION)
-                it.node("\$id").isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node(SCHEMA).isEqualTo(SCHEMA_VERSION)
+                it.node(ID).isEqualTo("$INVALID_ARCHIVE/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
                 it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                 it.node("type").isEqualTo("object")
@@ -215,7 +217,7 @@ internal class HelmDependencyExtractorTest {
             .hasContent("key: $EMBEDDED_SCHEMA")
         assertThatJsonFile("$extractsDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node(ID).isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
                 it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
             })
     }

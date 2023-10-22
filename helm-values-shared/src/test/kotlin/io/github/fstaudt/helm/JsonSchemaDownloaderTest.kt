@@ -8,6 +8,9 @@ import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.unauthorized
 import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.REF
+import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -87,7 +90,7 @@ internal class JsonSchemaDownloaderTest {
         ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -116,7 +119,7 @@ internal class JsonSchemaDownloaderTest {
         ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -127,7 +130,7 @@ internal class JsonSchemaDownloaderTest {
         ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$PROTECTED_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -136,7 +139,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "ref": {
-                "${'$'}ref": "../../$REF_VALUES_SCHEMA_PATH"
+                "$REF": "../../$REF_VALUES_SCHEMA_PATH"
               }
             }
             """.trimIndent())
@@ -144,7 +147,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "global": {
-                "${'$'}ref": "$SUB_SCHEMA_FILE"
+                "$REF": "$SUB_SCHEMA_FILE"
                 }
               }
             """.trimIndent())
@@ -155,16 +158,16 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
-                { it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH) },
-                { it.node("properties.ref.\$ref").isEqualTo("../../$REF_VALUES_SCHEMA_PATH") },
+                { it.node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH) },
+                { it.node("properties.ref.$REF").isEqualTo("../../$REF_VALUES_SCHEMA_PATH") },
             )
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$REF_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
-                { it.node("\$id").isEqualTo(REF_VALUES_SCHEMA_PATH) },
-                { it.node("properties.global.\$ref").isEqualTo(SUB_SCHEMA_FILE) },
+                { it.node(ID).isEqualTo(REF_VALUES_SCHEMA_PATH) },
+                { it.node("properties.global.$REF").isEqualTo(SUB_SCHEMA_FILE) },
             )
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$REF_SUB_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(REF_SUB_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(REF_SUB_SCHEMA_PATH)
     }
 
     @Test
@@ -173,7 +176,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "global": {
-                "${'$'}ref": "$RELATIVE_JSON_SCHEMA"
+                "$REF": "$RELATIVE_JSON_SCHEMA"
                 }
               }
             """.trimIndent())
@@ -184,11 +187,11 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-                it.node("properties.global.\$ref").isEqualTo(RELATIVE_JSON_SCHEMA)
+                it.node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.global.$REF").isEqualTo(RELATIVE_JSON_SCHEMA)
             })
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$RELATIVE_JSON_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(RELATIVE_JSON_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(RELATIVE_JSON_SCHEMA_PATH)
     }
 
     @Test
@@ -197,7 +200,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "refs": {
-                "${'$'}ref": "../../$REF_VALUES_SCHEMA_PATH#/objects/refs"
+                "$REF": "../../$REF_VALUES_SCHEMA_PATH#/objects/refs"
               }
             }
             """.trimIndent())
@@ -208,11 +211,11 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-                it.node("properties.refs.\$ref").isEqualTo("../../$REF_VALUES_SCHEMA_PATH#/objects/refs")
+                it.node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.$REF").isEqualTo("../../$REF_VALUES_SCHEMA_PATH#/objects/refs")
             })
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$REF_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(REF_VALUES_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(REF_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -221,7 +224,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "refs": {
-                "${'$'}ref": "../../../$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH#/objects/refs"
+                "$REF": "../../../$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH#/objects/refs"
               }
             }
             """.trimIndent()
@@ -233,12 +236,12 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-                it.node("properties.refs.\$ref")
+                it.node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.$REF")
                     .isEqualTo("../../../$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH#/objects/refs")
             })
         assertThatJsonFile("$downloadDir/$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(PROTECTED_VALUES_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(PROTECTED_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -247,7 +250,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "refs": {
-                "${'$'}ref": "$REPOSITORY_URL/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH"
+                "$REF": "$REPOSITORY_URL/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH"
               }
             }
             """.trimIndent()
@@ -259,12 +262,12 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-                it.node("properties.refs.\$ref")
+                it.node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.$REF")
                     .isEqualTo("../../../$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH")
             })
         assertThatJsonFile("$downloadDir/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(THIRDPARTY_VALUES_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(THIRDPARTY_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -273,7 +276,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "refs": {
-                "${'$'}ref": "$REPOSITORY_URL/$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH"
+                "$REF": "$REPOSITORY_URL/$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH"
               }
             }
             """.trimIndent()
@@ -285,11 +288,11 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-                it.node("properties.refs.\$ref").isEqualTo("../../../$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH")
+                it.node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.$REF").isEqualTo("../../../$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH")
             })
         assertThatJsonFile("$downloadDir/$PROTECTED_PATH/$PROTECTED_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(PROTECTED_VALUES_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(PROTECTED_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -298,7 +301,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "refs": {
-                "${'$'}ref": "$REPOSITORY_URL/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH#/objects/refs"
+                "$REF": "$REPOSITORY_URL/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH#/objects/refs"
               }
             }
             """.trimIndent()
@@ -310,12 +313,12 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
-                it.node("properties.refs.\$ref")
+                it.node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                it.node("properties.refs.$REF")
                     .isEqualTo("../../../$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH#/objects/refs")
             })
         assertThatJsonFile("$downloadDir/$THIRDPARTY_PATH/$THIRDPARTY_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(THIRDPARTY_VALUES_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(THIRDPARTY_VALUES_SCHEMA_PATH)
     }
 
     @Test
@@ -324,7 +327,7 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "refs": {
-                "${'$'}ref": "#/objects/refs"
+                "$REF": "#/objects/refs"
               }
             }
             """.trimIndent()
@@ -334,7 +337,7 @@ internal class JsonSchemaDownloaderTest {
         ))
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-            .hasContent().node("properties.refs.\$ref").isEqualTo("#/objects/refs")
+            .hasContent().node("properties.refs.$REF").isEqualTo("#/objects/refs")
     }
 
     @Test
@@ -358,10 +361,10 @@ internal class JsonSchemaDownloaderTest {
             """
             "properties": {
               "refs": {
-                "${'$'}ref": "../\"invalid/$HELM_SCHEMA_FILE"
+                "$REF": "../\"invalid/$HELM_SCHEMA_FILE"
               },
               "next": {
-                "${'$'}ref": "$RELATIVE_JSON_SCHEMA"
+                "$REF": "$RELATIVE_JSON_SCHEMA"
               }
             }
             """.trimIndent()
@@ -373,11 +376,11 @@ internal class JsonSchemaDownloaderTest {
         downloader.download(chart)
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
-                { it.node("properties.refs.\$ref").isEqualTo("../\\\"invalid/$HELM_SCHEMA_FILE") },
-                { it.node("properties.next.\$ref").isEqualTo(RELATIVE_JSON_SCHEMA) },
+                { it.node("properties.refs.$REF").isEqualTo("../\\\"invalid/$HELM_SCHEMA_FILE") },
+                { it.node("properties.next.$REF").isEqualTo(RELATIVE_JSON_SCHEMA) },
             )
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$RELATIVE_JSON_SCHEMA_PATH").isFile
-            .hasContent().node("\$id").isEqualTo(RELATIVE_JSON_SCHEMA_PATH)
+            .hasContent().node(ID).isEqualTo(RELATIVE_JSON_SCHEMA_PATH)
     }
 
     @Test
@@ -391,8 +394,8 @@ internal class JsonSchemaDownloaderTest {
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
                 {
-                    it.node("\$schema").isEqualTo(SCHEMA_VERSION)
-                    it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                    it.node(SCHEMA).isEqualTo(SCHEMA_VERSION)
+                    it.node(ID).isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
                     it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
                     it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                     it.node("type").isEqualTo("object")
@@ -418,8 +421,8 @@ internal class JsonSchemaDownloaderTest {
         assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
             .hasContent().and(
                 {
-                    it.node("\$schema").isEqualTo(SCHEMA_VERSION)
-                    it.node("\$id").isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
+                    it.node(SCHEMA).isEqualTo(SCHEMA_VERSION)
+                    it.node(ID).isEqualTo("$baseUrl/$EXTERNAL_VALUES_SCHEMA_PATH")
                     it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
                     it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
                     it.node("type").isEqualTo("object")
@@ -455,8 +458,8 @@ internal class JsonSchemaDownloaderTest {
     private fun stubForSchema(path: String, fileContent: String? = null) {
         val body = Body("""
             {
-              "${'$'}schema": "$SCHEMA_VERSION",
-              "${'$'}id": "$path"
+              "$SCHEMA": "$SCHEMA_VERSION",
+              "$ID": "$path"
               ${fileContent?.let { ",$it" } ?: ""}
             }
             """.trimIndent().toByteArray())
@@ -466,8 +469,8 @@ internal class JsonSchemaDownloaderTest {
     private fun stubForProtectedSchema(path: String, fileContent: String? = null) {
         val body = Body("""
             {
-              "${'$'}schema": "$SCHEMA_VERSION",
-              "${'$'}id": "$path"
+              "$SCHEMA": "$SCHEMA_VERSION",
+              "$ID": "$path"
               ${fileContent?.let { ",$it" } ?: ""}
             }
             """.trimIndent().toByteArray())
@@ -478,8 +481,8 @@ internal class JsonSchemaDownloaderTest {
     private fun stubForThirdPartySchema(path: String, fileContent: String? = null) {
         val body = Body("""
             {
-              "${'$'}schema": "$SCHEMA_VERSION",
-              "${'$'}id": "$path"
+              "$SCHEMA": "$SCHEMA_VERSION",
+              "$ID": "$path"
               ${fileContent?.let { ",$it" } ?: ""}
             }
             """.trimIndent().toByteArray())

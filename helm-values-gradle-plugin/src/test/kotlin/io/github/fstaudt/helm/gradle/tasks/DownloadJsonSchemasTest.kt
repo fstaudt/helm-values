@@ -8,6 +8,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.http.Body
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
@@ -109,7 +111,7 @@ class DownloadJsonSchemasTest {
         testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-                .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
     }
 
@@ -144,7 +146,7 @@ class DownloadJsonSchemasTest {
         testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-                .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
     }
 
@@ -164,7 +166,7 @@ class DownloadJsonSchemasTest {
         testProject.runTask(DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$downloadDir/$PROTECTED_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-                .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
     }
 
@@ -187,13 +189,13 @@ class DownloadJsonSchemasTest {
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
             assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-                .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
         downloadDir.deleteRecursively()
         testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
             assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
             assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
-                .hasContent().node("\$id").isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
+                .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
     }
 
@@ -208,8 +210,8 @@ class DownloadJsonSchemasTest {
     private fun stubForSchema(path: String, fileContent: String? = null) {
         val body = Body("""
             {
-              "${'$'}schema": "$SCHEMA_VERSION",
-              "${'$'}id": "$path"
+              "$SCHEMA": "$SCHEMA_VERSION",
+              "$ID": "$path"
               ${fileContent?.let { ",$it" } ?: ""}
             }
             """.trimIndent().toByteArray())
@@ -219,8 +221,8 @@ class DownloadJsonSchemasTest {
     private fun stubForProtectedSchema(path: String, fileContent: String? = null) {
         val body = Body("""
             {
-              "${'$'}schema": "$SCHEMA_VERSION",
-              "${'$'}id": "$path"
+              "$SCHEMA": "$SCHEMA_VERSION",
+              "$ID": "$path"
               ${fileContent?.let { ",$it" } ?: ""}
             }
             """.trimIndent().toByteArray())

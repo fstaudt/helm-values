@@ -2,6 +2,8 @@ package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
@@ -108,8 +110,8 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("\$id").isEqualTo("$BASE_URI/$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
-            it.isObject.doesNotContainKey("\$ref")
+            it.node(ID).isEqualTo("$BASE_URI/$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
+            it.isObject.doesNotContainKey(REF)
         })
     }
 
@@ -118,15 +120,15 @@ class AggregateJsonSchemaTest {
         File(testProject, HELM_SCHEMA_FILE).writeText(
             """
             {
-              "${'$'}id": "$CHART_NAME/$HELM_SCHEMA_FILE"
+              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE"
             }
             """.trimIndent())
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("allOf[0].\$ref").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-            it.node("\$defs.local.${HELM_SCHEMA_FILE.escaped()}.\$id")
+            it.node("allOf[0].$REF").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+            it.node("\$defs.local.${HELM_SCHEMA_FILE.escaped()}.$ID")
                 .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
@@ -139,7 +141,7 @@ class AggregateJsonSchemaTest {
         File(sourcesDir, HELM_SCHEMA_FILE).writeText(
             """
             {
-              "${'$'}id": "$CHART_NAME/$HELM_SCHEMA_FILE"
+              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE"
             }
             """.trimIndent())
         testProject.initBuildFile {
@@ -159,8 +161,8 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("allOf[0].\$ref").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-            it.node("\$defs.local.${HELM_SCHEMA_FILE.escaped()}.\$id")
+            it.node("allOf[0].$REF").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+            it.node("\$defs.local.${HELM_SCHEMA_FILE.escaped()}.$ID")
                 .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
@@ -185,7 +187,7 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
+            it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo("$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
             it.node(NO_SCHEMA).isObject.isEmpty()
         })
     }
@@ -206,7 +208,7 @@ class AggregateJsonSchemaTest {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-                it.node("$EMBEDDED_SCHEMA.\$ref").isEqualTo("$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                it.node("$EMBEDDED_SCHEMA.$REF").isEqualTo("$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
             })
         }
     }
@@ -243,7 +245,7 @@ class AggregateJsonSchemaTest {
             File(it, AGGREGATED_SCHEMA_FILE).writeText(
                 """
                 {
-                  "${'$'}id": "$EXTERNAL_SCHEMA"
+                  "$ID": "$EXTERNAL_SCHEMA"
                 }
                 """.trimIndent())
         }
@@ -252,7 +254,7 @@ class AggregateJsonSchemaTest {
         }
         val externalSchemaPath = "$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(externalSchemaPath)
+            it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo(externalSchemaPath)
         })
     }
 
@@ -288,7 +290,7 @@ class AggregateJsonSchemaTest {
             File(it, AGGREGATED_SCHEMA_FILE).writeText(
                 """
                 {
-                  "${'$'}id": "$EXTERNAL_SCHEMA"
+                  "$ID": "$EXTERNAL_SCHEMA"
                 }
                 """.trimIndent())
         }
@@ -297,7 +299,7 @@ class AggregateJsonSchemaTest {
         }
         val externalSchemaPath = "$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo(externalSchemaPath)
+            it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo(externalSchemaPath)
         })
     }
 
@@ -326,7 +328,7 @@ class AggregateJsonSchemaTest {
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
                 it.node("title").isEqualTo("overridden value")
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
-                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
         }
     }
@@ -371,7 +373,7 @@ class AggregateJsonSchemaTest {
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
                 it.node("title").isEqualTo("overridden value")
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
-                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
         }
     }
@@ -416,7 +418,7 @@ class AggregateJsonSchemaTest {
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
                 it.node("title").isEqualTo("overridden value")
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
-                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
         }
     }
@@ -444,7 +446,7 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
-                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
         }
     }
@@ -487,7 +489,7 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
-                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
         }
     }
@@ -530,7 +532,7 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
-                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
         }
     }

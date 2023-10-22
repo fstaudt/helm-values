@@ -1,6 +1,9 @@
 package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.REF
+import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
@@ -91,15 +94,15 @@ class GenerateJsonSchemasTest {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
-                    { it.node("\$schema").isEqualTo(SCHEMA_VERSION) },
-                    { it.node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
+                    { it.node(SCHEMA).isEqualTo(SCHEMA_VERSION) },
+                    { it.node(ID).isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE") },
                     { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME:$CHART_VERSION") },
                     {
-                        it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                        it.node("properties.$EXTERNAL_SCHEMA.$REF")
                             .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
                     },
                     {
-                        it.node("properties.global.allOf[0].\$ref")
+                        it.node("properties.global.allOf[0].$REF")
                             .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
                     },
                     { it.node("properties").isObject.doesNotContainKey(EMBEDDED_SCHEMA) },
@@ -124,11 +127,11 @@ class GenerateJsonSchemasTest {
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("properties").and(
                     {
-                        it.node("global.allOf[0].\$ref")
+                        it.node("global.allOf[0].$REF")
                             .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE#/properties/global")
                     },
                     {
-                        it.node("$EXTERNAL_SCHEMA.\$ref")
+                        it.node("$EXTERNAL_SCHEMA.$REF")
                             .isEqualTo("../../$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
                     },
                 )
@@ -155,7 +158,7 @@ class GenerateJsonSchemasTest {
         testProject.runTask(GENERATE_JSON_SCHEMAS).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
+                .hasContent().node(ID).isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
         }
     }
 
@@ -181,7 +184,7 @@ class GenerateJsonSchemasTest {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().and(
-                    { it.node("\$id").isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.1.1/$VALUES_SCHEMA_FILE") },
+                    { it.node(ID).isEqualTo("$BASE_URL/$APPS_PATH/$CHART_NAME/0.1.1/$VALUES_SCHEMA_FILE") },
                     { it.node("title").isEqualTo("Configuration for chart $APPS/$CHART_NAME:0.1.1") },
                 )
         }
@@ -217,10 +220,10 @@ class GenerateJsonSchemasTest {
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node("properties").and(
                     {
-                        it.node("global.allOf[0].\$ref")
+                        it.node("global.allOf[0].$REF")
                             .isEqualTo("../../$EXTERNAL_SCHEMA/0.1.1/$VALUES_SCHEMA_FILE#/properties/global")
                     },
-                    { it.node("$EXTERNAL_SCHEMA.\$ref").isEqualTo("../../$EXTERNAL_SCHEMA/0.1.1/$VALUES_SCHEMA_FILE") },
+                    { it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo("../../$EXTERNAL_SCHEMA/0.1.1/$VALUES_SCHEMA_FILE") },
                 )
         }
     }
@@ -251,7 +254,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     { it.node("title").isEqualTo("overridden value") },
                     { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
-                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF) },
                 )
         }
     }
@@ -296,7 +299,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     { it.node("title").isEqualTo("overridden value") },
                     { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
-                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF) },
                 )
         }
     }
@@ -342,7 +345,7 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     { it.node("title").isEqualTo("overridden value") },
                     { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
-                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF) },
                 )
         }
     }
@@ -421,13 +424,13 @@ class GenerateJsonSchemasTest {
         testProject.runTask(WITH_BUILD_CACHE, GENERATE_JSON_SCHEMAS).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
+                .hasContent().node(ID).isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
         }
         File("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR").deleteRecursively()
         testProject.runTask(WITH_BUILD_CACHE, GENERATE_JSON_SCHEMAS).also {
             assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(FROM_CACHE)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
+                .hasContent().node(ID).isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
         }
     }
 

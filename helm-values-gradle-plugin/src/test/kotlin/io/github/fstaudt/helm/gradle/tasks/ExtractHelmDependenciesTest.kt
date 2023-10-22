@@ -4,6 +4,7 @@ import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_VALUES_FILE
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
+import io.github.fstaudt.helm.Keywords.Companion.ID
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.TestProject
@@ -63,7 +64,7 @@ class ExtractHelmDependenciesTest {
         testProject.runTask(EXTRACT_HELM_DEPENDENCIES).also {
             assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
+                .hasContent().node(ID).isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
                 .content().contains("name: $EMBEDDED_SCHEMA")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
@@ -98,7 +99,7 @@ class ExtractHelmDependenciesTest {
         testProject.runTask(EXTRACT_HELM_DEPENDENCIES).also {
             assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
+                .hasContent().node(ID).isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
                 .content().contains("name: $EMBEDDED_SCHEMA")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
@@ -121,7 +122,7 @@ class ExtractHelmDependenciesTest {
         testProject.runTask(WITH_BUILD_CACHE, EXTRACT_HELM_DEPENDENCIES).also {
             assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isIn(SUCCESS, FROM_CACHE)
             assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
+                .hasContent().node(ID).isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
                 .content().contains("name: $EMBEDDED_SCHEMA")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
@@ -131,7 +132,7 @@ class ExtractHelmDependenciesTest {
         testProject.runTask(WITH_BUILD_CACHE, EXTRACT_HELM_DEPENDENCIES).also {
             assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isEqualTo(FROM_CACHE)
             assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
-                .hasContent().node("\$id").isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
+                .hasContent().node(ID).isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
                 .content().contains("name: $EMBEDDED_SCHEMA")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile

@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
@@ -82,8 +84,8 @@ class HelmDependencyExtractor(
             it.parentFile.mkdirs()
             val errorLabel = "An error occurred during extraction from archive $HELM_CHARTS_DIR/$name-$version.tgz"
             val fallbackSchema = ObjectNode(nodeFactory)
-                .put("\$schema", SCHEMA_VERSION)
-                .put("\$id", "$name/$version/$HELM_SCHEMA_FILE")
+                .put(SCHEMA, SCHEMA_VERSION)
+                .put(ID, "$name/$version/$HELM_SCHEMA_FILE")
                 .put("x-generated-by", GENERATOR_LABEL)
                 .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
                 .put("title", "Fallback schema for $name:$version")

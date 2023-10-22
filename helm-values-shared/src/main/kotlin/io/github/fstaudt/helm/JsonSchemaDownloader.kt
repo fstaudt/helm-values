@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.Keywords.Companion.ADDITIONAL_PROPERTIES
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.REF
+import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isFullUri
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
@@ -71,9 +74,9 @@ class JsonSchemaDownloader(
 
     private fun downloadSchemaReferences(uri: URI, downloadedSchema: File) {
         val jsonSchema = jsonMapper.readTree(downloadedSchema)
-        val needsRewrite = jsonSchema.findValues("\$ref").any { it.isFullUri() }
-        jsonSchema.findParents("\$ref").forEach {
-            val ref = it.get("\$ref")
+        val needsRewrite = jsonSchema.findValues(REF).any { it.isFullUri() }
+        jsonSchema.findParents(REF).forEach {
+            val ref = it.get(REF)
             if (!ref.isInternalReference()) {
                 try {
                     val refUri = ref.toUriFrom(uri)
@@ -81,7 +84,7 @@ class JsonSchemaDownloader(
                         repositoryMappings.filterValues { "$refUri".startsWith(it.baseUri) }.values.firstOrNull()
                     downloadSchema(refUri.path, refUri, refRepository)
                     if (ref.isFullUri()) {
-                        (it as ObjectNode).replace("\$ref", TextNode(refUri.toDownloadedUriFrom(uri)))
+                        (it as ObjectNode).replace(REF, TextNode(refUri.toDownloadedUriFrom(uri)))
                     }
                 } catch (e: Exception) {
                     logger.warn("Failed to download schema for ref \"${ref.textValue()}\"", e)
@@ -109,8 +112,8 @@ class JsonSchemaDownloader(
         val errorLabel = "An error occurred during download of $uri:"
         val htmlLabel = "An error occurred during download of <a href='$uri'>JSON schema for $schemaName</a>:"
         return ObjectNode(nodeFactory)
-            .put("\$schema", SCHEMA_VERSION)
-            .put("\$id", "$uri")
+            .put(SCHEMA, SCHEMA_VERSION)
+            .put(ID, "$uri")
             .put("x-generated-by", GENERATOR_LABEL)
             .put("x-generated-at", "${now(UTC).truncatedTo(SECONDS)}")
             .put("type", "object")

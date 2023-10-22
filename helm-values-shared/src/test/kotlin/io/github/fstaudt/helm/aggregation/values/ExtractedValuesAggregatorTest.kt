@@ -2,6 +2,7 @@ package io.github.fstaudt.helm.aggregation.values
 
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
+import io.github.fstaudt.helm.Keywords.Companion.ID
 import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.extractsDir
 import io.github.fstaudt.helm.initExtractedHelmDependency
@@ -214,7 +215,7 @@ class ExtractedValuesAggregatorTest {
             chartDependencies = null,
             schema = """
                 {
-                  "${'$'}id": "fallback"
+                  "$ID": "fallback"
                 }
             """.trimIndent(),
             values = null)

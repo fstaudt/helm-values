@@ -8,15 +8,17 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
-import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator.Companion.DOWNLOADS
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator.Companion.EXTRACTS
 import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator.Companion.LOCAL
-import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.idea.CHART_NAME
 import io.github.fstaudt.helm.idea.CHART_VERSION
 import io.github.fstaudt.helm.idea.HelmValuesSettings
@@ -112,10 +114,10 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.isObject.doesNotContainKey("\$ref")
-                it.node("properties.$EMBEDDED_SCHEMA.\$ref")
+                it.isObject.doesNotContainKey(REF)
+                it.node("properties.$EMBEDDED_SCHEMA.$REF")
                     .isEqualTo("$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
-                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA.$REF")
                     .isEqualTo("$DEFS/$DOWNLOADS/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
             })
     }
@@ -141,15 +143,15 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         File(project.baseDir(), HELM_SCHEMA_FILE).writeText(
             """
             {
-              "${'$'}id": "$CHART_NAME/$HELM_SCHEMA_FILE"
+              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE"
             }
             """.trimIndent()
         )
         service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("allOf[0].\$ref").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-                it.node("\$defs.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.\$id")
+                it.node("allOf[0].$REF").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+                it.node("\$defs.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
@@ -162,15 +164,15 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         File(subdir, HELM_SCHEMA_FILE).writeText(
             """
             {
-              "${'$'}id": "$CHART_NAME/$HELM_SCHEMA_FILE"
+              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE"
             }
             """.trimIndent()
         )
         service.aggregate(project, File(subdir, HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("allOf[0].\$ref").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-                it.node("\$defs.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.\$id")
+                it.node("allOf[0].$REF").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+                it.node("\$defs.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
@@ -190,9 +192,9 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(project.baseDir(), "$CHART_NAME/$HELM_CHART_FILE"))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA.$REF")
                     .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.\$id")
+                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
             })
     }
@@ -212,7 +214,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(project.baseDir(), "$CHART_NAME/$HELM_CHART_FILE"))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("\$id").isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
+                it.node(ID).isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
             })
     }
 
@@ -231,9 +233,9 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA.$REF")
                     .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.\$id")
+                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
             })
     }
@@ -254,7 +256,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             File(it, AGGREGATED_SCHEMA_FILE).writeText(
                 """
                 {
-                  "${'$'}id": "$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+                  "$ID": "$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
                 }
                 """.trimIndent()
             )
@@ -262,9 +264,9 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(project.baseDir(), "$CHART_NAME/$HELM_CHART_FILE"))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("properties.$EXTERNAL_SCHEMA.\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA.$REF")
                     .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.\$id")
+                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
             })
     }
@@ -291,7 +293,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
-                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
     }
 
@@ -319,7 +321,7 @@ class HelmChartServiceTest : BasePlatformTestCase() {
             .hasContent().and({
                 it.node("title").isEqualTo("overridden value")
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
-                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey("\$ref")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
     }
 

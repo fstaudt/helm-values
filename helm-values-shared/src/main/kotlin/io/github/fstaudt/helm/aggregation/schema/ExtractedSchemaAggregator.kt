@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import io.github.fstaudt.helm.NEW_LINE
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
@@ -60,7 +61,7 @@ class ExtractedSchemaAggregator(
         }
         with(props().objectNode(dependency.aliasOrName())) {
             File(dependencyDir, HELM_SCHEMA_FILE).takeIf { it.exists() }?.let {
-                put("\$ref", "$dependencyRefPrefix/$HELM_SCHEMA_FILE")
+                put(REF, "$dependencyRefPrefix/$HELM_SCHEMA_FILE")
                 jsonSchema.aggregateExtractedSchemaFor(dependencyDir,
                     "$dependencyRefPrefix/$HELM_SCHEMA_FILE".removePrefix("#/"))
             }
@@ -70,8 +71,8 @@ class ExtractedSchemaAggregator(
             propsOrNull()?.globalOrNull()?.let {
                 addGlobalPropertiesDescriptionFor(dependencyRefPrefix.removePrefix("#/$DEFS/${EXTRACTS}/"))
             }
-            if (has("\$ref") && size() > 1) {
-                allOf().add(objectNode().set("\$ref", remove("\$ref")) as JsonNode)
+            if (has(REF) && size() > 1) {
+                allOf().add(objectNode().set(REF, remove(REF)) as JsonNode)
             }
         }
         addGlobalPropertiesFor(dependency, extractedChartDir, refPrefix)
@@ -98,7 +99,7 @@ class ExtractedSchemaAggregator(
         val dependencyDir = File(extractedChartDir, dependency.name)
         File(dependencyDir, HELM_SCHEMA_FILE).takeIf { it.exists() }?.let {
             val ref = "$dependencyRefPrefix/$HELM_SCHEMA_FILE/properties/global"
-            props().global().allOf().add(objectNode().put("\$ref", ref))
+            props().global().allOf().add(objectNode().put(REF, ref))
         }
         val dependencyChart = File(dependencyDir, HELM_CHART_FILE).takeIf { it.exists() }?.let { chartFile ->
             chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }

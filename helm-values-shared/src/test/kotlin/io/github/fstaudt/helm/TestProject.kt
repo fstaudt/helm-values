@@ -2,6 +2,8 @@ package io.github.fstaudt.helm
 
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.Keywords.Companion.REF
 import java.io.File
 
 const val CHART_NAME = "helm-chart"
@@ -28,7 +30,7 @@ fun TestProject.initLocalSchema(
     schemaFile: String = HELM_SCHEMA_FILE,
     schemaContent: String = """
         {
-          "${'$'}id": "$path/$schemaFile",
+          "$ID": "$path/$schemaFile",
           "properties": {
             "global": {}
           }
@@ -45,7 +47,7 @@ fun TestProject.initExtractedHelmDependency(
     values: String? = "",
     schema: String? = """
     {
-      "${'$'}id": "$dependencyPath/$HELM_SCHEMA_FILE",
+      "$ID": "$dependencyPath/$HELM_SCHEMA_FILE",
       "properties": {
         "global": {}
       }
@@ -74,15 +76,15 @@ fun TestProject.initDownloadedSchemas(
     globalSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
     globalSchemaContent: String = """
         {
-          "${'$'}id": "$dependencyPath/$globalSchemaFile"
+          "$ID": "$dependencyPath/$globalSchemaFile"
         }
     """.trimIndent(),
     valuesSchemaContent: String = """
         {
-          "${'$'}id": "$dependencyPath/$valuesSchemaFile",
+          "$ID": "$dependencyPath/$valuesSchemaFile",
           "properties": {
             "global": {
-              "${'$'}ref": "$globalSchemaFile"
+              "$REF": "$globalSchemaFile"
             }
           }
         }
