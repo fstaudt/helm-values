@@ -7,16 +7,17 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHART_FILE
-import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator
-import io.github.fstaudt.helm.JsonSchemaDownloader
-import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.HelmDependencyExtractor
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
+import io.github.fstaudt.helm.JsonSchemaDownloader
+import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
@@ -25,14 +26,14 @@ import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import java.io.File
 
-class HelmChartService {
+@Service
+class HelmJsonSchemaService {
     companion object {
         const val JSON_SCHEMAS_DIR = ".idea/json-schemas"
         const val CHART_METADATA_FILE = "metadata.yaml"
-        val instance: HelmChartService = ApplicationManager.getApplication().getService(HelmChartService::class.java)
+        val instance: HelmJsonSchemaService =
+            ApplicationManager.getApplication().getService(HelmJsonSchemaService::class.java)
     }
-
-    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
         it.registerModule(KotlinModule.Builder().build())
@@ -87,7 +88,7 @@ class HelmChartService {
     }
 
     private fun mappings(): Map<String, JsonSchemaRepository> {
-        return jsonSchemaRepositoryMappingService.list()
+        return JsonSchemaRepositoryMappingService.instance.list()
             .associateBy { it.name }.mapValues { it.value.toJsonSchemaRepository() }
     }
 

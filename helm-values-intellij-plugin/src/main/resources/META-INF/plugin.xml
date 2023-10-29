@@ -13,10 +13,6 @@
                            bundle="messages.HelmValuesBundle" key="notifications.info"/>
         <notificationGroup id="helm.values.errors" displayType="BALLOON"
                            bundle="messages.HelmValuesBundle" key="notifications.error"/>
-        <applicationService serviceImplementation="io.github.fstaudt.helm.idea.HelmValuesSettings"/>
-        <applicationService serviceImplementation="io.github.fstaudt.helm.idea.service.HelmChartService"/>
-        <applicationService
-                serviceImplementation="io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService"/>
         <applicationConfigurable parentId="tools"
                                  instance="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
                                  id="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"

@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
-import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.CHART_METADATA_FILE
-import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.CHART_METADATA_FILE
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR
 import java.io.File
 
 const val CHART_NAME = "helm-chart"

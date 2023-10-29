@@ -5,12 +5,14 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 
+@Service
 class JsonSchemaRepositoryMappingService {
     companion object {
         val instance: JsonSchemaRepositoryMappingService =

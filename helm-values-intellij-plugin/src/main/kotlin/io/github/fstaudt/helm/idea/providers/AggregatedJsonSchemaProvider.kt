@@ -11,7 +11,7 @@ import com.jetbrains.jsonSchema.extension.SchemaType.userSchema
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion.SCHEMA_7
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
-import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.CHART_METADATA_FILE
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.CHART_METADATA_FILE
 import java.io.File
 
 class AggregatedJsonSchemaProvider(private val jsonSchemasDir: File) : JsonSchemaFileProvider {

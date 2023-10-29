@@ -3,8 +3,8 @@ package io.github.fstaudt.helm.idea
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
 import io.github.fstaudt.helm.HELM_CHART_FILE
-import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.CHART_METADATA_FILE
-import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.CHART_METADATA_FILE
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR
 import java.io.File
 
 internal fun Project.baseDir() = stateStore.projectBasePath.toFile()

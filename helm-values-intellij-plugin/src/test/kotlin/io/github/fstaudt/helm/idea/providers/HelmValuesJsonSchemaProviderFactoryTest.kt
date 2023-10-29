@@ -10,7 +10,7 @@ import io.github.fstaudt.helm.idea.CHART_NAME
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.initHelmChart
 import io.github.fstaudt.helm.idea.initJsonSchemas
-import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 import java.nio.file.Path

@@ -10,11 +10,9 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.rd.util.string.printToString
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
-import io.github.fstaudt.helm.idea.service.HelmChartService
 
 abstract class BackgroundTask(private val project: Project, private val key: String) :
     ConditionalModal(project, message("$key.title"), false, ALWAYS_BACKGROUND) {
-    protected val helmChartService = HelmChartService.instance
 
     protected fun asyncRefresh() {
         VirtualFileManager.getInstance().asyncRefresh {

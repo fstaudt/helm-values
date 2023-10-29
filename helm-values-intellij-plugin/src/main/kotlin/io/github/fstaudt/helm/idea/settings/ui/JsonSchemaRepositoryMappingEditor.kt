@@ -36,7 +36,6 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         private const val FIELD_REQUIRED = "settings.mappings.field.required"
     }
 
-    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
     override fun getItemClass() = JsonSchemaRepositoryMapping::class.java
     override fun applyEdited(oldItem: JsonSchemaRepositoryMapping, newItem: JsonSchemaRepositoryMapping) {
         oldItem.applyFrom(newItem)
@@ -52,7 +51,7 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         mutator: Function<in JsonSchemaRepositoryMapping, out JsonSchemaRepositoryMapping>,
         isAdd: Boolean
     ) {
-        val mappings = jsonSchemaRepositoryMappingService.list()
+        val mappings = JsonSchemaRepositoryMappingService.instance.list()
         val referenceMappings = mappings.filter { !it.referenced() && it.name != item.name }.map { it.name }
         lateinit var name: Cell<JBTextField>
         lateinit var baseUri: Cell<JBTextField>

@@ -2,12 +2,16 @@ package io.github.fstaudt.helm.idea
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType.DISABLED
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 
-@State(name = "io.github.fstaudt.helm.idea.HelmValuesSettings", storages = [Storage("helm.values.xml")])
+@Service
+@State(name = "io.github.fstaudt.helm.idea.HelmValuesSettings",
+    storages = [Storage("helm.values.xml", roamingType = DISABLED)])
 class HelmValuesSettings : PersistentStateComponent<HelmValuesSettings> {
     companion object {
         val instance: HelmValuesSettings =
@@ -19,6 +23,6 @@ class HelmValuesSettings : PersistentStateComponent<HelmValuesSettings> {
     override fun getState() = this
 
     override fun loadState(state: HelmValuesSettings) {
-        XmlSerializerUtil.copyBean(state, this);
+        XmlSerializerUtil.copyBean(state, this)
     }
 }

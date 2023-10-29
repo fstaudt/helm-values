@@ -17,7 +17,6 @@ import kotlin.reflect.KMutableProperty1
 /**
  * Provides controller functionality for application settings.
  */
-@Suppress("UnstableApiUsage")
 class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "helm.values") {
     private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
     private val tableEditor = TableModelEditor(

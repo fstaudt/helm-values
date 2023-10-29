@@ -25,8 +25,8 @@ import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.initHelmChart
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
-import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.CHART_METADATA_FILE
-import io.github.fstaudt.helm.idea.service.HelmChartService.Companion.JSON_SCHEMAS_DIR
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.CHART_METADATA_FILE
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.test.assertions.escaped
@@ -35,7 +35,7 @@ import java.io.File
 
 private const val REPOSITORY_PORT = 1983
 
-class HelmChartServiceTest : BasePlatformTestCase() {
+class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
     companion object {
         private const val DEFS = "#/\$defs"
         private const val OTHER_CHART_NAME = "other-chart"
@@ -55,12 +55,12 @@ class HelmChartServiceTest : BasePlatformTestCase() {
     }
 
     private lateinit var state: HelmValuesSettings
-    private lateinit var service: HelmChartService
+    private lateinit var service: HelmJsonSchemaService
 
     private fun reset() {
         state = HelmValuesSettings.instance.state
         state.jsonSchemaRepositories = emptyMap()
-        service = HelmChartService.instance
+        service = HelmJsonSchemaService.instance
         File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
         File(project.baseDir(), PATCH_AGGREGATED_SCHEMA_FILE).delete()
         File(project.baseDir(), PATCH_VALUES_SCHEMA_FILE).delete()
