@@ -15,7 +15,7 @@ dependencies {
     }
     api("com.github.tomakehurst:wiremock-jre8:3.0.1")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:2.15.2")
+    testRuntimeOnly("com.fasterxml.jackson.core:jackson-databind:2.15.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 

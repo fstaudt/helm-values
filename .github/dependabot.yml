@@ -12,15 +12,20 @@ updates:
         - "*"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 1
+    assignees:
+      - "fstaudt"
     ignore:
       - dependency-name: "net.javacrumbs.json-unit:json-unit-assertj"
-        versions: ["3.x"]
       - dependency-name: "org.jetbrains.intellij"
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 1
+    assignees:
+      - "fstaudt"
     groups:
       github-actions:
         patterns:
