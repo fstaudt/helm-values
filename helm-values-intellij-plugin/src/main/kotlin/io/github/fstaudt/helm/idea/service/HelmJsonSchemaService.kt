@@ -44,10 +44,13 @@ class HelmJsonSchemaService {
         it.enable(INDENT_OUTPUT)
     }
 
-    fun aggregate(project: Project, chartFile: File) {
+    fun aggregate(project: Project, chartFile: File, updateLocalDependencies: Boolean = true): Boolean {
         val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
-        chart.dependencies.filter { it.isStoredLocally() }.forEach {
-            aggregate(project, File(chartFile.parentFile, "${it.localPath()}/$HELM_CHART_FILE"))
+        if (updateLocalDependencies) {
+            chart.dependencies.filter { it.isStoredLocally() }.forEach { dependency ->
+                File(chartFile.parentFile, "${dependency.localPath()}/$HELM_CHART_FILE").canonicalFile
+                    .takeIf { it.exists() }?.let { aggregate(project, it) }
+            }
         }
         val jsonSchemasDir = File(project.baseDir(), "$JSON_SCHEMAS_DIR/${chart.name}")
         val downloadSchemaDir = download(jsonSchemasDir, chart)
@@ -66,6 +69,7 @@ class HelmJsonSchemaService {
         HelmChartMetadata(chartFile.parentFile).also {
             yamlMapper.writeValue(File(jsonSchemasDir, CHART_METADATA_FILE), it)
         }
+        return chart.dependencies.all { File(extractSchemaDir, "${it.name}/$HELM_CHART_FILE").exists() }
     }
 
     fun clear(project: Project, chartFile: File) {

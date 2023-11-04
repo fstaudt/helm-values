@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PRO
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
@@ -16,6 +16,7 @@ import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator.Companion.DOWNLOADS
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator.Companion.EXTRACTS
 import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator.Companion.LOCAL
@@ -33,15 +34,12 @@ import io.github.fstaudt.helm.test.assertions.escaped
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 
-private const val REPOSITORY_PORT = 1983
-
-class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
+class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
     companion object {
-        private const val DEFS = "#/\$defs"
         private const val OTHER_CHART_NAME = "other-chart"
         private const val EXTERNAL = "@external"
         private const val THIRDPARTY = "@thirdparty"
-        private const val REPOSITORY_URL = "http://localhost:$REPOSITORY_PORT"
+        private const val REPOSITORY_URL = "http://localhost:1983"
         private const val EXTERNAL_SCHEMA = "external-json-schema"
         private const val EXTERNAL_VERSION = "0.1.0"
         private const val EMBEDDED_SCHEMA = "embedded-json-schema"
@@ -61,9 +59,6 @@ class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
         state = HelmValuesSettings.instance.state
         state.jsonSchemaRepositories = emptyMap()
         service = HelmJsonSchemaService.instance
-        File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
-        File(project.baseDir(), PATCH_AGGREGATED_SCHEMA_FILE).delete()
-        File(project.baseDir(), PATCH_VALUES_SCHEMA_FILE).delete()
     }
 
     fun `test - aggregate should download JSON schemas from external repositories`() {
@@ -116,9 +111,9 @@ class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
             .hasContent().and({
                 it.isObject.doesNotContainKey(REF)
                 it.node("properties.$EMBEDDED_SCHEMA.$REF")
-                    .isEqualTo("$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
+                    .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$VALUES_SCHEMA_FILE")
                 it.node("properties.$EXTERNAL_SCHEMA.$REF")
-                    .isEqualTo("$DEFS/$DOWNLOADS/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+                    .isEqualTo("#/$DEFS/$DOWNLOADS/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
             })
     }
 
@@ -150,8 +145,8 @@ class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(project.baseDir(), HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("allOf[0].$REF").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-                it.node("\$defs.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.$ID")
+                it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+                it.node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
@@ -171,8 +166,8 @@ class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
         service.aggregate(project, File(subdir, HELM_CHART_FILE))
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
-                it.node("allOf[0].$REF").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-                it.node("\$defs.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.$ID")
+                it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+                it.node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
@@ -193,8 +188,8 @@ class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.$REF")
-                    .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
+                    .isEqualTo("#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
             })
     }
@@ -218,6 +213,25 @@ class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
             })
     }
 
+    fun `test - aggregate should skip invalid local dependencies`() {
+        reset()
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        project.initHelmChart(File(project.baseDir(), CHART_NAME)) {
+            appendText("""
+                dependencies:
+                - name: invalid
+                  version: $EXTERNAL_VERSION
+                  repository: "file://../invalid"
+            """.trimIndent())
+        }
+        service.aggregate(project, File(project.baseDir(), "$CHART_NAME/$HELM_CHART_FILE"))
+        assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
+            .hasContent().and({
+                it.node("properties.invalid.$REF").isEqualTo("#/$DEFS/local/invalid/$AGGREGATED_SCHEMA_FILE")
+                it.node("$DEFS.local.invalid.${AGGREGATED_SCHEMA_FILE.escaped()}").isObject.isEmpty()
+            })
+    }
+
     fun `test - aggregate should include aggregated JSON schema of dependency when dependency is stored in child folder`() {
         reset()
         state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
@@ -234,8 +248,8 @@ class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.$REF")
-                    .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
+                    .isEqualTo("#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
                     .isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
             })
     }
@@ -265,9 +279,9 @@ class HelmJsonSchemaServiceTest : BasePlatformTestCase() {
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.$REF")
-                    .isEqualTo("$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("\$defs.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
-                    .isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
+                    .isEqualTo("#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
+                    .isEqualTo("$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             })
     }
 

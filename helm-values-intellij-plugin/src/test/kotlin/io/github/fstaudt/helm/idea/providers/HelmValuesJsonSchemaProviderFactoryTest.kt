@@ -2,7 +2,7 @@ package io.github.fstaudt.helm.idea.providers
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.jetbrains.jsonSchema.extension.SchemaType.userSchema
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion.SCHEMA_7
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
@@ -16,7 +16,7 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.name
 
-class HelmValuesJsonSchemaProviderFactoryTest : BasePlatformTestCase() {
+class HelmValuesJsonSchemaProviderFactoryTest : HeavyPlatformTestCase() {
 
     private lateinit var factory: HelmValuesJsonSchemaProviderFactory
 
@@ -44,7 +44,6 @@ class HelmValuesJsonSchemaProviderFactoryTest : BasePlatformTestCase() {
 
     private fun reset() {
         factory = HelmValuesJsonSchemaProviderFactory()
-        File(project.baseDir(), JSON_SCHEMAS_DIR).deleteRecursively()
     }
 
     fun `test - getProviders should return empty list when there is no json schemas directory with helm chart metadata`() {

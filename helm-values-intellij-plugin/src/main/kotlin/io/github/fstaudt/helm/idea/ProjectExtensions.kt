@@ -20,6 +20,6 @@ private fun File.helmChartDirs(): List<File> {
     return listOf(this).filter { it.isHelmChartDir() } + directories().flatMap { dir -> dir.helmChartDirs() }
 }
 
-private fun File.directories() = listFiles { file -> file.isDirectory }?.toList() ?: emptyList()
+private fun File.directories() = listFiles { file -> file.isDirectory && file.name != ".idea" }?.toList() ?: emptyList()
 private fun File.isHelmChartDir(): Boolean = chartFile().exists()
 private fun File.isJsonSchemasDir(): Boolean = File(this, CHART_METADATA_FILE).exists()

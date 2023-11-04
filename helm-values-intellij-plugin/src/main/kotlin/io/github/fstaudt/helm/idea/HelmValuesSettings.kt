@@ -14,10 +14,12 @@ import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
     storages = [Storage("helm.values.xml", roamingType = DISABLED)])
 class HelmValuesSettings : PersistentStateComponent<HelmValuesSettings> {
     companion object {
+        const val HELM_BINARY = "helm"
         val instance: HelmValuesSettings =
             ApplicationManager.getApplication().getService(HelmValuesSettings::class.java)
     }
 
+    var helmBinaryPath: String = HELM_BINARY
     var jsonSchemaRepositories: Map<String, JsonSchemaRepository> = emptyMap()
 
     override fun getState() = this

@@ -1,14 +1,15 @@
 package io.github.fstaudt.helm.idea.tasks
 
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType.ERROR
 import com.intellij.notification.NotificationType.INFORMATION
+import com.intellij.notification.NotificationType.WARNING
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task.ConditionalModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
-import com.jetbrains.rd.util.string.printToString
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 
 abstract class BackgroundTask(private val project: Project, private val key: String) :
@@ -20,6 +21,10 @@ abstract class BackgroundTask(private val project: Project, private val key: Str
         }
     }
 
+    protected fun ProgressIndicator.initProgress() {
+        text = message("$key.init")
+    }
+
     protected fun ProgressIndicator.updateProgress(chartName: String, progress: Double? = null) {
         text = message("$key.indicator", chartName)
         progress?.also {
@@ -28,17 +33,27 @@ abstract class BackgroundTask(private val project: Project, private val key: Str
         }
     }
 
-    protected fun success(chartName: String = "") {
+    protected fun success(param: String = "", vararg actions: NotificationAction) {
         NotificationGroupManager.getInstance()
             .getNotificationGroup("helm.values.notifications")
-            .createNotification(message("$key.info", chartName), INFORMATION)
+            .createNotification(message("$key.info", param), INFORMATION)
+            .apply { addActions(actions.toSet()) }
             .notify(project)
     }
 
-    protected fun error(chartName: String, exception: Exception) {
+    protected fun warning(param: String = "", vararg actions: NotificationAction) {
         NotificationGroupManager.getInstance()
             .getNotificationGroup("helm.values.errors")
-            .createNotification(message("$key.error", chartName), exception.printToString(), ERROR)
+            .createNotification(message("$key.warning", param), WARNING)
+            .apply { addActions(actions.toSet()) }
+            .notify(project)
+    }
+
+    protected fun error(param: String, exception: Exception, vararg actions: NotificationAction) {
+        NotificationGroupManager.getInstance()
+            .getNotificationGroup("helm.values.errors")
+            .createNotification(message("$key.error", param), exception.localizedMessage, ERROR)
+            .apply { addActions(actions.toSet()) }
             .notify(project)
     }
 }
