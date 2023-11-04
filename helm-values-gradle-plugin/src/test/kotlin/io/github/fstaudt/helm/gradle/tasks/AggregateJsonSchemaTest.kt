@@ -4,10 +4,11 @@ import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.Keywords.Companion.ID
 import io.github.fstaudt.helm.Keywords.Companion.REF
-import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator.Companion.DOWNLOADS
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator.Companion.EXTRACTS
 import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator.Companion.LOCAL
@@ -43,7 +44,6 @@ class AggregateJsonSchemaTest {
     private lateinit var aggregatedSchemaFile: File
 
     companion object {
-        private const val DEFS = "#/\$defs"
         private const val REPOSITORY_URL = "http://localhost:1980"
         private const val APPS = "@apps"
         private const val APPS_PATH = "apps"
@@ -127,8 +127,8 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("allOf[0].$REF").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-            it.node("\$defs.local.${HELM_SCHEMA_FILE.escaped()}.$ID")
+            it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+            it.node("$DEFS.local.${HELM_SCHEMA_FILE.escaped()}.$ID")
                 .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
@@ -161,8 +161,8 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
-            it.node("allOf[0].$REF").isEqualTo("$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-            it.node("\$defs.local.${HELM_SCHEMA_FILE.escaped()}.$ID")
+            it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
+            it.node("$DEFS.local.${HELM_SCHEMA_FILE.escaped()}.$ID")
                 .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
@@ -187,7 +187,7 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-            it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo("$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
+            it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SCHEMA_PATH")
             it.node(NO_SCHEMA).isObject.isEmpty()
         })
     }
@@ -208,7 +208,7 @@ class AggregateJsonSchemaTest {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
-                it.node("$EMBEDDED_SCHEMA.$REF").isEqualTo("$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                it.node("$EMBEDDED_SCHEMA.$REF").isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
             })
         }
     }
@@ -252,7 +252,7 @@ class AggregateJsonSchemaTest {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
-        val externalSchemaPath = "$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+        val externalSchemaPath = "#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
             it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo(externalSchemaPath)
         })
@@ -297,7 +297,7 @@ class AggregateJsonSchemaTest {
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
-        val externalSchemaPath = "$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+        val externalSchemaPath = "#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().node("properties").and({
             it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo(externalSchemaPath)
         })

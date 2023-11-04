@@ -20,6 +20,7 @@ import io.github.fstaudt.helm.TestProject
 import io.github.fstaudt.helm.TestSchemaLocator
 import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
+import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator.Companion.DOWNLOADS
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator.Companion.EXTRACTED_GLOBAL_VALUES_TITLE
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator.Companion.EXTRACTS
@@ -47,7 +48,6 @@ internal class JsonSchemaAggregatorTest {
     private val jsonMapper = ObjectMapper()
 
     companion object {
-        private const val DEFS = "\$defs"
         private const val REPOSITORY_URL = "http://localhost:1980"
         private const val APPS = "@apps"
         private const val APPS_PATH = "apps"
