@@ -10,29 +10,23 @@
 **Gradle**\
 ![Gradle Plugin Portal](https://img.shields.io/gradle-plugin-portal/v/io.github.fstaudt.helm-values)
 
-**Generate JSON schemas to help writing values for [Helm charts](https://helm.sh/).**
+**Ease configuration of values for [Helm charts](https://helm.sh/) in your IDE**
 
-The project provides several plugins to generate [JSON schemas](https://json-schema.org/) for a Helm chart.\
+The project provides several plugins to generate [JSON schemas](https://json-schema.org/) for values of Helm charts.\
 These schemas can then be used to document, validate and auto-complete Helm values in your IDE:
 
 - [IntelliJ plugin](helm-values-intellij-plugin/README.md)
 - [Gradle plugin](helm-values-gradle-plugin/README.md)
 
-Since Helm v3, Helm charts can package a [JSON schema](https://helm.sh/docs/topics/charts/#schema-files)
-named `values.schema.json` to validate values when Helm chart is installed.\
-The plugins can extract the JSON schemas from all chart dependencies.
-
-The plugins can also be configured to download JSON schemas from external JSON schema repositories.
+The plugins can extract the [JSON schemas](https://helm.sh/docs/topics/charts/#schema-files) named `values.schema.json` from all chart dependencies.\
+They can also be configured to download JSON schemas from external JSON schema repositories.
 
 The aggregated JSON schema can then be used to provide auto-completion and documentation on values.yaml in your IDE.
 
-Finally, the gradle plugin can also be used to generate and publish JSON schemas to external JSON schema repositories.
+Finally, the Gradle plugin can also be used to generate and publish JSON schemas to external JSON schema repositories.
 
 All business logic of the plugins is maintained in a [java shared library](helm-values-shared/README.md) published on maven Central repository.\
 This java library can be used to provide JSON schema generation for other IDE or build tools (e.g. Maven plugin).
-
-*The project only supports Helm3: Helm dependencies are only retrieved in `Chart.yaml`.*\
-*File `dependencies.yaml` previously used in Helm2 to define dependencies is not supported*.
 
 ## JSON schemas
 
@@ -47,7 +41,7 @@ by [Gradle task aggregateJsonSchema](helm-values-gradle-plugin/README.md#aggrega
 or [aggregation actions in IntelliJ plugin](helm-values-intellij-plugin/README.md#refresh-jon-schemas-for-current-chart)
 .
 
-It is intended to provide auto-completion, documentation and validation in your IDE on values.yaml of the current chart.
+It is intended to provide documentation, validation and auto-completion in your IDE on values.yaml of the current chart.
 
 It aggregates:
 
@@ -65,7 +59,7 @@ A fallback schema is generated if JSON schema can't be downloaded from the exter
 network failure ...).
 The description of the fallback schema provides more information on the download issue.
 
-It is also intended to provide auto-completion, documentation and validation in your IDE on extra values applied on a
+It is also intended to provide documentation, validation and auto-completion on extra values applied on a
 packaged chart.\
 e.g.:
 ```shell
@@ -88,8 +82,7 @@ by [Gradle task generateJsonSchemas](helm-values-gradle-plugin/README.md#generat
 
 It was intended to be published in a JSON schema repository, so that it can be referenced in schemas of other charts.
 
-*Since [#11 (0.4.0)](https://github.com/fstaudt/helm-values/issues/11), schema `global-values.schema.json`
-is no more generated and published to external repositories.*\
+*Since [#11 (0.4.0)](https://github.com/fstaudt/helm-values/issues/11), schema `global-values.schema.json` is no more generated and published to external repositories.*\
 *It is however still used in generation of schema `aggregated-values.schema.json` for retro-compatibility with schemas
 generated with previous versions.*\
 *The support of global values schema files in aggregation is however deprecated and will be removed in `1.0.0`.*

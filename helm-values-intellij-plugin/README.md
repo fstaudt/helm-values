@@ -5,19 +5,14 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/19970.svg)](https://plugins.jetbrains.com/plugin/19970-helm-values-assistant)
 
 <!-- Plugin description -->
-**Generate JSON schemas to help writing values for [Helm charts](https://helm.sh/).**
+**Ease configuration of values for [Helm charts](https://helm.sh/) in your IDE**
 
-The plugin provides several actions to generate [JSON schemas](https://json-schema.org/) for a Helm chart.\
-These schemas can then be used to document, validate and auto-complete Helm values in your IDE.
+The plugin provides several actions to generate [JSON schemas](https://json-schema.org/) for values of Helm charts.\
+These schemas can then be used in your IDE to document, validate and auto-complete Helm values.
 
-Since Helm v3, Helm charts can package a [JSON schema](https://helm.sh/docs/topics/charts/#schema-files)
-named `values.schema.json` to validate values when Helm chart is installed.\
-The plugin can extract packaged JSON schemas from chart dependencies.
-
-It can also be configured to download JSON schemas of dependencies from external JSON schema repositories.
-
-Plugin provides actions to aggregate extracted and downloaded JSON schemas into a single JSON schema
-that can be used to provide validation, auto-completion and documentation on values.yaml in your IDE.
+Plugin also allows to update Helm dependencies for Helm charts directly from your IDE.\
+_This requires [installation of Helm](https://helm.sh/docs/intro/install/) on your local workstation
+and [configuration of Helm repositories](https://helm.sh/docs/helm/helm_repo/)._
 
 More information: [Helm values documentation](https://github.com/fstaudt/helm-values#readme)
 <!-- Plugin description end -->
@@ -28,7 +23,7 @@ More information: [Helm values documentation](https://github.com/fstaudt/helm-va
 
 Action *Refresh JSON schema for current chart* is available from `Chart.yaml` or `values.yaml`.
 
-![settings](screenshots/action-refresh.png "Refresh JON schemas for current chart")
+![action_refresh_current](screenshots/action-refresh.png "Refresh JON schemas for current chart")
 
 Action will trigger the following processing:
 
@@ -40,18 +35,19 @@ Action will trigger the following processing:
   *A fallback schema is generated if package of chart dependency is missing or invalid.*\
   *The description of the fallback schema provides more information on the extract issue.*
 - extract file `values.schema.json` from chart dependencies (if available)\
-  *Action only attempts to extract file `values.schema.json` from archive of each dependency*
-  *if a repository mapping is **not** defined for the Helm repository of the dependency.*\
-  *Check dedicated section to [configure JSON schema repositories](#configure-json-schema-repositories).*\
-  *A fallback schema is generated if JSON schema can't be downloaded from the external repository*
-  *(schema not found, network failure ...).*\
+  *A fallback schema is generated if JSON schema can't be extracted from dependency archive*
+  *(archive not found, corrupted archive ...).*\
   *The description of the fallback schema provides more information on the download issue.*
-- generate JSON schema `aggregated-values.schema.json` in `.idea/json-schemas/<chart name>/`
+- generate aggregated JSON schema `aggregated-values.schema.json` in `.idea/json-schemas/<chart name>/`\
+  *Action only aggregates extracted JSON schemas for each dependency*
+  *if a repository mapping is **not** defined for the Helm repository of the dependency.*\
+  *Check dedicated section to [configure JSON schema repositories](#configure-json-schema-repositories).*
 
 The JSON schema `aggregated-values.schema.json` is used by default to validate file `values.yaml`
 in the same folder as `Chart.yaml`.\
-Additional JSON schema mappings can be configured in IntelliJ settings if required 
-(e.g. for other values files applied after packaging).
+Additional JSON schema mappings can be configured 
+in [IntelliJ settings](https://www.jetbrains.com/help/idea/json.html#ws_json_schema_add_custom)
+if required (e.g. for other values files applied after packaging).
 
 Optional file `aggregated-values.schema.patch.json` can be created in the base folder of the chart
 (same folder as Chart.yaml) to [patch aggregated JSON schema](https://jsonpatch.com/).\
@@ -62,30 +58,55 @@ on [patch for generated JSON schemas](../README.md#patch-for-generated-json-sche
 
 Action *Clear JSON schema for current chart* is available from `Chart.yaml` or `values.yaml`.
 
-![settings](screenshots/action-clear.png "Clear JON schemas for current chart")
+![action_clear_current](screenshots/action-clear.png "Clear JON schemas for current chart")
 
 Action will trigger the following processing:
 
-- clear previously extracted JSON schemas for the current chart
 - clear previously downloaded JSON schemas for the current chart
+- clear previously extracted JSON schemas for the current chart
 - clear generated JSON schema for the current chart (`aggregated-values.schema.json`)
+
+### Update dependencies for current chart
+
+Action *Update dependencies for current chart* is available from `Chart.yaml` or `values.yaml`.
+
+![action_update_dependencies_current](screenshots/action-update-dependencies.png "Update dependencies for current chart")
+
+Action will trigger the following processing:
+- update Helm repositories (`helm repo update`)
+- update dependencies for the current chart (`helm dependency update --skip-refresh`)
+
+_Action requires [installation of Helm](https://helm.sh/docs/intro/install/) on local workstation 
+and [configuration of Helm repositories](https://helm.sh/docs/helm/helm_repo/)._
 
 ### Refresh JSON schemas for all charts in project
 
-Action *Refresh JSON schemas for all charts in project* is available from actions search.
+Action *Refresh JSON schemas for all charts in project* is available from actions search and from "All charts in project" menu.
 
-![settings](screenshots/action-refresh-all.png "Refresh JON schemas for all charts in project")
+![action_refresh_all](screenshots/action-refresh-all.png "Refresh JON schemas for all charts in project")
 
 It will trigger the refresh of JSON schemas for each chart in the project
 (i.e. for each file named `Chart.yaml` in the project).
 
 ### Clear JSON schemas for all charts in project
 
-Action *Clear JSON schema for all charts in project* is available from actions search.
+Action *Clear JSON schema for all charts in project* is available from actions search and from "All charts in project" menu.
 
-![settings](screenshots/action-clear-all.png "Clear JON schemas for all charts in project")
+![action_clear_all](screenshots/action-clear-all.png "Clear JON schemas for all charts in project")
 
 It will clear JSON schemas for each chart in the project (i.e. for each file named `Chart.yaml` in the project).
+
+### Update dependencies for all charts in project
+
+Action *Update dependencies for all charts in project* is available from actions search and from "All charts in project" menu.
+
+![action_update_dependencies_all](screenshots/action-update-dependencies-all.png "Update dependencies for all charts in project")
+
+It will trigger the update of Helm dependencies for each chart in the project (i.e. for each file named `Chart.yaml` in the project).\
+Update of Helm repositories is however only executed once for all charts in project.
+
+_Action requires [installation of Helm](https://helm.sh/docs/intro/install/) on local workstation
+and [configuration of Helm repositories](https://helm.sh/docs/helm/helm_repo/)._
 
 ## Configure JSON schema repositories
 

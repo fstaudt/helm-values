@@ -1,3 +1,27 @@
+## 0.8.0 - Nov 11, 2023
+- :sparkles: discard required properties when already defined in dependency values
+  ([#40](https://github.com/fstaudt/helm-values/issues/40))
+- :sparkles: (intellij) actions to trigger helm dependency update
+  ([#53](https://github.com/fstaudt/helm-values/issues/53))
+- :sparkles: (intellij) actions in error notifications to install or configure Helm
+- :sparkles: (intellij) support IJ 2023.3
+- :bug: avoid NullPointerException in JSON schema providers when virtual file parent is null
+  ([#114](https://github.com/fstaudt/helm-values/issues/114))
+- :bug: discard generation of extra-values.schema.json
+  ([#130](https://github.com/fstaudt/helm-values/issues/130))
+- :bug: disable additionalProperties at top level of aggregated chart
+  ([#131](https://github.com/fstaudt/helm-values/issues/131))
+- :bug: (intellij) UnsupportedOperationException when values.yaml is part of a virtual file system
+  ([#132](https://github.com/fstaudt/helm-values/issues/132))
+- :bug: JSON schema extractor should take aliases into account
+  ([#133](https://github.com/fstaudt/helm-values/issues/133))
+
+**BREAKING CHANGES**:
+- Since [#130](https://github.com/fstaudt/helm-values/issues/130),
+  JSON schema validation is no more applied by default on files `*-values.yaml` in IntelliJ IDEA.\
+  Validation of non-standard Helm values files with generated JSON schema can be configured
+  in [IntelliJ settings](https://www.jetbrains.com/help/idea/json.html#ws_json_schema_add_custom).
+
 ## 0.7.1 - Jul 14, 2023
 - :sparkles: (intellij) support for IntelliJ IDEA 2023.2
 - :zap: (intellij) avoid full project scanning in JSON schema provider factory
