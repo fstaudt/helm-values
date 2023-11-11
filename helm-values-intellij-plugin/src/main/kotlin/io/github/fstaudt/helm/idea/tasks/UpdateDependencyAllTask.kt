@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.idea.chartFile
 import io.github.fstaudt.helm.idea.service.HelmChartService
 import io.github.fstaudt.helm.idea.tasks.actions.AggregateAllNotificationAction
+import io.github.fstaudt.helm.idea.tasks.actions.HelmInstallBrowserNotificationAction
+import io.github.fstaudt.helm.idea.tasks.actions.HelmRepoBrowserNotificationAction
 import io.github.fstaudt.helm.idea.tasks.actions.HelmValuesSettingsNotificationAction
 import io.github.fstaudt.helm.idea.tasks.actions.UpdateDependencyAllNotificationAction
 
@@ -15,6 +17,7 @@ class UpdateDependencyAllTask(private val project: Project) : BackgroundAllTask(
             HelmChartService.instance.updateRepositories(project)
         } catch (e: Exception) {
             error("", e,
+                HelmInstallBrowserNotificationAction(),
                 HelmValuesSettingsNotificationAction(),
                 UpdateDependencyAllNotificationAction("tasks.retry"))
             return
@@ -26,7 +29,7 @@ class UpdateDependencyAllTask(private val project: Project) : BackgroundAllTask(
                     HelmChartService.instance.updateDependencies(dir.chartFile(), false)
                 } catch (e: Exception) {
                     error(dir.name, e,
-                        HelmValuesSettingsNotificationAction(),
+                        HelmRepoBrowserNotificationAction(),
                         UpdateDependencyAllNotificationAction("tasks.retry"))
                     return
                 }

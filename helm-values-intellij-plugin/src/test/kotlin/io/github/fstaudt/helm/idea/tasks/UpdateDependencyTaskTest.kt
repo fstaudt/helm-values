@@ -38,9 +38,10 @@ class UpdateDependencyTaskTest : HeavyPlatformTestCase() {
             it.run(indicator)
         }
         verifyOrder {
-            indicator.text = eq("Updating dependencies for chart $CHART_NAME")
+            indicator.text = eq("Updating Helm repositories")
             anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("repo", "update"))
             anyConstructed<GeneralCommandLine>().createProcess()
+            indicator.text = eq("Updating dependencies for chart $CHART_NAME")
             anyConstructed<GeneralCommandLine>().withWorkDirectory(File(project.baseDir(), CHART_NAME))
             anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("dependency", "update", ".", "--skip-refresh"))
             anyConstructed<GeneralCommandLine>().createProcess()
