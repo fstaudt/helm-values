@@ -34,6 +34,10 @@ dependencies {
     api("com.networknt", "json-schema-validator", "1.0.81")
 }
 
+tasks.validatePlugins {
+    enableStricterValidation = true
+}
+
 val currentGradleVersion: String = GradleVersion.current().version
 val additionalGradleVersions = listOf("7.6.3")
 val testGradleVersion = "testGradleVersion"
