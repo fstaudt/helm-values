@@ -109,7 +109,7 @@ fun TestProject.runAndFail(vararg task: String): BuildResult {
 private fun TestProject.gradleRunner(vararg task: String): GradleRunner {
     return GradleRunner.create()
         .withProjectDir(this)
-        .withArguments("--info", "--stacktrace", "--warning-mode=fail", *task)
+        .withArguments("--info", "--stacktrace", "--warning-mode=fail", "--configuration-cache", *task)
         .withPluginClasspath()
         .withDebug(true)
         .withGradleVersion(System.getProperty("testGradleVersion"))

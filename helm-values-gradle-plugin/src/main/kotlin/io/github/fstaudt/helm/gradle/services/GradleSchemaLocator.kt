@@ -1,4 +1,4 @@
-package io.github.fstaudt.helm.gradle
+package io.github.fstaudt.helm.gradle.services
 
 import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.SchemaLocator

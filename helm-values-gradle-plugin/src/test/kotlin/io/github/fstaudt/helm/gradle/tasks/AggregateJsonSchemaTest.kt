@@ -400,7 +400,7 @@ class AggregateJsonSchemaTest {
                   publicationRepository = "$APPS"
                 }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
-                  patchAggregatedFile = File(project.projectDir, "custom.schema.patch.json")
+                  patchAggregatedFile.set(File(project.projectDir, "custom.schema.patch.json"))
                 }
                 """.trimIndent()
             )
@@ -516,7 +516,7 @@ class AggregateJsonSchemaTest {
                   publicationRepository = "$APPS"
                 }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
-                  patchValuesFile = File(project.projectDir, "custom.schema.patch.json")
+                  patchValuesFile.set(File(project.projectDir, "custom.schema.patch.json"))
                 }
                 """.trimIndent()
             )

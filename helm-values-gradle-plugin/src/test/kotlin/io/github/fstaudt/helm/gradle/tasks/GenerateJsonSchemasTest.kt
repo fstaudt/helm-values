@@ -326,7 +326,7 @@ class GenerateJsonSchemasTest {
                   publicationRepository = "$APPS"
                 }
                 tasks.named<${GenerateJsonSchemas::class.java.name}>("$GENERATE_JSON_SCHEMAS") {
-                  patchValuesFile = File(project.projectDir, "custom.schema.patch.json")
+                  patchValuesFile.set(File(project.projectDir, "custom.schema.patch.json"))
                 }
             """.trimIndent()
             )

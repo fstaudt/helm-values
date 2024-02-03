@@ -1,58 +1,59 @@
 package io.github.fstaudt.helm.gradle.tasks
 
-import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HelmDependencyExtractor
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.model.Chart
+import io.github.fstaudt.helm.gradle.services.YamlMapper
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.Directory
+import org.gradle.api.file.ProjectLayout
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import javax.inject.Inject
 
 @CacheableTask
-open class ExtractHelmDependencies : DefaultTask() {
+abstract class ExtractHelmDependencies : DefaultTask() {
     companion object {
         const val EXTRACT_HELM_DEPENDENCIES = "extractHelmDependencies"
     }
 
-    @Nested
-    lateinit var extension: HelmValuesExtension
+    @get:Nested
+    abstract var extension: HelmValuesExtension
 
-    @InputDirectory
-    @Optional
-    @PathSensitive(RELATIVE)
-    var chartsDir: File? = null
+    @get:InputFiles
+    @get:PathSensitive(RELATIVE)
+    abstract val chartsDir: Property<File>
 
-    @InputFile
-    @SkipWhenEmpty
-    @PathSensitive(RELATIVE)
-    var chartFile: File? = null
+    @get:InputFile
+    @get:SkipWhenEmpty
+    @get:PathSensitive(RELATIVE)
+    abstract val chartFile: Property<File>
 
     @OutputDirectory
-    val extractSchemasDir = File(project.buildDir, "$HELM_VALUES/$EXTRACTS_DIR")
+    val extractSchemasDir: Provider<Directory> = layout.buildDirectory.dir("$HELM_VALUES/$EXTRACTS_DIR")
 
-    private val yamlMapper = ObjectMapper(YAMLFactory()).also {
-        it.registerModule(KotlinModule.Builder().build())
-        it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-    }
+    @get:Inject
+    abstract val layout: ProjectLayout
+
+    @get:Internal
+    abstract val yamlMapper: Property<YamlMapper>
 
     @TaskAction
     fun extract() {
-        val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
-        val extractor = HelmDependencyExtractor(chartsDir, extractSchemasDir)
+        val chart = yamlMapper.get().chartFrom(chartFile)
+        val extractor = HelmDependencyExtractor(chartsDir.orNull, extractSchemasDir.get().asFile)
         extractor.extract(chart)
     }
 }

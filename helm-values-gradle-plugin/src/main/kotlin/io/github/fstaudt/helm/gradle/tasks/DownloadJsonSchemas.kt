@@ -1,17 +1,18 @@
 package io.github.fstaudt.helm.gradle.tasks
 
-import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
-import io.github.fstaudt.helm.model.Chart
+import io.github.fstaudt.helm.gradle.services.YamlMapper
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.ProjectLayout
+import org.gradle.api.file.RegularFile
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
@@ -19,33 +20,35 @@ import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import javax.inject.Inject
 
 @CacheableTask
-open class DownloadJsonSchemas : DefaultTask() {
+abstract class DownloadJsonSchemas : DefaultTask() {
     companion object {
         const val DOWNLOAD_JSON_SCHEMAS = "downloadJsonSchemas"
     }
 
-    @Nested
-    lateinit var extension: HelmValuesExtension
+    @get:Nested
+    abstract var extension: HelmValuesExtension
 
-    @InputFile
-    @SkipWhenEmpty
-    @PathSensitive(RELATIVE)
-    var chartFile: File? = null
+    @get:InputFile
+    @get:SkipWhenEmpty
+    @get:PathSensitive(RELATIVE)
+    abstract val chartFile: Property<File>
 
     @OutputDirectory
-    val downloadSchemasDir = File(project.buildDir, "$HELM_VALUES/$DOWNLOADS_DIR")
+    val downloadSchemasDir: Provider<RegularFile> = layout.buildDirectory.file("$HELM_VALUES/$DOWNLOADS_DIR")
 
-    private val yamlMapper = ObjectMapper(YAMLFactory()).also {
-        it.registerModule(KotlinModule.Builder().build())
-        it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-    }
+    @get:Inject
+    abstract val layout: ProjectLayout
+
+    @get:Internal
+    abstract val yamlMapper: Property<YamlMapper>
 
     @TaskAction
     fun download() {
-        val chart = chartFile?.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
-        val downloader = JsonSchemaDownloader(extension.repositoryMappings, downloadSchemasDir)
+        val chart = yamlMapper.get().chartFrom(chartFile)
+        val downloader = JsonSchemaDownloader(extension.repositoryMappings, downloadSchemasDir.get().asFile)
         downloader.download(chart)
     }
 }
