@@ -9,7 +9,7 @@ import java.io.File
 
 internal fun Project.baseDir() = stateStore.projectBasePath.toFile()
 
-internal fun Project.helmChartDirs() = baseDir().helmChartDirs()
+internal fun Project.helmChartDirs() = baseDir().helmChartDirs().sortedBy { it.canonicalPath }
 
 internal fun File.chartFile() = File(this, HELM_CHART_FILE)
 internal fun Project.jsonSchemasDirs(): List<File> {
