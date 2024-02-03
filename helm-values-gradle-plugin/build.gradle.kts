@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 plugins {
     `java-gradle-plugin`
     `kotlin-dsl`
@@ -30,11 +32,37 @@ dependencies {
     api(kotlin("gradle-plugin"))
     api(projects.helmValuesShared)
     api("com.networknt", "json-schema-validator", "1.0.81")
-    testImplementation(gradleTestKit())
-    testImplementation(projects.helmValuesTest)
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.test {
-    useJUnitPlatform()
+val currentGradleVersion: String = GradleVersion.current().version
+val additionalGradleVersions = listOf("7.6.3")
+val testGradleVersion = "testGradleVersion"
+val displayNameSuffix = "displayNameSuffix"
+testing {
+    suites {
+        named<JvmTestSuite>("test") {
+            useJUnitJupiter()
+            dependencies {
+                implementation(gradleTestKit())
+                implementation(projects.helmValuesTest)
+                runtimeOnly("org.junit.jupiter:junit-jupiter-engine")
+            }
+            targets {
+                named("test") {
+                    testTask {
+                        systemProperties(testGradleVersion to currentGradleVersion, displayNameSuffix to "")
+                    }
+                }
+                additionalGradleVersions.forEach { version ->
+                    create("testWithGradle${version.replace(Regex("\\W"), "_")}") {
+                        testTask {
+                            systemProperties(testGradleVersion to version, displayNameSuffix to " - Gradle $version")
+                            mustRunAfter(tasks.test)
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
+

@@ -112,5 +112,6 @@ private fun TestProject.gradleRunner(vararg task: String): GradleRunner {
         .withArguments("--info", "--stacktrace", *task)
         .withPluginClasspath()
         .withDebug(true)
+        .withGradleVersion(System.getProperty("testGradleVersion"))
         .forwardOutput()
 }
