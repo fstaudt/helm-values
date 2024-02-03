@@ -25,10 +25,12 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 import java.util.*
 import java.util.Locale.ENGLISH
 
+@DisableCachingByDefault(because = "no output")
 open class ValidateHelmValues : DefaultTask() {
     companion object {
         const val VALIDATE_HELM_VALUES = "validateHelmValues"
