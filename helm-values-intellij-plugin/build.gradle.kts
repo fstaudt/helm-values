@@ -15,7 +15,7 @@ plugins {
     // Kotlin support
     kotlin("jvm")
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij") version "1.13.2"
+    id("org.jetbrains.intellij") version "1.17.1"
     // Gradle Changelog Plugin
     id("org.jetbrains.changelog") version "2.2.0"
 }
@@ -34,6 +34,7 @@ dependencies {
         exclude(module = "junit-jupiter-api")
         exclude(module = "wiremock-jre8")
     }
+    testRuntimeOnly("org.yaml:snakeyaml:2.2")
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
@@ -58,7 +59,6 @@ changelog {
             "\uD83D\uDD25 Removed"
         )
     )
-
 }
 
 tasks {
