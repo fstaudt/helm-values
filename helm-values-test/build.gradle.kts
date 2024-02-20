@@ -9,7 +9,7 @@ kotlin {
 
 dependencies {
     api("org.junit.jupiter:junit-jupiter-api:5.10.2")
-    api("org.assertj:assertj-core:3.25.2")
+    api("org.assertj:assertj-core:3.25.3")
     api("net.javacrumbs.json-unit:json-unit-assertj:2.38.0") {
         api("net.minidev:json-smart:2.5.0")
     }
