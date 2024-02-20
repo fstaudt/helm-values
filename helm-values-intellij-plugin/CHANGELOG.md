@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1 - Feb 20, 2024
+
+### 🐛 Fixed
+- use alphabetical order for actions on all charts in project
+
 ## 0.8.0 - Nov 11, 2023
 
 ### ✨ New

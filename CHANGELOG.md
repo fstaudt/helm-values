@@ -1,3 +1,11 @@
+## 0.8.1 - Feb 20, 2024
+- :sparkles: (gradle) compatibility with Gradle configuration cache
+- :bug: (gradle) disable caching by default for task validateHelmValues
+- :bug: (intellij) use alphabetical order for actions on all charts in project
+
+**BREAKING CHANGES**:
+- Minimal Gradle version for Gradle plugin: Gradle 8.3
+
 ## 0.8.0 - Nov 11, 2023
 - :sparkles: discard required properties when already defined in dependency values
   ([#40](https://github.com/fstaudt/helm-values/issues/40))
