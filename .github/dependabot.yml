@@ -16,7 +16,6 @@ updates:
       - "fstaudt"
     ignore:
       - dependency-name: "net.javacrumbs.json-unit:json-unit-assertj"
-      - dependency-name: "org.jetbrains.intellij"
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
