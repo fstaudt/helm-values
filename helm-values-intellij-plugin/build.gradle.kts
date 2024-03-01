@@ -15,7 +15,7 @@ plugins {
     // Kotlin support
     kotlin("jvm")
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij") version "1.17.1"
+    id("org.jetbrains.intellij") version "1.17.2"
     // Gradle Changelog Plugin
     id("org.jetbrains.changelog") version "2.2.0"
 }
@@ -28,7 +28,7 @@ dependencies {
     api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
-    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("io.mockk:mockk:1.13.10")
     testImplementation("org.assertj:assertj-core:3.25.3")
     testImplementation(projects.helmValuesTest) {
         exclude(module = "junit-jupiter-api")
