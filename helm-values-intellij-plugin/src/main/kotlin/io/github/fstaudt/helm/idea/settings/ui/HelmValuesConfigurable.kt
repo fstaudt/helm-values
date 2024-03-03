@@ -1,5 +1,7 @@
 package io.github.fstaudt.helm.idea.settings.ui
 
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTextField
@@ -17,7 +19,9 @@ import com.intellij.util.ui.table.TableModelEditor
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.HelmValuesSettings.Companion.HELM_BINARY
+import io.github.fstaudt.helm.idea.settings.model.ChartRepository
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
+import io.github.fstaudt.helm.idea.settings.service.ChartRepositoryService
 import io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService
 import javax.swing.JTable
 import javax.swing.JTextField
@@ -29,15 +33,31 @@ import kotlin.reflect.KMutableProperty1
  * Provides controller functionality for application settings.
  */
 class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "helm.values") {
+    companion object {
+        internal const val FIELD_REQUIRED = "settings.field.required"
+    }
+
     private val state = HelmValuesSettings.instance.state
-    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
-    private val tableEditor = TableModelEditor(
+    private val chartRepositoryService = ChartRepositoryService.instance
+
+    private val chartRepositoryEditor = TableModelEditor(
         arrayOf(
-            Column(JsonSchemaRepositoryMapping::name, 40),
-            Column(JsonSchemaRepositoryMapping::baseUri, 150),
-            Column(JsonSchemaRepositoryMapping::valuesSchemaFile, 50),
-            Column(JsonSchemaRepositoryMapping::globalValuesSchemaFile, 60),
-            BooleanColumn(JsonSchemaRepositoryMapping::secured)
+            Column("charts", ChartRepository::name, 40),
+            Column("charts", ChartRepository::url, 150),
+            BooleanColumn("charts", ChartRepository::secured, 50),
+            BooleanColumn("charts", ChartRepository::synchronized, 80)
+        ),
+        ChartRepositoryEditor(),
+        message("settings.charts.none")
+    ).disableUpDownActions()
+    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
+    private val jsonSchemaRepositoryMappingEditor = TableModelEditor(
+        arrayOf(
+            Column("mappings", JsonSchemaRepositoryMapping::name, 40),
+            Column("mappings", JsonSchemaRepositoryMapping::baseUri, 150),
+            Column("mappings", JsonSchemaRepositoryMapping::valuesSchemaFile, 50),
+            Column("mappings", JsonSchemaRepositoryMapping::globalValuesSchemaFile, 60),
+            BooleanColumn("mappings", JsonSchemaRepositoryMapping::secured, 50)
         ),
         JsonSchemaRepositoryMappingEditor(),
         message("settings.mappings.none")
@@ -45,13 +65,19 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     private lateinit var helmBinaryPath: Cell<JBTextField>
 
     override fun createPanel(): DialogPanel {
-        tableEditor.reset(jsonSchemaRepositoryMappingService.list())
+        jsonSchemaRepositoryMappingEditor.reset(jsonSchemaRepositoryMappingService.list())
         return panel {
             rowWithTextFieldForProperty(state::helmBinaryPath) { cell ->
                 cell.focused().also { helmBinaryPath = it }
             }
             row {
-                cell(tableEditor.createComponent())
+                cell(chartRepositoryEditor.createComponent())
+                    .horizontalAlign(HorizontalAlign.FILL)
+                    .verticalAlign(VerticalAlign.FILL)
+                    .label(message("settings.charts.label"), LabelPosition.TOP)
+            }.resizableRow()
+            row {
+                cell(jsonSchemaRepositoryMappingEditor.createComponent())
                     .horizontalAlign(HorizontalAlign.FILL)
                     .verticalAlign(VerticalAlign.FILL)
                     .label(message("settings.mappings.label"), LabelPosition.TOP)
@@ -60,26 +86,31 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     }
 
     override fun isModified(): Boolean {
-        return tableEditor.model.items.sortedBy { it.name } != jsonSchemaRepositoryMappingService.list()
+        return jsonSchemaRepositoryMappingEditor.model.items.sortedBy { it.name } != jsonSchemaRepositoryMappingService.list()
+                || chartRepositoryEditor.model.items.sortedBy { it.name } != chartRepositoryService.list()
                 || helmBinaryPath.component.text.trimOrElse(HELM_BINARY) != state.helmBinaryPath
     }
 
     override fun apply() {
-        jsonSchemaRepositoryMappingService.update(tableEditor.model.items)
+        val project = PROJECT.getData(DataManager.getInstance().getDataContext(getPreferredFocusedComponent()))
+        jsonSchemaRepositoryMappingService.update(jsonSchemaRepositoryMappingEditor.model.items)
+        chartRepositoryService.update(project, chartRepositoryEditor.model.items)
         state.helmBinaryPath = helmBinaryPath.component.text.trimOrElse(HELM_BINARY)
         reset()
     }
 
     override fun reset() {
-        tableEditor.reset(jsonSchemaRepositoryMappingService.list())
+        jsonSchemaRepositoryMappingEditor.reset(jsonSchemaRepositoryMappingService.list())
+        chartRepositoryEditor.reset(chartRepositoryService.list())
         helmBinaryPath.component.text = state.helmBinaryPath
     }
 
     private class Column<T, C>(
+        private val tableName: String,
         private val field: KMutableProperty1<T, C>,
         private val preferredWidth: Int? = null,
     ) : TableModelEditor.EditableColumnInfo<T, C>() {
-        override fun getName() = message("settings.mappings.${field.name}.title")
+        override fun getName() = message("settings.$tableName.${field.name}.title")
         override fun getPreferredStringValue() = preferredWidth?.let { "".padEnd(it) }
         override fun valueOf(item: T): C = field.get(item)
         override fun setValue(item: T, value: C) {
@@ -90,11 +121,13 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     }
 
     private class BooleanColumn<R>(
+        private val tableName: String,
         private val function: KFunction<Boolean>,
+        private val width: Int,
     ) : TableModelEditor.EditableColumnInfo<R, Boolean>() {
         override fun getColumnClass() = Boolean::class.java
-        override fun getWidth(table: JTable) = 50
-        override fun getName() = message("settings.mappings.${function.name}.title")
+        override fun getWidth(table: JTable) = width
+        override fun getName() = message("settings.$tableName.${function.name}.title")
         override fun valueOf(item: R): Boolean = function.call(item)
         override fun isCellEditable(item: R) = false
     }

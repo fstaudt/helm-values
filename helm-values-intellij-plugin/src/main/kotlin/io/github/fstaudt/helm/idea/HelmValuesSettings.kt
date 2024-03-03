@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
+import io.github.fstaudt.helm.idea.settings.model.ChartRepositorySetting
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 
 @Service
@@ -21,10 +22,17 @@ class HelmValuesSettings : PersistentStateComponent<HelmValuesSettings> {
 
     var helmBinaryPath: String = HELM_BINARY
     var jsonSchemaRepositories: Map<String, JsonSchemaRepository> = emptyMap()
+    var chartRepositories: Map<String, ChartRepositorySetting> = emptyMap()
 
     override fun getState() = this
 
     override fun loadState(state: HelmValuesSettings) {
         XmlSerializerUtil.copyBean(state, this)
+    }
+
+    fun reset() {
+        helmBinaryPath = HELM_BINARY
+        jsonSchemaRepositories = emptyMap()
+        chartRepositories = emptyMap()
     }
 }

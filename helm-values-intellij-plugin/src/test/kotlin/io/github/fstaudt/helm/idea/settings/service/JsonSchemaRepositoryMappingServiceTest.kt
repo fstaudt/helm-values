@@ -29,7 +29,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
 
     private fun reset() {
         state = HelmValuesSettings.instance.state
-        state.jsonSchemaRepositories = emptyMap()
+        state.reset()
         passwordSafe = PasswordSafe.instance
         passwordSafe.set(credentialAttributes(APPS), null)
         passwordSafe.set(credentialAttributes(BUNDLES), null)

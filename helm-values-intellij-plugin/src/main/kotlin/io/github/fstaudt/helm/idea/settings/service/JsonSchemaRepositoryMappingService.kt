@@ -15,6 +15,7 @@ import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 @Service
 class JsonSchemaRepositoryMappingService {
     companion object {
+        private const val CREDENTIALS = "HelmValues"
         val instance: JsonSchemaRepositoryMappingService =
             ApplicationManager.getApplication().getService(JsonSchemaRepositoryMappingService::class.java)
     }
@@ -24,8 +25,7 @@ class JsonSchemaRepositoryMappingService {
 
     fun list(): List<JsonSchemaRepositoryMapping> {
         return state.jsonSchemaRepositories.map {
-            val credentials = passwordSafe.get(credentialAttributes(it.key))
-            it.value.toJsonSchemaRepositoryMapping(it.key, credentials)
+            it.value.toJsonSchemaRepositoryMapping(it.key, credentialsFor(it.key))
         }.also { list ->
             list.forEach { it.inheritConfigurationFromReferenceRepositoryIn(list) }
         }.sortedBy { it.name }
@@ -34,12 +34,12 @@ class JsonSchemaRepositoryMappingService {
     fun update(items: List<JsonSchemaRepositoryMapping>) {
         state.jsonSchemaRepositories.forEach { r ->
             if (items.none { r.key == it.name && it.secured() && !it.referenced() }) {
-                passwordSafe.set(credentialAttributes(r.key), null)
+                passwordSafe.set(credentialAttributesFor(r.key), null)
             }
         }
         items.forEach {
             if (it.secured() && !it.referenced()) {
-                passwordSafe.set(credentialAttributes(it.name), Credentials(it.username, it.password))
+                passwordSafe.set(credentialAttributesFor(it.name), it.credentials())
             }
         }
         state.jsonSchemaRepositories = items.associateBy { it.name }.mapValues { it.value.toJsonSchemaRepository() }
@@ -79,6 +79,6 @@ class JsonSchemaRepositoryMappingService {
     }
 
     private fun String?.orElse(default: String) = takeUnless { it.isNullOrBlank() } ?: default
-
-    private fun credentialAttributes(key: String) = CredentialAttributes(generateServiceName("HelmValues", key))
+    private fun credentialsFor(key: String) = passwordSafe.get(credentialAttributesFor(key))
+    private fun credentialAttributesFor(key: String) = CredentialAttributes(generateServiceName(CREDENTIALS, key))
 }

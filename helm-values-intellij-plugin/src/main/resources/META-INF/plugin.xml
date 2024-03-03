@@ -34,7 +34,7 @@
                             icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                     </action>
                     <action id="HelmValues.UpdateDependency" text="Update Dependencies for Current Chart"
-                            description="Download dependencies from Helm repositories for current Helm chart"
+                            description="Download dependencies from chart repositories for current Helm chart"
                             class="io.github.fstaudt.helm.idea.actions.UpdateDependencyAction"
                             icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                     </action>
@@ -54,7 +54,7 @@
                             icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                     </action>
                     <action id="HelmValues.UpdateDependencyAll" text="Update Dependencies for All Charts in Project"
-                            description="Download dependencies from Helm repositories for all Helm charts in project"
+                            description="Download dependencies from chart repositories for all Helm charts in project"
                             class="io.github.fstaudt.helm.idea.actions.UpdateDependencyAllAction"
                             icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                     </action>
@@ -65,6 +65,12 @@
                             icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                     </action>
                 </group>
+                <action id="HelmValues.AddRepositoryAll"
+                        text="Synchronize chart repositories in Helm"
+                        description="Synchronized all chart repositories configured in settings with Helm local installation"
+                        class="io.github.fstaudt.helm.idea.actions.AddRepositoryAllAction"
+                        icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
+                </action>
             </group>
         </group>
     </actions>

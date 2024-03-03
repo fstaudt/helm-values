@@ -57,7 +57,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     private fun reset() {
         state = HelmValuesSettings.instance.state
-        state.jsonSchemaRepositories = emptyMap()
+        state.reset()
         service = HelmJsonSchemaService.instance
     }
 

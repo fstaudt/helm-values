@@ -21,75 +21,67 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.ui.table.TableModelEditor
-import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
-import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
-import io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService
+import io.github.fstaudt.helm.idea.settings.model.ChartRepository
+import io.github.fstaudt.helm.idea.settings.service.ChartRepositoryService
 import io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable.Companion.FIELD_REQUIRED
 import java.net.URI
 import javax.swing.JTextField
 import kotlin.reflect.KMutableProperty0
 
-class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<JsonSchemaRepositoryMapping> {
-    override fun getItemClass() = JsonSchemaRepositoryMapping::class.java
-    override fun applyEdited(oldItem: JsonSchemaRepositoryMapping, newItem: JsonSchemaRepositoryMapping) {
+class ChartRepositoryEditor : TableModelEditor.DialogItemEditor<ChartRepository> {
+    override fun getItemClass() = ChartRepository::class.java
+    override fun applyEdited(oldItem: ChartRepository, newItem: ChartRepository) {
         oldItem.applyFrom(newItem)
     }
 
-    override fun clone(item: JsonSchemaRepositoryMapping, forInPlaceEditing: Boolean): JsonSchemaRepositoryMapping {
+    override fun clone(item: ChartRepository, forInPlaceEditing: Boolean): ChartRepository {
         return if (forInPlaceEditing) item else item.copy()
     }
 
     override fun isUseDialogToAdd() = true
     override fun edit(
-        item: JsonSchemaRepositoryMapping,
-        mutator: Function<in JsonSchemaRepositoryMapping, out JsonSchemaRepositoryMapping>,
+        item: ChartRepository,
+        mutator: Function<in ChartRepository, out ChartRepository>,
         isAdd: Boolean
     ) {
-        val mappings = JsonSchemaRepositoryMappingService.instance.list()
+        val mappings = ChartRepositoryService.instance.list()
         val referenceMappings = mappings.filter { !it.referenced() && it.name != item.name }.map { it.name }
         lateinit var name: Cell<JBTextField>
-        lateinit var baseUri: Cell<JBTextField>
+        lateinit var url: Cell<JBTextField>
         lateinit var referenced: Cell<JBCheckBox>
-        lateinit var referenceRepositoryMapping: Cell<ComboBox<String>>
+        lateinit var referenceRepository: Cell<ComboBox<String>>
         lateinit var password: Cell<JBPasswordField>
         lateinit var username: Cell<JBTextField>
-        lateinit var valuesSchemaFile: Cell<JBTextField>
-        lateinit var globalValuesSchemaFile: Cell<JBTextField>
         val panel = panel {
             rowWithTextFieldForProperty(item::name) { cell ->
                 cell.focused().also { name = it }
             }
-            rowWithTextFieldForProperty(item::baseUri) { cell ->
+            rowWithTextFieldForProperty(item::url) { cell ->
                 cell.validationOnInput {
-                    error(message("settings.mappings.baseUri.errors.invalid")).takeIf {
+                    error(message("settings.charts.url.errors.invalid")).takeIf {
                         runCatching { !URI(cell.component.text).isAbsolute }.getOrElse { true }
                     }
-                }.also { baseUri = it }
+                }.also { url = it }
             }
-            row(message("settings.mappings.referenced.label")) {
+            row(message("settings.charts.referenced.label")) {
                 checkBox("").let { cell ->
                     cell.bindSelected(
                         { item.referenced() },
-                        { if (!it) referenceRepositoryMapping.component.selectedItem = "" }
+                        { if (!it) referenceRepository.component.selectedItem = "" }
                     )
                 }.also { referenced = it }
-            }.comment(message("settings.mappings.referenced.comment"))
-            rowWithComboBoxForProperty(item::referenceRepositoryMapping, referenceMappings) { cell ->
+            }.comment(message("settings.charts.referenced.comment"))
+            rowWithComboBoxForProperty(item::referenceRepository, referenceMappings) { cell ->
                 cell.component.addActionListener {
                     username.component.text = ""
                     password.component.text = ""
-                    valuesSchemaFile.component.text = VALUES_SCHEMA_FILE
-                    globalValuesSchemaFile.component.text = GLOBAL_VALUES_SCHEMA_FILE
                     mappings.firstOrNull { it.name == "${cell.component.selectedItem}" }?.let {
                         username.component.text = it.username
                         password.component.text = it.password
-                        valuesSchemaFile.component.text = it.valuesSchemaFile
-                        globalValuesSchemaFile.component.text = it.globalValuesSchemaFile
                     }
                 }
-                cell.visibleIf(referenced.selected).also { referenceRepositoryMapping = it }
+                cell.visibleIf(referenced.selected).also { referenceRepository = it }
             }
             rowWithTextFieldForProperty(item::username) { cell ->
                 cell.enabledIf(referenced.selected.not()).also { username = it }
@@ -97,23 +89,17 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
             rowWithPasswordFieldForProperty(item::password) { cell ->
                 cell.enabledIf(referenced.selected.not()).also { password = it }
             }
-            rowWithTextFieldForProperty(item::valuesSchemaFile) { cell ->
-                cell.enabledIf(referenced.selected.not()).also { valuesSchemaFile = it }
-            }
-            rowWithTextFieldForProperty(item::globalValuesSchemaFile) { cell ->
-                cell.enabledIf(referenced.selected.not()).also { globalValuesSchemaFile = it }
-            }
         }
-        dialog(title = message("settings.mappings.dialog.title"), panel = panel, ok = {
+        dialog(title = message("settings.charts.dialog.title"), panel = panel, ok = {
             val errors = mutableListOf<ValidationInfo>()
             if (name.component.text.isBlank()) {
                 errors += ValidationInfoBuilder(name.component).error(message(FIELD_REQUIRED))
             }
-            if (baseUri.component.text.isBlank()) {
-                errors += ValidationInfoBuilder(baseUri.component).error(message(FIELD_REQUIRED))
+            if (url.component.text.isBlank()) {
+                errors += ValidationInfoBuilder(url.component).error(message(FIELD_REQUIRED))
             }
-            if (referenceRepositoryMapping.component.item.isBlank() && referenceRepositoryMapping.component.isVisible) {
-                errors += ValidationInfoBuilder(referenceRepositoryMapping.component).error(message(FIELD_REQUIRED))
+            if (referenceRepository.component.item.isBlank() && referenceRepository.component.isVisible) {
+                errors += ValidationInfoBuilder(referenceRepository.component).error(message(FIELD_REQUIRED))
             }
             return@dialog errors
         }).show()
@@ -124,7 +110,7 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         prop: KMutableProperty0<String>,
         textFieldFn: (Cell<JBTextField>) -> Cell<JBTextField> = { it }
     ): Row {
-        return row(message("settings.mappings.${prop.name}.label")) {
+        return row(message("settings.charts.${prop.name}.label")) {
             textField().forProperty(prop, textFieldFn)
         }
     }
@@ -133,7 +119,7 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         prop: KMutableProperty0<String>,
         passwordFieldFn: (Cell<JBPasswordField>) -> Cell<JBPasswordField> = { it }
     ): Row {
-        return row(message("settings.mappings.${prop.name}.label")) {
+        return row(message("settings.charts.${prop.name}.label")) {
             cell(JBPasswordField()).forProperty(prop, passwordFieldFn)
         }
     }
@@ -143,12 +129,12 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         items: List<String>,
         comboboxFn: (Cell<ComboBox<String>>) -> Cell<ComboBox<String>> = { it }
     ): Row {
-        return row(message("settings.mappings.${prop.name}.label")) {
+        return row(message("settings.charts.${prop.name}.label")) {
             comboBox(listOf("") + items)
                 .accessibleName(prop.name)
                 .bindItem(prop.toNullableProperty())
                 .columns(COLUMNS_LARGE)
-                .comment(message("settings.mappings.${prop.name}.comment"))
+                .comment(message("settings.charts.${prop.name}.comment"))
                 .let { comboboxFn(it) }
         }
     }
@@ -160,7 +146,7 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         return accessibleName(prop.name)
             .bindText(prop)
             .columns(COLUMNS_LARGE)
-            .comment(message("settings.mappings.${prop.name}.comment"))
+            .comment(message("settings.charts.${prop.name}.comment"))
             .let { textFieldFn(it) }
     }
 }

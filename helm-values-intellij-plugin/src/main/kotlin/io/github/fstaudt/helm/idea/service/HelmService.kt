@@ -12,14 +12,15 @@ import io.github.fstaudt.helm.HELM_CHART_FILE
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.exceptions.ProcessFailureException
+import io.github.fstaudt.helm.idea.settings.model.ChartRepository
 import io.github.fstaudt.helm.model.Chart
 import java.io.File
 
 @Service
-class HelmChartService {
+class HelmService {
     companion object {
-        val instance: HelmChartService =
-            ApplicationManager.getApplication().getService(HelmChartService::class.java)
+        val instance: HelmService =
+            ApplicationManager.getApplication().getService(HelmService::class.java)
     }
 
     private val yamlMapper = ObjectMapper(YAMLFactory()).also {
@@ -27,6 +28,42 @@ class HelmChartService {
         it.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
     private val state = HelmValuesSettings.instance.state
+
+    fun addRepository(repository: ChartRepository) {
+        with(repository) {
+            val parameters = if (secured()) {
+                arrayOf("repo", "add", name, url,
+                    "--username", username,
+                    "--password", password,
+                    "--force-update")
+            } else {
+                arrayOf("repo", "add", name, url, "--force-update")
+            }
+            GeneralCommandLine()
+                .withExePath(state.helmBinaryPath)
+                .withParameters(*parameters)
+                .execute {
+                    if (timeout)
+                        throw ProcessFailureException("Timeout while adding Helm repository $name")
+                    if (exitCode != 0)
+                        throw ProcessFailureException(output)
+                }
+        }
+    }
+
+    fun removeRepository(repository: ChartRepository) {
+        with(repository) {
+            GeneralCommandLine()
+                .withExePath(state.helmBinaryPath)
+                .withParameters("repo", "remove", name)
+                .execute {
+                    if (timeout)
+                        throw ProcessFailureException("Timeout while deleting Helm repository $name")
+                    if (exitCode != 0)
+                        throw ProcessFailureException(output)
+                }
+        }
+    }
 
     fun updateRepositories(project: Project) {
         GeneralCommandLine()

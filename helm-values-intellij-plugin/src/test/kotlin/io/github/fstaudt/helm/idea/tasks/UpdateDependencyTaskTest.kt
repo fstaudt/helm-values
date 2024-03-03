@@ -20,8 +20,7 @@ class UpdateDependencyTaskTest : HeavyPlatformTestCase() {
 
     private fun reset() {
         state = HelmValuesSettings.instance.state
-        state.helmBinaryPath = "helm"
-        state.jsonSchemaRepositories = emptyMap()
+        state.reset()
         mockkConstructor(GeneralCommandLine::class)
         every { anyConstructed<GeneralCommandLine>().createProcess() } returns mockk<Process>(relaxed = true)
         mockkConstructor(OSProcessHandler::class)
@@ -38,7 +37,7 @@ class UpdateDependencyTaskTest : HeavyPlatformTestCase() {
             it.run(indicator)
         }
         verifyOrder {
-            indicator.text = eq("Updating Helm repositories")
+            indicator.text = eq("Updating chart repositories")
             anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("repo", "update"))
             anyConstructed<GeneralCommandLine>().createProcess()
             indicator.text = eq("Updating dependencies for chart $CHART_NAME")

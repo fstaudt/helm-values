@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable
 
-class HelmValuesSettingsNotificationAction : ProjectNotificationAction("tasks.settings") {
+class HelmValuesSettingsNotificationAction(key: String = "tasks.settings") : ProjectNotificationAction(key) {
     override fun actionPerformed(event: AnActionEvent, notification: Notification) {
         ShowSettingsUtil.getInstance().editConfigurable(event.project!!, HelmValuesConfigurable())
     }

@@ -26,8 +26,7 @@ class UpdateDependencyAllTaskTest : HeavyPlatformTestCase() {
 
     private fun reset() {
         state = HelmValuesSettings.instance.state
-        state.helmBinaryPath = "helm"
-        state.jsonSchemaRepositories = emptyMap()
+        state.reset()
         mockkConstructor(GeneralCommandLine::class)
         every { anyConstructed<GeneralCommandLine>().createProcess() } returns mockk<Process>(relaxed = true)
         mockkConstructor(OSProcessHandler::class)
