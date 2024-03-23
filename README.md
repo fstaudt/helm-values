@@ -28,6 +28,24 @@ Finally, the Gradle plugin can also be used to generate and publish JSON schemas
 All business logic of the plugins is maintained in a [java shared library](helm-values-shared/README.md) published on maven Central repository.\
 This java library can be used to provide JSON schema generation for other IDE or build tools (e.g. Maven plugin).
 
+### Supported by
+
+<table width="100%">
+<tr><td align="center">
+<img src="supports/jetbrains.svg" height="150" alt="JetBrains"/>
+
+[Licenses for Open Source Development](https://jb.gg/OpenSourceSupport)
+
+</td>
+<td>
+<img src="supports/SBS.svg" height="150" alt="Sopra Banking Software"/>
+
+[Sopra Banking Software](https://jb.gg/OpenSourceSupport)
+
+</td>
+</tr>
+</table>
+
 ## JSON schemas
 
 ### Generated JSON schemas
