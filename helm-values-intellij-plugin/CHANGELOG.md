@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.2 - Mar 23, 2024
+
+### ✨ New
+- support for IntelliJ IDEA 2024.1
+
 ## 0.8.1 - Feb 20, 2024
 
 ### 🐛 Fixed

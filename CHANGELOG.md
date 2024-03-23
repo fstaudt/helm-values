@@ -1,3 +1,6 @@
+## 0.8.2 - Mar 23, 2024
+- :sparkles: (intellij) support IJ 2024.1
+
 ## 0.8.1 - Feb 20, 2024
 - :sparkles: (gradle) compatibility with Gradle configuration cache
 - :bug: (gradle) disable caching by default for task validateHelmValues
