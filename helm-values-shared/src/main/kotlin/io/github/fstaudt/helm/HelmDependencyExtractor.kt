@@ -42,7 +42,12 @@ class HelmDependencyExtractor(
     }
 
     private fun extractFrom(dependency: ChartDependency) {
-        val archive = File(chartsDir, "${dependency.name}-${dependency.version}.tgz")
+        val archive = if (dependency.version?.matches(SEMVER_REGEX) == true) {
+            File(chartsDir, "${dependency.name}-${dependency.version}.tgz")
+        } else {
+            chartsDir?.listFiles()?.first { it.name.startsWith("${dependency.name}-") && it.extension == "tgz" }
+                ?: File(chartsDir, "${dependency.name}-${dependency.sanitizedVersion()}.tgz")
+        }
         if (archive.exists()) {
             try {
                 archive.inputStream().use {

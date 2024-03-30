@@ -59,6 +59,24 @@ internal class HelmDependencyExtractorTest {
     }
 
     @Test
+    fun `extract should extract metadata, values and JSON schema from dependency archive when dependency is provided with version range`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, "^0.0.0", THIRDPARTY)
+        ))
+        testProject.initHelmResources(EMBEDDED_SCHEMA, SUBCHART_VERSION)
+        extractor.extract(chart)
+        assertThat(File("$extractsDir/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile
+            .content().contains("name: $EMBEDDED_SCHEMA")
+        assertThat(File("$extractsDir/$EMBEDDED_SCHEMA/$HELM_VALUES_FILE")).isFile
+            .hasContent("key: $EMBEDDED_SCHEMA")
+        assertThatJsonFile("$extractsDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
+            .hasContent().and({
+                it.node(ID).isEqualTo("$EMBEDDED_SCHEMA/$SUBCHART_VERSION/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$EMBEDDED_SCHEMA $SUBCHART_VERSION")
+            })
+    }
+
+    @Test
     fun `extract should extract sub-chart metadata, values and JSON schema from dependency archives`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SUB_SCHEMA, SUBCHART_VERSION, THIRDPARTY)
@@ -128,6 +146,17 @@ internal class HelmDependencyExtractorTest {
         extractor.extract(chart)
         assertThat(File("$extractsDir/$MISSING_ARCHIVE/$HELM_CHART_FILE")).doesNotExist()
         assertThat(File("$extractsDir/$MISSING_ARCHIVE/$HELM_VALUES_FILE")).doesNotExist()
+    }
+
+    @Test
+    fun `extract should not extract chart metadata and values when archive has an outdated version`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SUB_SCHEMA, "$SUBCHART_VERSION-prerelease+build", THIRDPARTY)
+        ))
+        testProject.initHelmResources(EMBEDDED_SUB_SCHEMA, SUBCHART_VERSION)
+        extractor.extract(chart)
+        assertThat(File("$extractsDir/$EMBEDDED_SUB_SCHEMA/$HELM_CHART_FILE")).doesNotExist()
+        assertThat(File("$extractsDir/$EMBEDDED_SUB_SCHEMA/$HELM_VALUES_FILE")).doesNotExist()
     }
 
     @Test
