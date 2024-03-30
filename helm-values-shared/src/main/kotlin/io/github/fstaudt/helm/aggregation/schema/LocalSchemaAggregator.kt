@@ -2,15 +2,15 @@ package io.github.fstaudt.helm.aggregation.schema
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.HELM_SCHEMA_FILE
-import io.github.fstaudt.helm.Keywords.Companion.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.removeAdditionalAndUnevaluatedProperties
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
 import io.github.fstaudt.helm.SchemaLocator
-import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency

@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import io.github.fstaudt.helm.HELM_CHART_FILE
-import io.github.fstaudt.helm.HELM_VALUES_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.globalOrNull
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode

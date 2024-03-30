@@ -1,9 +1,15 @@
 package io.github.fstaudt.helm
 
+import io.github.fstaudt.helm.HelmConstants.HELM_CHARTS_DIR
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
+import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
-import io.github.fstaudt.helm.Keywords.Companion.ID
-import io.github.fstaudt.helm.Keywords.Companion.REF
 import java.io.File
 
 const val CHART_NAME = "helm-chart"

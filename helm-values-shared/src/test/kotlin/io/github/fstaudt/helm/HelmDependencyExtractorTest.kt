@@ -1,7 +1,12 @@
 package io.github.fstaudt.helm
 
-import io.github.fstaudt.helm.Keywords.Companion.ID
-import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.GENERATOR_LABEL
+import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.SCHEMA
+import io.github.fstaudt.helm.JsonSchemaConstants.SCHEMA_VERSION
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile

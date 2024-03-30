@@ -8,11 +8,13 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import io.github.fstaudt.helm.Keywords.Companion.ALL_OF
-import io.github.fstaudt.helm.Keywords.Companion.GLOBAL
-import io.github.fstaudt.helm.Keywords.Companion.PROPERTIES
-import io.github.fstaudt.helm.Keywords.Companion.REQUIRED
-import io.github.fstaudt.helm.Keywords.Companion.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ADDITIONAL_PROPERTIES
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ALL_OF
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.GLOBAL
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.PROPERTIES
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REQUIRED
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.UNEVALUATED_PROPERTIES
 import java.io.File
 import java.net.URI
 
@@ -63,11 +65,11 @@ class ObjectNodeExtensions {
         }
 
         internal fun ObjectNode.removeAdditionalAndUnevaluatedProperties() {
-            remove(Keywords.ADDITIONAL_PROPERTIES)
-            remove(Keywords.UNEVALUATED_PROPERTIES)
+            remove(ADDITIONAL_PROPERTIES)
+            remove(UNEVALUATED_PROPERTIES)
             propsOrNull()?.globalOrNull()?.let {
-                it.remove(Keywords.ADDITIONAL_PROPERTIES)
-                it.remove(Keywords.UNEVALUATED_PROPERTIES)
+                it.remove(ADDITIONAL_PROPERTIES)
+                it.remove(UNEVALUATED_PROPERTIES)
             }
         }
     }

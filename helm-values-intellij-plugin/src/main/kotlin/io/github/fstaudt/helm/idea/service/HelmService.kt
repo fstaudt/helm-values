@@ -8,7 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import io.github.fstaudt.helm.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.exceptions.ProcessFailureException

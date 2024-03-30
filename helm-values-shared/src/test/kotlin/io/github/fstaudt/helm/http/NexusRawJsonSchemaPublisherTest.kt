@@ -10,9 +10,9 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import io.github.fstaudt.helm.CHART_NAME
 import io.github.fstaudt.helm.CHART_VERSION
-import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
+import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.TestProject
-import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.exceptions.PublicationException
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.JsonSchemaRepository

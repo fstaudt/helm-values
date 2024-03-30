@@ -21,8 +21,8 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.ui.table.TableModelEditor
-import io.github.fstaudt.helm.GLOBAL_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService

@@ -1,11 +1,11 @@
 package io.github.fstaudt.helm.gradle.tasks
 
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.SCHEMA
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
-import io.github.fstaudt.helm.Keywords.Companion.ID
-import io.github.fstaudt.helm.Keywords.Companion.REF
-import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
-import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.CHART_VERSION
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES

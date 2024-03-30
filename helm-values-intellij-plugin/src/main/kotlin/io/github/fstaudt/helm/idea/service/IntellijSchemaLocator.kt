@@ -1,6 +1,6 @@
 package io.github.fstaudt.helm.idea.service
 
-import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.SchemaLocator
 import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR
 import io.github.fstaudt.helm.model.ChartDependency

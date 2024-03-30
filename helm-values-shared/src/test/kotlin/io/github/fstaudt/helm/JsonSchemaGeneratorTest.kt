@@ -2,11 +2,15 @@ package io.github.fstaudt.helm
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonpatch.JsonPatch
+import io.github.fstaudt.helm.JsonSchemaConstants.GENERATOR_LABEL
+import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.SCHEMA
+import io.github.fstaudt.helm.JsonSchemaConstants.SCHEMA_VERSION
+import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
-import io.github.fstaudt.helm.Keywords.Companion.ID
-import io.github.fstaudt.helm.Keywords.Companion.REF
-import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository

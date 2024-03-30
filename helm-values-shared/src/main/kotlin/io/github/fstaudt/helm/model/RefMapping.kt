@@ -3,7 +3,7 @@ package io.github.fstaudt.helm.model
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
-import io.github.fstaudt.helm.Keywords.Companion.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 
 data class RefMapping(val baseUri: String, val mappedBaseUri: String) {
 

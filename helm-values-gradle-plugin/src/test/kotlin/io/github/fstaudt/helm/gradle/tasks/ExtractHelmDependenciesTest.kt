@@ -1,10 +1,10 @@
 package io.github.fstaudt.helm.gradle.tasks
 
-import io.github.fstaudt.helm.HELM_CHART_FILE
-import io.github.fstaudt.helm.HELM_SCHEMA_FILE
-import io.github.fstaudt.helm.HELM_VALUES_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
-import io.github.fstaudt.helm.Keywords.Companion.ID
+import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.TestProject

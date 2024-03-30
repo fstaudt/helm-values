@@ -7,9 +7,12 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
-import io.github.fstaudt.helm.Keywords.Companion.ID
-import io.github.fstaudt.helm.Keywords.Companion.REF
-import io.github.fstaudt.helm.Keywords.Companion.SCHEMA
+import io.github.fstaudt.helm.JsonSchemaConstants.GENERATOR_LABEL
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.SCHEMA
+import io.github.fstaudt.helm.JsonSchemaConstants.NEW_LINE
+import io.github.fstaudt.helm.JsonSchemaConstants.SCHEMA_VERSION
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode

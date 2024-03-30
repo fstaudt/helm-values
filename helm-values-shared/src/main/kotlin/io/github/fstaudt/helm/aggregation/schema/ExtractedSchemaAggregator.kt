@@ -6,10 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import io.github.fstaudt.helm.HELM_CHART_FILE
-import io.github.fstaudt.helm.HELM_SCHEMA_FILE
-import io.github.fstaudt.helm.Keywords.Companion.REF
-import io.github.fstaudt.helm.NEW_LINE
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.NEW_LINE
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.globalOrNull

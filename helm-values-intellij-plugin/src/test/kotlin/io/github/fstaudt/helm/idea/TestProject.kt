@@ -6,8 +6,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil.findFileByIoFile
-import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
 import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.CHART_METADATA_FILE
 import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR

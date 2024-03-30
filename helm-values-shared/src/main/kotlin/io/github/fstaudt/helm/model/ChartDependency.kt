@@ -11,7 +11,7 @@ data class ChartDependency(
         private const val LOCAL_PATH_PREFIX = "file://"
     }
 
-    fun sanitizedVersion() = version?.filter { "$it".matches(Regex("[\\dA-Za-z.-]")) }
+    fun sanitizedVersion() = version?.filter { "$it".matches(Regex("[\\dA-Za-z.\\-+]")) }
     fun aliasOrName() = alias ?: name
     fun isStoredLocally() = repository?.startsWith(LOCAL_PATH_PREFIX) == true
     fun localPath() = repository?.takeIf { isStoredLocally() }?.removePrefix(LOCAL_PATH_PREFIX)

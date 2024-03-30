@@ -1,10 +1,10 @@
 package io.github.fstaudt.helm.gradle
 
-import io.github.fstaudt.helm.HELM_CHARTS_DIR
-import io.github.fstaudt.helm.HELM_CHART_FILE
-import io.github.fstaudt.helm.HELM_VALUES_FILE
-import io.github.fstaudt.helm.PATCH_AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_CHARTS_DIR
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.EXTENSION
 import io.github.fstaudt.helm.gradle.services.JsonMapper
 import io.github.fstaudt.helm.gradle.services.YamlMapper

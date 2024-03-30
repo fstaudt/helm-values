@@ -1,7 +1,7 @@
 package io.github.fstaudt.helm.gradle.tasks
 
-import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
+import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator
 import io.github.fstaudt.helm.gradle.HelmValuesExtension

@@ -3,7 +3,7 @@ package io.github.fstaudt.helm.aggregation.schema
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
-import io.github.fstaudt.helm.Keywords.Companion.REF
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
 import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.removeAdditionalAndUnevaluatedProperties

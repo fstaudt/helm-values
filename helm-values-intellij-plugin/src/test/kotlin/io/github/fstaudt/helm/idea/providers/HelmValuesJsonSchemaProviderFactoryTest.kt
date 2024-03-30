@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.jetbrains.jsonSchema.extension.SchemaType.userSchema
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion.SCHEMA_7
-import io.github.fstaudt.helm.AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.CHART_NAME
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.initHelmChart

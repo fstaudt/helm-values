@@ -1,8 +1,8 @@
 package io.github.fstaudt.helm.gradle
 
-import io.github.fstaudt.helm.HELM_CHARTS_DIR
-import io.github.fstaudt.helm.HELM_CHART_FILE
-import io.github.fstaudt.helm.HELM_VALUES_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_CHARTS_DIR
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.HELM_SOURCES_DIR
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner

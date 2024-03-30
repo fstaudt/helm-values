@@ -3,7 +3,7 @@ package io.github.fstaudt.helm.idea.service
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.testFramework.HeavyPlatformTestCase
-import io.github.fstaudt.helm.HELM_CHART_FILE
+import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.idea.CHART_NAME
 import io.github.fstaudt.helm.idea.CHART_VERSION
 import io.github.fstaudt.helm.idea.HelmValuesSettings
