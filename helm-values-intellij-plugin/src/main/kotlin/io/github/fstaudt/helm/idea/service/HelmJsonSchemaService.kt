@@ -17,6 +17,8 @@ import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.Mappers.chartMapper
+import io.github.fstaudt.helm.Mappers.chartMetadataMapper
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
@@ -35,17 +37,13 @@ class HelmJsonSchemaService {
             ApplicationManager.getApplication().getService(HelmJsonSchemaService::class.java)
     }
 
-    private val yamlMapper = ObjectMapper(YAMLFactory()).also {
-        it.registerModule(KotlinModule.Builder().build())
-        it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-    }
     private val jsonMapper = ObjectMapper().also {
         it.registerModule(KotlinModule.Builder().build())
         it.enable(INDENT_OUTPUT)
     }
 
     fun aggregate(project: Project, chartFile: File, updateLocalDependencies: Boolean = true): Boolean {
-        val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        val chart = chartFile.inputStream().use { chartMapper.readValue(it, Chart::class.java) }
         if (updateLocalDependencies) {
             chart.dependencies.filter { it.isStoredLocally() }.forEach { dependency ->
                 File(chartFile.parentFile, "${dependency.localPath()}/$HELM_CHART_FILE").canonicalFile
@@ -67,13 +65,13 @@ class HelmJsonSchemaService {
             jsonMapper.writeValue(File(jsonSchemasDir, AGGREGATED_SCHEMA_FILE), it)
         }
         HelmChartMetadata(chartFile.parentFile).also {
-            yamlMapper.writeValue(File(jsonSchemasDir, CHART_METADATA_FILE), it)
+            chartMetadataMapper.writeValue(File(jsonSchemasDir, CHART_METADATA_FILE), it)
         }
         return chart.dependencies.all { File(extractSchemaDir, "${it.name}/$HELM_CHART_FILE").exists() }
     }
 
     fun clear(project: Project, chartFile: File) {
-        val chart = chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+        val chart = chartFile.inputStream().use { chartMapper.readValue(it, Chart::class.java) }
         File(project.baseDir(), "$JSON_SCHEMAS_DIR/${chart.name}").deleteRecursively()
     }
 

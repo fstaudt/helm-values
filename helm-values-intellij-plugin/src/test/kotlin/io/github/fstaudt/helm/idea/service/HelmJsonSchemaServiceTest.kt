@@ -1,9 +1,5 @@
 package io.github.fstaudt.helm.idea.service
 
-import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.intellij.testFramework.HeavyPlatformTestCase
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
@@ -15,6 +11,7 @@ import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
+import io.github.fstaudt.helm.Mappers.chartMetadataMapper
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator.Companion.DOWNLOADS
@@ -46,10 +43,6 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
         private const val EMBEDDED_VERSION = "0.1.0"
         private const val CHART_DOWNLOADS_DIR = "$JSON_SCHEMAS_DIR/$CHART_NAME/$DOWNLOADS_DIR"
         private const val CHART_EXTRACT_DIR = "$JSON_SCHEMAS_DIR/$CHART_NAME/$EXTRACTS_DIR"
-        private val yamlMapper = ObjectMapper(YAMLFactory()).also {
-            it.registerModule(KotlinModule.Builder().build())
-            it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-        }
     }
 
     private lateinit var state: HelmValuesSettings
@@ -126,7 +119,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
         val chartMetadataFile = File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$CHART_METADATA_FILE")
         assertThat(chartMetadataFile).isFile.exists()
         val chartMetadata = chartMetadataFile.inputStream().use {
-            yamlMapper.readValue(it, HelmChartMetadata::class.java)
+            chartMetadataMapper.readValue(it, HelmChartMetadata::class.java)
         }
         assertThat(chartMetadata.dir.path).isEqualTo("$subdir")
     }

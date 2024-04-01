@@ -2,11 +2,11 @@ package io.github.fstaudt.helm.aggregation.values
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOfOrNull
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNodeOrNull
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.propsOrNull
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.refOrNull
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.requiredOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.allOfOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.objectNodeOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.propsOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.refOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.requiredOrNull
 import io.github.fstaudt.helm.model.Chart
 import java.io.File
 

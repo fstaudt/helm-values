@@ -1,24 +1,23 @@
 package io.github.fstaudt.helm.aggregation.schema
 
-import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.NEW_LINE
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.globalOrNull
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.propsOrNull
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.removeAdditionalAndUnevaluatedProperties
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
+import io.github.fstaudt.helm.Mappers.chartMapper
+import io.github.fstaudt.helm.ObjectNodeExtensions.allOf
+import io.github.fstaudt.helm.ObjectNodeExtensions.global
+import io.github.fstaudt.helm.ObjectNodeExtensions.globalOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.objectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.props
+import io.github.fstaudt.helm.ObjectNodeExtensions.propsOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.removeAdditionalAndUnevaluatedProperties
+import io.github.fstaudt.helm.ObjectNodeExtensions.splitNotBlanks
+import io.github.fstaudt.helm.ObjectNodeExtensions.toObjectNode
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
+import io.github.fstaudt.helm.aggregation.schema.ImportValuesAggregator.addImportValueReferencesFor
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -36,15 +35,13 @@ class ExtractedSchemaAggregator(
     companion object {
         const val EXTRACTED_GLOBAL_VALUES_TITLE = "Aggregated global values for"
         const val EXTRACTS = "extracts"
-        private val yamlMapper = ObjectMapper(YAMLFactory()).also {
-            it.registerModule(KotlinModule.Builder().build())
-            it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-        }
     }
 
     fun aggregateFor(chart: Chart, jsonSchema: ObjectNode) {
         chart.dependencies.filter { it.shouldBeAggregated() }.forEach { dependency ->
             jsonSchema.aggregateFor(dependency, extractsDir, "#/$DEFS/$EXTRACTS", jsonSchema)
+            val schemaPath = "#/$DEFS/$EXTRACTS/${dependency.aliasOrName()}/$HELM_SCHEMA_FILE"
+            jsonSchema.addImportValueReferencesFor(dependency.importValues, schemaPath)
         }
     }
 
@@ -57,7 +54,7 @@ class ExtractedSchemaAggregator(
         val dependencyRefPrefix = "$refPrefix/${dependency.aliasOrName()}"
         val dependencyDir = File(extractedChartDir, dependency.name)
         val dependencyChart = File(dependencyDir, HELM_CHART_FILE).takeIf { it.exists() }?.let { chartFile ->
-            chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+            chartFile.inputStream().use { chartMapper.readValue(it, Chart::class.java) }
         }
         with(props().objectNode(dependency.aliasOrName())) {
             File(dependencyDir, HELM_SCHEMA_FILE).takeIf { it.exists() }?.let {
@@ -102,7 +99,7 @@ class ExtractedSchemaAggregator(
             props().global().allOf().add(objectNode().put(REF, ref))
         }
         val dependencyChart = File(dependencyDir, HELM_CHART_FILE).takeIf { it.exists() }?.let { chartFile ->
-            chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+            chartFile.inputStream().use { chartMapper.readValue(it, Chart::class.java) }
         }
         dependencyChart?.dependencies?.forEach {
             addGlobalPropertiesFor(it, dependencyDir, dependencyRefPrefix)
@@ -110,8 +107,7 @@ class ExtractedSchemaAggregator(
     }
 
     private fun ObjectNode.aggregateExtractedSchemaFor(schemaDir: File, schemaPath: String) {
-        val schemaNode = schemaPath.split("/").filter { it.isNotBlank() }
-            .fold(this) { node, s -> node.objectNode(s) }
+        val schemaNode = schemaPath.splitNotBlanks("/").fold(this) { node, s -> node.objectNode(s) }
         val schema = File(schemaDir, HELM_SCHEMA_FILE).toObjectNode()
         schema.updateReferencesFor(listOf(schemaPath.toInternalRefMapping()))
         schema.removeAdditionalAndUnevaluatedProperties()

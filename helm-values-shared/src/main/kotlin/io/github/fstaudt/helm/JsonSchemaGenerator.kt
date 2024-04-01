@@ -13,11 +13,11 @@ import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.SCHEMA
 import io.github.fstaudt.helm.JsonSchemaConstants.NEW_LINE
 import io.github.fstaudt.helm.JsonSchemaConstants.SCHEMA_VERSION
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNodeOrNull
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
+import io.github.fstaudt.helm.ObjectNodeExtensions.allOf
+import io.github.fstaudt.helm.ObjectNodeExtensions.global
+import io.github.fstaudt.helm.ObjectNodeExtensions.objectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.objectNodeOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.props
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository

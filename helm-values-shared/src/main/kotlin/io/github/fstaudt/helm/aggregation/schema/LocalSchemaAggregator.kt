@@ -6,12 +6,13 @@ import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.removeAdditionalAndUnevaluatedProperties
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.allOf
+import io.github.fstaudt.helm.ObjectNodeExtensions.objectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.removeAdditionalAndUnevaluatedProperties
+import io.github.fstaudt.helm.ObjectNodeExtensions.toObjectNode
 import io.github.fstaudt.helm.SchemaLocator
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
+import io.github.fstaudt.helm.aggregation.schema.ImportValuesAggregator.addImportValueReferencesFor
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.RefMapping
@@ -46,9 +47,10 @@ class LocalSchemaAggregator(private val chartDir: File, private val schemaLocato
     private fun ObjectNode.aggregateLocallyStoredSchemasFor(chart: Chart) {
         updateReferencesFor(chart.dependencies.toLocallyStoredRefMappings())
         chart.dependencies.filter { it.isStoredLocally() }.forEach {
-            aggregateLocalSchema(it, schemaLocator.aggregatedSchemaFor(it))
+            val aggregatedSchemaFile = schemaLocator.aggregatedSchemaFor(it)
+            aggregateLocalSchema(it, aggregatedSchemaFile)
+            addImportValueReferencesFor(it.importValues, "#/$DEFS/$LOCAL/${it.name}/${aggregatedSchemaFile.name}")
         }
-
     }
 
     private fun List<ChartDependency>.toLocallyStoredRefMappings() = mapNotNull { it.toLocallyStoredRefMapping() }

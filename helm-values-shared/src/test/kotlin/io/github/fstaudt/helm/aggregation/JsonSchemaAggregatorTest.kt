@@ -32,6 +32,7 @@ import io.github.fstaudt.helm.initExtractedHelmDependency
 import io.github.fstaudt.helm.initLocalSchema
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
+import io.github.fstaudt.helm.model.ChartDependencyImport
 import io.github.fstaudt.helm.model.JsonSchemaRepository
 import io.github.fstaudt.helm.test.assertions.escaped
 import io.github.fstaudt.helm.testProject
@@ -560,6 +561,233 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
+    fun `aggregate should add ref for values imported from downloaded JSON schema`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
+                importValues = listOf(ChartDependencyImport("imported", "from-child"))),
+        ))
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
+            {
+              "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "properties": {
+                "imported": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+        """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            it.node("$EXTERNAL_SCHEMA.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+            it.node("from-child.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH/properties/imported")
+        })
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
+            .and({
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("imported")
+            })
+    }
+
+    @Test
+    fun `aggregate should add ref for values imported by String or by parent-child`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
+                importValues = listOf(
+                    ChartDependencyImport("exports.from-child", "from-child"),
+                    ChartDependencyImport("child", "parent"),
+                )),
+        ))
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
+            {
+              "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "properties": {
+                "child": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "exports": {
+                  "properties": {
+                    "from-child": {
+                      "properties": {
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+        """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            it.node("$EXTERNAL_SCHEMA.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+            it.node("parent.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH/properties/child")
+            it.node("from-child.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH/properties/exports/properties/from-child")
+        })
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
+            .and({
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("child", "exports")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.properties.exports.properties").isObject.containsOnlyKeys("from-child")
+            })
+    }
+
+    @Test
+    fun `aggregate should add ref for imported values when child and parent have complex paths`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
+                importValues = listOf(ChartDependencyImport("imported.sub", "from-child.sub"))),
+        ))
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
+            {
+              "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "properties": {
+                "imported": {
+                  "properties": {
+                    "sub": {
+                      "properties": {
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+        """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            it.node("$EXTERNAL_SCHEMA.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+            it.node("from-child.properties.sub.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH/properties/imported/properties/sub")
+        })
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
+            .and({
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.properties.imported.properties").isObject.containsOnlyKeys("sub")
+            })
+    }
+
+    @Test
+    fun `aggregate should add ref for imported values when dependency alias equals import`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS, alias = "from-child",
+                importValues = listOf(ChartDependencyImport("imported", "from-child"))),
+        ))
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
+            {
+              "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "properties": {
+                "imported": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+        """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            it.node("from-child.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+            it.node("from-child.allOf[0].$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH/properties/imported")
+        })
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
+            .and({
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("imported")
+            })
+    }
+
+    @Test
+    fun `aggregate should add ref for imported values when dependency alias equals import and condition`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
+                alias = "from-child", condition = "from-child.enabled",
+                importValues = listOf(ChartDependencyImport("imported", "from-child"))),
+        ))
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
+            {
+              "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "properties": {
+                "imported": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+        """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            it.node("from-child.properties.enabled").isObject
+            it.node("from-child.allOf[0].$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+            it.node("from-child.allOf[1].$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH/properties/imported")
+        })
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
+            .and({
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("imported")
+            })
+    }
+
+    @Test
+    fun `aggregate should comment ref for imported values when ref is not found in schema`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS,
+                importValues = listOf(ChartDependencyImport("not-found", "imported"))),
+        ))
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
+            {
+              "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "properties": {
+                "imported": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+        """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            it.node("$EXTERNAL_SCHEMA.$REF")
+                .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+            it.node("imported._comment")
+                .isEqualTo("removed invalid $REF #/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH/properties/not-found")
+        })
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
+            .and({
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("imported")
+            })
+    }
+
+    @Test
     fun `aggregate should aggregate extracted JSON schemas`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
@@ -844,6 +1072,38 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
+    fun `aggregate should add ref for imported values from extracted JSON schema`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY,
+                importValues = listOf(ChartDependencyImport("child", "imported")))
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA, schema = """
+            {
+              "$ID": "$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
+              "properties": {
+                "child": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+        """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            val extractedSchemaFile = "#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE"
+            it.node("$EMBEDDED_SCHEMA.$REF").isEqualTo(extractedSchemaFile)
+            it.node("imported.$REF").isEqualTo("$extractedSchemaFile/properties/child")
+        })
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}").and({
+            it.node(ID).isEqualTo("$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+            it.node("properties").isObject.containsOnlyKeys("child")
+        })
+    }
+
+    @Test
     fun `aggregate should discard required property when property is set in extracted values`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
@@ -1047,6 +1307,39 @@ internal class JsonSchemaAggregatorTest {
             .and({
                 it.node(ID).isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             })
+    }
+
+    @Test
+    fun `aggregate should add ref for imported values when dependency is stored locally`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA",
+                importValues = listOf(ChartDependencyImport("child", "parent")))
+        ))
+        testProject.initExtractedHelmDependency(EXTERNAL_SCHEMA)
+        testProject.initLocalSchema("sub/$EXTERNAL_SCHEMA", AGGREGATED_SCHEMA_FILE, schemaContent = """
+            {
+              "$ID": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
+              "properties": {
+                "child": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+        """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("properties").and({
+            val subChartAggregatedSchemaFile = "#/$DEFS/$LOCAL/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+            it.node("$EXTERNAL_SCHEMA.$REF").isEqualTo(subChartAggregatedSchemaFile)
+            it.node("parent.$REF").isEqualTo("$subChartAggregatedSchemaFile/properties/child")
+        })
+        assertThatJson(json).node("$DEFS.$LOCAL.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}").and({
+            it.node(ID).isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            it.node("properties").isObject.containsOnlyKeys("child")
+        })
     }
 
     @Test

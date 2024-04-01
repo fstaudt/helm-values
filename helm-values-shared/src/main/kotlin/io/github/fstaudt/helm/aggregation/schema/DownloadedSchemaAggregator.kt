@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.removeAdditionalAndUnevaluatedProperties
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toObjectNode
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
+import io.github.fstaudt.helm.ObjectNodeExtensions.isInternalReference
+import io.github.fstaudt.helm.ObjectNodeExtensions.objectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.removeAdditionalAndUnevaluatedProperties
+import io.github.fstaudt.helm.ObjectNodeExtensions.splitNotBlanks
+import io.github.fstaudt.helm.ObjectNodeExtensions.toObjectNode
+import io.github.fstaudt.helm.ObjectNodeExtensions.toUriFrom
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
+import io.github.fstaudt.helm.aggregation.schema.ImportValuesAggregator.addImportValueReferencesFor
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository
@@ -37,16 +39,13 @@ class DownloadedSchemaAggregator(
         jsonSchema.updateReferencesFor(chart.dependencies.toDownloadedRefMappings())
         chart.dependencies.filter { repositoryMappings.contains(it.repository) }.forEach {
             jsonSchema.aggregateDownloadedSchemaFor(it.valuesSchemaUri())
+            jsonSchema.addImportValueReferencesFor(it.importValues, schemaPathFor(it.valuesSchemaUri()))
         }
     }
 
     private fun ObjectNode.aggregateDownloadedSchemaFor(schemaUri: URI): String {
-        val schemaNode = schemaUri.path.split("/").filter { it.isNotBlank() }
-            .fold(objectNode(DEFS).objectNode(DOWNLOADS)) { node, s ->
-                node.objectNode(s)
-            }
-        val schemaPath = schemaUri.path.split("/").filter { it.isNotBlank() }
-            .fold("#/$DEFS/${DOWNLOADS}") { basePath, dir -> "$basePath/$dir" }
+        val schemaNode = schemaNodeFor(schemaUri)
+        val schemaPath = schemaPathFor(schemaUri)
         if (schemaNode.isEmpty) {
             val schema = File(downloadSchemasDir, schemaUri.path).toObjectNode()
             schema.findParents(REF).forEach { parent ->
@@ -82,5 +81,15 @@ class DownloadedSchemaAggregator(
 
     private fun ChartDependency.valuesSchemaUri(): URI {
         return repositoryMappings[repository]!!.let { URI("${it.baseUri}/$name/$version/${it.valuesSchemaFile}") }
+    }
+
+    private fun ObjectNode.schemaNodeFor(uri: URI): ObjectNode {
+        return uri.path.splitNotBlanks("/")
+            .fold(objectNode(DEFS).objectNode(DOWNLOADS)) { node, dir -> node.objectNode(dir) }
+    }
+
+    private fun schemaPathFor(uri: URI): String {
+        return uri.path.splitNotBlanks("/")
+            .fold("#/$DEFS/$DOWNLOADS") { basePath, dir -> "$basePath/$dir" }
     }
 }

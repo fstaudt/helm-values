@@ -8,9 +8,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.globalOrNull
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.objectNode
+import io.github.fstaudt.helm.Mappers.chartMapper
+import io.github.fstaudt.helm.ObjectNodeExtensions.global
+import io.github.fstaudt.helm.ObjectNodeExtensions.globalOrNull
+import io.github.fstaudt.helm.ObjectNodeExtensions.objectNode
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import java.io.File
@@ -35,7 +36,7 @@ class ExtractedValuesAggregator(private val extractsDir: File) {
     private fun ObjectNode.aggregateFor(dependency: ChartDependency, extractedChartDir: File) {
         val dependencyDir = File(extractedChartDir, dependency.name)
         val dependencyChart = File(dependencyDir, HELM_CHART_FILE).takeIf { it.exists() }?.let { chartFile ->
-            chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+            chartFile.inputStream().use { chartMapper.readValue(it, Chart::class.java) }
         }
         val dependencyValues = File(dependencyDir, HELM_VALUES_FILE).takeIf { it.exists() }?.let { valuesFile ->
             valuesFile.inputStream().use { yamlMapper.readTree(it) as? ObjectNode }
@@ -67,7 +68,7 @@ class ExtractedValuesAggregator(private val extractsDir: File) {
     private fun ObjectNode.propagate(dependency: ChartDependency, extractedChartDir: File, globalValues: ObjectNode) {
         val dependencyDir = File(extractedChartDir, dependency.name)
         val dependencyChart = File(dependencyDir, HELM_CHART_FILE).takeIf { it.exists() }?.let { chartFile ->
-            chartFile.inputStream().use { yamlMapper.readValue(it, Chart::class.java) }
+            chartFile.inputStream().use { chartMapper.readValue(it, Chart::class.java) }
         }
         objectNode(dependency.aliasOrName()).global().deepMergeWith(globalValues)
         dependencyChart?.dependencies?.forEach {

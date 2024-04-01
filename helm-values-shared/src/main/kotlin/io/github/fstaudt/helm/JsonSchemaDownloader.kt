@@ -13,9 +13,9 @@ import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.SCHEMA
 import io.github.fstaudt.helm.JsonSchemaConstants.NEW_LINE
 import io.github.fstaudt.helm.JsonSchemaConstants.SCHEMA_VERSION
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isFullUri
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.isInternalReference
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.toUriFrom
+import io.github.fstaudt.helm.ObjectNodeExtensions.isFullUri
+import io.github.fstaudt.helm.ObjectNodeExtensions.isInternalReference
+import io.github.fstaudt.helm.ObjectNodeExtensions.toUriFrom
 import io.github.fstaudt.helm.model.Chart
 import io.github.fstaudt.helm.model.ChartDependency
 import io.github.fstaudt.helm.model.JsonSchemaRepository

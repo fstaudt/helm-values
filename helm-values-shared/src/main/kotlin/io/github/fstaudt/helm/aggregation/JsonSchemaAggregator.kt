@@ -13,9 +13,9 @@ import io.github.fstaudt.helm.JsonSchemaConstants.NEW_LINE
 import io.github.fstaudt.helm.JsonSchemaGenerator
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_DESCRIPTION
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GLOBAL_VALUES_TITLE
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.allOf
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.global
-import io.github.fstaudt.helm.ObjectNodeExtensions.Companion.props
+import io.github.fstaudt.helm.ObjectNodeExtensions.allOf
+import io.github.fstaudt.helm.ObjectNodeExtensions.global
+import io.github.fstaudt.helm.ObjectNodeExtensions.props
 import io.github.fstaudt.helm.SchemaLocator
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator
 import io.github.fstaudt.helm.aggregation.schema.ExtractedSchemaAggregator
