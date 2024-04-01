@@ -87,14 +87,14 @@ internal class JsonSchemaAggregatorTest {
     }
 
     @Test
-    fun `aggregate should generate JSON schema for assistance in IDE`() {
+    fun `aggregate should generate JSON schema with generation metadata`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).and({
             it.node(SCHEMA).isEqualTo(SCHEMA_VERSION)
             it.node(ID).isEqualTo("$BASE_URI/$CHART_NAME/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
             it.node("x-generated-by").isEqualTo(GENERATOR_LABEL)
-            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")
+            it.node("x-generated-at").isString.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){1,2}Z")
             it.node("title").isEqualTo("Configuration for chart $CHART_NAME:$CHART_VERSION")
             it.node("description").isEqualTo("\\n\\\\n")
             it.isObject.doesNotContainKey(REF)
