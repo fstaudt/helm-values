@@ -61,7 +61,7 @@ class HelmDependencyExtractor(
                 archive.inputStream().use {
                     GzipCompressorInputStream(it).use {
                         TarArchiveInputStream(it).use {
-                            var entry: TarArchiveEntry? = it.nextTarEntry
+                            var entry: TarArchiveEntry? = it.nextEntry
                             while (entry != null) {
                                 logger.debug("entry {}: {}", entry.name, entry)
                                 if (entry.name.endsWith("/$HELM_CHART_FILE")
@@ -73,7 +73,7 @@ class HelmDependencyExtractor(
                                         writeBytes(it.readAllBytes())
                                     }
                                 }
-                                entry = it.nextTarEntry
+                                entry = it.nextEntry
                             }
                         }
                     }
