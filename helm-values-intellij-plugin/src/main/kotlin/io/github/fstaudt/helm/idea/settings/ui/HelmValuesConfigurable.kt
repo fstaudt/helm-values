@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.Align.Companion.FILL
 import com.intellij.ui.dsl.builder.COLUMNS_LARGE
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.LabelPosition
@@ -13,8 +14,6 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.table.TableModelEditor
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.HelmValuesSettings
@@ -72,14 +71,12 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
             }
             row {
                 cell(chartRepositoryEditor.createComponent())
-                    .horizontalAlign(HorizontalAlign.FILL)
-                    .verticalAlign(VerticalAlign.FILL)
+                    .align(FILL)
                     .label(message("settings.charts.label"), LabelPosition.TOP)
             }.resizableRow()
             row {
                 cell(jsonSchemaRepositoryMappingEditor.createComponent())
-                    .horizontalAlign(HorizontalAlign.FILL)
-                    .verticalAlign(VerticalAlign.FILL)
+                    .align(FILL)
                     .label(message("settings.mappings.label"), LabelPosition.TOP)
             }.resizableRow()
         }
