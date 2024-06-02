@@ -20,7 +20,7 @@ data class ChartDependencyImport(val child: String, val parent: String) {
                 START_OBJECT -> {
                     Builder().apply {
                         while (p.nextToken() != END_OBJECT) {
-                            when (p.currentName) {
+                            when (p.currentName()) {
                                 ChartDependencyImport::child.name -> p.nextToken().also { child = p.valueAsString }
                                 ChartDependencyImport::parent.name -> p.nextToken().also { parent = p.valueAsString }
                             }
