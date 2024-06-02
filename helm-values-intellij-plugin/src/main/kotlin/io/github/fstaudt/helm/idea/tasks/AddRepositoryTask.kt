@@ -21,10 +21,10 @@ class AddRepositoryTask(project: Project?, private val repository: ChartReposito
     fun runSynchronously() {
         try {
             helmService.addRepository(repository)
-            state.chartRepositories[repository.name]?.synchronized = true
+            state.chartRepositories[repository.name]?.pushedToHelm = true
             success(repository.name)
         } catch (e: Exception) {
-            state.chartRepositories[repository.name]?.synchronized = false
+            state.chartRepositories[repository.name]?.pushedToHelm = false
             error(repository.name, e,
                 HelmValuesSettingsNotificationAction("tasks.helmRepo"),
                 AddRepositoryNotificationAction(repository)

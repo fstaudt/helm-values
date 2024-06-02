@@ -1,7 +1,7 @@
 package io.github.fstaudt.helm.idea.settings.model
 
-data class ChartRepositorySetting(
+data class ChartRepositoryState(
     var url: String = "",
     var referenceRepository: String = "",
-    var synchronized: Boolean = true
+    var pushedToHelm: Boolean = true
 )

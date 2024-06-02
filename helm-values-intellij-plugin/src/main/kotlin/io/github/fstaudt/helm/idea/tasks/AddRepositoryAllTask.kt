@@ -21,9 +21,9 @@ class AddRepositoryAllTask(project: Project) : BackgroundTask(project, "tasks.ad
                 indicator.updateProgress(repository.name, index.toDouble() / size)
                 try {
                     helmService.addRepository(repository)
-                    state.chartRepositories[repository.name]?.synchronized = true
+                    state.chartRepositories[repository.name]?.pushedToHelm = true
                 } catch (e: Exception) {
-                    state.chartRepositories[repository.name]?.synchronized = false
+                    state.chartRepositories[repository.name]?.pushedToHelm = false
                     error(repository.name, e,
                         HelmValuesSettingsNotificationAction("tasks.helmRepo"),
                         AddRepositoryNotificationAction(repository)
@@ -31,7 +31,7 @@ class AddRepositoryAllTask(project: Project) : BackgroundTask(project, "tasks.ad
                 }
             }
         }
-        if (state.chartRepositories.all { it.value.synchronized }) {
+        if (state.chartRepositories.all { it.value.pushedToHelm }) {
             success("", HelmValuesSettingsNotificationAction("tasks.helmRepo"))
         }
     }

@@ -6,8 +6,8 @@ import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import io.github.fstaudt.helm.idea.HelmValuesSettings
-import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
+import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryState
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 
@@ -44,8 +44,8 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     fun `test - jsonSchemaRepositoryMappings should return all mappings from state`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            APPS to JsonSchemaRepository(APPS_URI),
-            BUNDLES to JsonSchemaRepository(BUNDLES_URI),
+            APPS to JsonSchemaRepositoryState(APPS_URI),
+            BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI),
         )
         assertThat(service.list()).containsExactly(
             JsonSchemaRepositoryMapping(APPS, APPS_URI),
@@ -56,8 +56,8 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     fun `test - jsonSchemaRepositoryMappings should retrieve specific values files from state`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            APPS to JsonSchemaRepository(APPS_URI, valuesSchemaFile = VALUES_SCHEMA),
-            BUNDLES to JsonSchemaRepository(BUNDLES_URI, globalValuesSchemaFile = GLOBAL_SCHEMA),
+            APPS to JsonSchemaRepositoryState(APPS_URI, valuesSchemaFile = VALUES_SCHEMA),
+            BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI, globalValuesSchemaFile = GLOBAL_SCHEMA),
         )
         assertThat(service.list()).containsExactly(
             JsonSchemaRepositoryMapping(APPS, APPS_URI, valuesSchemaFile = VALUES_SCHEMA),
@@ -68,8 +68,8 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     fun `test - jsonSchemaRepositoryMappings should retrieve specific values files from reference repository mapping when it is provided`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            APPS to JsonSchemaRepository(APPS_URI, "", VALUES_SCHEMA, GLOBAL_SCHEMA),
-            BUNDLES to JsonSchemaRepository(BUNDLES_URI, APPS),
+            APPS to JsonSchemaRepositoryState(APPS_URI, "", VALUES_SCHEMA, GLOBAL_SCHEMA),
+            BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI, APPS),
         )
         assertThat(service.list()).containsExactly(
             JsonSchemaRepositoryMapping(APPS, APPS_URI,
@@ -84,8 +84,8 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     fun `test - jsonSchemaRepositoryMappings should retrieve credentials in password safe for all mappings from state`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            APPS to JsonSchemaRepository(APPS_URI),
-            BUNDLES to JsonSchemaRepository(BUNDLES_URI),
+            APPS to JsonSchemaRepositoryState(APPS_URI),
+            BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI),
         )
         passwordSafe.set(credentialAttributes(APPS), Credentials(USERNAME, PASSWORD))
         assertThat(service.list()).containsExactly(
@@ -97,8 +97,8 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     fun `test - jsonSchemaRepositoryMappings should retrieve credentials from reference repository when it is provided`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            APPS to JsonSchemaRepository(APPS_URI),
-            BUNDLES to JsonSchemaRepository(BUNDLES_URI, APPS),
+            APPS to JsonSchemaRepositoryState(APPS_URI),
+            BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI, APPS),
         )
         passwordSafe.set(credentialAttributes(APPS), Credentials(USERNAME, PASSWORD))
         assertThat(service.list()).containsExactly(
@@ -109,7 +109,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
 
     fun `test - jsonSchemaRepositoryMappings should use default configuration when reference repository mapping is not found`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository(BUNDLES_URI, APPS))
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI, APPS))
         assertThat(service.list()).containsExactly(JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS))
     }
 
@@ -120,14 +120,14 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
             JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI),
         ))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            entry(APPS, JsonSchemaRepository(APPS_URI)),
-            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI)),
+            entry(APPS, JsonSchemaRepositoryState(APPS_URI)),
+            entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI)),
         )
     }
 
     fun `test - update should overwrite existing mapping in state`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository("https://nexus/previous"))
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState("https://nexus/previous"))
         service.update(listOf(
             JsonSchemaRepositoryMapping(
                 BUNDLES,
@@ -137,14 +137,14 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
             )
         ))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI, "", VALUES_SCHEMA, GLOBAL_SCHEMA))
+            entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI, "", VALUES_SCHEMA, GLOBAL_SCHEMA))
         )
     }
 
     fun `test - update should only keep reference repository mapping in state when it is provided`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            BUNDLES to JsonSchemaRepository("https://previous", "", VALUES_SCHEMA, GLOBAL_SCHEMA)
+            BUNDLES to JsonSchemaRepositoryState("https://previous", "", VALUES_SCHEMA, GLOBAL_SCHEMA)
         )
         service.update(listOf(
             JsonSchemaRepositoryMapping(
@@ -157,7 +157,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
                 GLOBAL_SCHEMA)
         ))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI, APPS))
+            entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI, APPS))
         )
     }
 
@@ -170,8 +170,8 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
             )
         )
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            entry(APPS, JsonSchemaRepository(APPS_URI)),
-            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI)),
+            entry(APPS, JsonSchemaRepositoryState(APPS_URI)),
+            entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI)),
         )
         assertThat(passwordSafe.get(credentialAttributes(APPS))).isEqualTo(Credentials(USERNAME, PASSWORD))
         assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()
@@ -179,36 +179,36 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
 
     fun `test - update should clear credentials of removed mappings from password safe`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository(APPS_URI))
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState(APPS_URI))
         passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
         service.update(listOf(JsonSchemaRepositoryMapping(APPS, APPS_URI)))
-        assertThat(state.jsonSchemaRepositories).containsExactly(entry(APPS, JsonSchemaRepository(APPS_URI)))
+        assertThat(state.jsonSchemaRepositories).containsExactly(entry(APPS, JsonSchemaRepositoryState(APPS_URI)))
         assertThat(state.jsonSchemaRepositories).doesNotContainKey(BUNDLES)
         assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()
     }
 
     fun `test - update should clear credentials of unsecure mappings from password safe`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository(BUNDLES_URI))
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI))
         passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
         service.update(listOf(JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI)))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI))
+            entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI))
         )
         assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()
     }
 
     fun `test - update should clear credentials when reference repository mapping is provided`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepository("https://previous"))
+        state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState("https://previous"))
         passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
         service.update(listOf(
             JsonSchemaRepositoryMapping(APPS, APPS_URI, "", USERNAME, PASSWORD),
             JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS, USERNAME, PASSWORD)
         ))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            entry(APPS, JsonSchemaRepository(APPS_URI)),
-            entry(BUNDLES, JsonSchemaRepository(BUNDLES_URI, APPS))
+            entry(APPS, JsonSchemaRepositoryState(APPS_URI)),
+            entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI, APPS))
         )
         assertThat(passwordSafe.get(credentialAttributes(APPS))).isEqualTo(Credentials(USERNAME, PASSWORD))
         assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()

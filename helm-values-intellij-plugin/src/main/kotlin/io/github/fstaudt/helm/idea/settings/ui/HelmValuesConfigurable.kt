@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.table.TableModelEditor
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.HelmValuesSettings
@@ -38,19 +39,32 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
 
     private val state = HelmValuesSettings.instance.state
     private val chartRepositoryService = ChartRepositoryService.instance
+    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
 
-    private val chartRepositoryEditor = TableModelEditor(
+    private val chartRepositoriesEditor = TableModelEditor(
         arrayOf(
             Column("charts", ChartRepository::name, 40),
             Column("charts", ChartRepository::url, 150),
             BooleanColumn("charts", ChartRepository::secured, 50),
-            BooleanColumn("charts", ChartRepository::synchronized, 80)
+            BooleanColumn("charts", ChartRepository::pushedToHelm, 90)
         ),
         ChartRepositoryEditor(),
         message("settings.charts.none")
     ).disableUpDownActions()
-    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
-    private val jsonSchemaRepositoryMappingEditor = TableModelEditor(
+    private val chartJsonSchemaRepositoryMappingsViewer = TableModelEditor(
+        arrayOf(
+            Column("mappings", JsonSchemaRepositoryMapping::name, 40),
+            Column("mappings", JsonSchemaRepositoryMapping::baseUri, 150),
+            Column("mappings", JsonSchemaRepositoryMapping::valuesSchemaFile, 50),
+            Column("mappings", JsonSchemaRepositoryMapping::globalValuesSchemaFile, 60),
+            BooleanColumn("mappings", JsonSchemaRepositoryMapping::secured, 50)
+        ),
+        JsonSchemaRepositoryMappingEditor(),
+        message("settings.chartMappings.none")
+    ).apply {
+        enabled(false)
+    }
+    private val additionalJsonSchemaRepositoryMappingsEditor = TableModelEditor(
         arrayOf(
             Column("mappings", JsonSchemaRepositoryMapping::name, 40),
             Column("mappings", JsonSchemaRepositoryMapping::baseUri, 150),
@@ -64,42 +78,62 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     private lateinit var helmBinaryPath: Cell<JBTextField>
 
     override fun createPanel(): DialogPanel {
-        jsonSchemaRepositoryMappingEditor.reset(jsonSchemaRepositoryMappingService.list())
         return panel {
             rowWithTextFieldForProperty(state::helmBinaryPath) { cell ->
                 cell.focused().also { helmBinaryPath = it }
             }
             row {
-                cell(chartRepositoryEditor.createComponent())
+                cell(chartRepositoriesEditor.createComponent())
                     .align(FILL)
                     .label(message("settings.charts.label"), LabelPosition.TOP)
             }.resizableRow()
             row {
-                cell(jsonSchemaRepositoryMappingEditor.createComponent())
+                cell(chartJsonSchemaRepositoryMappingsViewer.createComponent().apply { preferredHeight = 162 })
+                    .align(FILL)
+                    .label(message("settings.chartMappings.label"), LabelPosition.TOP)
+            }
+            row {
+                cell(additionalJsonSchemaRepositoryMappingsEditor.createComponent().apply { preferredHeight = 162 })
                     .align(FILL)
                     .label(message("settings.mappings.label"), LabelPosition.TOP)
-            }.resizableRow()
+            }
         }
     }
 
     override fun isModified(): Boolean {
-        return jsonSchemaRepositoryMappingEditor.model.items.sortedBy { it.name } != jsonSchemaRepositoryMappingService.list()
-                || chartRepositoryEditor.model.items.sortedBy { it.name } != chartRepositoryService.list()
+        return additionalJsonSchemaRepositoryMappingsEditor.model.items.sortedBy { it.name } != additionalJsonSchemaRepositoryMappings()
+                || chartRepositoriesEditor.model.items.sortedBy { it.name } != chartRepositoryService.list()
                 || helmBinaryPath.component.text.trimOrElse(HELM_BINARY) != state.helmBinaryPath
     }
 
     override fun apply() {
         val project = PROJECT.getData(DataManager.getInstance().getDataContext(getPreferredFocusedComponent()))
-        jsonSchemaRepositoryMappingService.update(jsonSchemaRepositoryMappingEditor.model.items)
-        chartRepositoryService.update(project, chartRepositoryEditor.model.items)
+        jsonSchemaRepositoryMappingService.update(allJsonSchemaRepositoryMappings())
+        chartRepositoryService.update(project, chartRepositoriesEditor.model.items)
         state.helmBinaryPath = helmBinaryPath.component.text.trimOrElse(HELM_BINARY)
         reset()
     }
 
     override fun reset() {
-        jsonSchemaRepositoryMappingEditor.reset(jsonSchemaRepositoryMappingService.list())
-        chartRepositoryEditor.reset(chartRepositoryService.list())
+        val chartRepositories = chartRepositoryService.list()
+        chartRepositoriesEditor.reset(chartRepositories)
+        chartJsonSchemaRepositoryMappingsViewer.reset(chartRepositories.mapNotNull { it.toJsonSchemaRepositoryMapping() })
+        additionalJsonSchemaRepositoryMappingsEditor.reset(additionalJsonSchemaRepositoryMappings())
         helmBinaryPath.component.text = state.helmBinaryPath
+    }
+
+    private fun allJsonSchemaRepositoryMappings(): List<JsonSchemaRepositoryMapping> {
+        return (chartRepositoriesEditor.model.items.mapNotNull { it.toJsonSchemaRepositoryMapping() }
+                + additionalJsonSchemaRepositoryMappingsEditor.model.items)
+            .distinctBy { it.name }
+            .filter { it.name.isNotBlank() }
+    }
+
+    private fun additionalJsonSchemaRepositoryMappings(): List<JsonSchemaRepositoryMapping> {
+        val chartRepositories = chartRepositoryService.list()
+        return jsonSchemaRepositoryMappingService.list().filter { mapping ->
+            chartRepositories.mapNotNull { it.toJsonSchemaRepositoryMapping()?.name }.contains(mapping.name).not()
+        }
     }
 
     private class Column<T, C>(

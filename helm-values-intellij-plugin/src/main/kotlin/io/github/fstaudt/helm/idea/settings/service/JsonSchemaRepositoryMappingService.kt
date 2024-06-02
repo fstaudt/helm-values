@@ -9,8 +9,8 @@ import com.intellij.openapi.components.Service
 import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.HelmValuesSettings
-import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
+import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryState
 
 @Service
 class JsonSchemaRepositoryMappingService {
@@ -31,6 +31,10 @@ class JsonSchemaRepositoryMappingService {
         }.sortedBy { it.name }
     }
 
+    fun get(name: String): JsonSchemaRepositoryMapping? {
+        return list().firstOrNull { it.name == name }
+    }
+
     fun update(items: List<JsonSchemaRepositoryMapping>) {
         state.jsonSchemaRepositories.forEach { r ->
             if (items.none { r.key == it.name && it.secured() && !it.referenced() }) {
@@ -45,7 +49,7 @@ class JsonSchemaRepositoryMappingService {
         state.jsonSchemaRepositories = items.associateBy { it.name }.mapValues { it.value.toJsonSchemaRepository() }
     }
 
-    private fun JsonSchemaRepository.toJsonSchemaRepositoryMapping(
+    private fun JsonSchemaRepositoryState.toJsonSchemaRepositoryMapping(
         name: String,
         credentials: Credentials?
     ): JsonSchemaRepositoryMapping {
@@ -60,8 +64,8 @@ class JsonSchemaRepositoryMappingService {
         )
     }
 
-    private fun JsonSchemaRepositoryMapping.toJsonSchemaRepository(): JsonSchemaRepository {
-        return JsonSchemaRepository(
+    private fun JsonSchemaRepositoryMapping.toJsonSchemaRepository(): JsonSchemaRepositoryState {
+        return JsonSchemaRepositoryState(
             baseUri,
             referenceRepositoryMapping,
             valuesSchemaFile.takeUnless { referenced() }.orElse(VALUES_SCHEMA_FILE),

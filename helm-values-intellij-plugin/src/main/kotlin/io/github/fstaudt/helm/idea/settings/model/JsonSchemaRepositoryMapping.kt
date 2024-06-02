@@ -15,7 +15,7 @@ data class JsonSchemaRepositoryMapping @JvmOverloads constructor(
     @Deprecated(GLOBAL_VALUES_DEPRECATION)
     var globalValuesSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
 ) {
-    fun applyFrom(item: JsonSchemaRepositoryMapping) {
+    fun applyFrom(item: JsonSchemaRepositoryMapping) = apply {
         name = item.name
         baseUri = item.baseUri
         referenceRepositoryMapping = item.referenceRepositoryMapping

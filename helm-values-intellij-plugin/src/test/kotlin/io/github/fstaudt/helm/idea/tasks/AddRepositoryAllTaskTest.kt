@@ -8,8 +8,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.testFramework.HeavyPlatformTestCase
 import io.github.fstaudt.helm.idea.HelmValuesSettings
-import io.github.fstaudt.helm.idea.settings.model.ChartRepositorySetting
-import io.github.fstaudt.helm.idea.settings.service.ChartRepositoryServiceTest
+import io.github.fstaudt.helm.idea.settings.model.ChartRepositoryState
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
@@ -40,11 +39,11 @@ class AddRepositoryAllTaskTest : HeavyPlatformTestCase() {
         every { anyConstructed<OSProcessHandler>().exitCode } returns 0
     }
 
-    fun `test - run should synchronize all repositories configured in settings`() {
+    fun `test - run should push all repositories configured in settings to Helm`() {
         reset()
         state.chartRepositories = mapOf(
-            APPS to ChartRepositorySetting(APPS_URL, synchronized = true),
-            BUNDLES to ChartRepositorySetting(BUNDLES_URL, synchronized = false)
+            APPS to ChartRepositoryState(APPS_URL, pushedToHelm = true),
+            BUNDLES to ChartRepositoryState(BUNDLES_URL, pushedToHelm = false)
         )
         val indicator = mockk<ProgressIndicator>(relaxed = true)
         AddRepositoryAllTask(project).also {
@@ -63,29 +62,29 @@ class AddRepositoryAllTaskTest : HeavyPlatformTestCase() {
         }
     }
 
-    fun `test - run should update synchronized status when synchronization succeeds`() {
+    fun `test - run should update pushedToHelm status when push succeeds`() {
         reset()
         state.chartRepositories = mapOf(
-            APPS to ChartRepositorySetting(APPS_URL, synchronized = false),
+            APPS to ChartRepositoryState(APPS_URL, pushedToHelm = false),
         )
         val indicator = mockk<ProgressIndicator>(relaxed = true)
         AddRepositoryAllTask(project).also {
             it.run(indicator)
         }
-        assertThat(state.chartRepositories[APPS]?.synchronized).isTrue
+        assertThat(state.chartRepositories[APPS]?.pushedToHelm).isTrue
     }
 
-    fun `test - run should update synchronized status when synchronization fails`() {
+    fun `test - run should update pushedToHelm status when push fails`() {
         reset()
         every { anyConstructed<OSProcessHandler>().exitCode } returns 1
         state.chartRepositories = mapOf(
-            APPS to ChartRepositorySetting(APPS_URL, synchronized = true),
+            APPS to ChartRepositoryState(APPS_URL, pushedToHelm = true),
         )
         val indicator = mockk<ProgressIndicator>(relaxed = true)
         AddRepositoryAllTask(project).also {
             it.run(indicator)
         }
-        assertThat(state.chartRepositories[APPS]?.synchronized).isFalse
+        assertThat(state.chartRepositories[APPS]?.pushedToHelm).isFalse
     }
 
     private fun credentialsFor(key: String): CredentialAttributes {

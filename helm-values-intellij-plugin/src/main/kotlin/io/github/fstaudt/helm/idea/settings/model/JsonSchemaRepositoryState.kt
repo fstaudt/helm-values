@@ -4,7 +4,7 @@ import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_DEPRECATION
 import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 
-data class JsonSchemaRepository @JvmOverloads constructor(
+data class JsonSchemaRepositoryState @JvmOverloads constructor(
     var baseUri: String = "",
     var referenceRepositoryMapping: String = "",
     var valuesSchemaFile: String = VALUES_SCHEMA_FILE,

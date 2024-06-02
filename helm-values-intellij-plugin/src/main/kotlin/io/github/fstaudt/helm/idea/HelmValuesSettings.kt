@@ -7,8 +7,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
-import io.github.fstaudt.helm.idea.settings.model.ChartRepositorySetting
-import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
+import io.github.fstaudt.helm.idea.settings.model.ChartRepositoryState
+import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryState
 
 @Service
 @State(name = "io.github.fstaudt.helm.idea.HelmValuesSettings",
@@ -21,8 +21,8 @@ class HelmValuesSettings : PersistentStateComponent<HelmValuesSettings> {
     }
 
     var helmBinaryPath: String = HELM_BINARY
-    var jsonSchemaRepositories: Map<String, JsonSchemaRepository> = emptyMap()
-    var chartRepositories: Map<String, ChartRepositorySetting> = emptyMap()
+    var jsonSchemaRepositories: Map<String, JsonSchemaRepositoryState> = emptyMap()
+    var chartRepositories: Map<String, ChartRepositoryState> = emptyMap()
 
     override fun getState() = this
 

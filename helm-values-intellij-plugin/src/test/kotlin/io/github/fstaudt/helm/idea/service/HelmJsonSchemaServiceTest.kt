@@ -25,7 +25,7 @@ import io.github.fstaudt.helm.idea.initHelmChart
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
 import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.CHART_METADATA_FILE
 import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR
-import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepository
+import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryState
 import io.github.fstaudt.helm.test.assertions.JsonFileAssert.Companion.assertThatJsonFile
 import io.github.fstaudt.helm.test.assertions.escaped
 import org.assertj.core.api.Assertions.assertThat
@@ -56,7 +56,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should download JSON schemas from external repositories`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart {
             appendText("""
                 dependencies:
@@ -72,7 +72,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should extract JSON schemas from Helm dependencies`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart {
             appendText("""
                 dependencies:
@@ -87,7 +87,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should generate aggregated JSON schema`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart {
             appendText("""
                 dependencies:
@@ -112,7 +112,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should generate metadata file with chart dir`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         val subdir = File(project.baseDir(), CHART_NAME)
         project.initHelmChart(subdir)
         service.aggregate(project, File(subdir, HELM_CHART_FILE))
@@ -126,7 +126,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should include JSON schema of current chart when it is available`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart()
         File(project.baseDir(), HELM_SCHEMA_FILE).writeText(
             """
@@ -146,7 +146,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should include JSON schema of current chart when it is available in project subdirectory`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         val subdir = File(project.baseDir(), CHART_NAME)
         project.initHelmChart(subdir)
         File(subdir, HELM_SCHEMA_FILE).writeText(
@@ -167,7 +167,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should include aggregated JSON schema of dependency when dependency is stored locally`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart(File(project.baseDir(), CHART_NAME)) {
             appendText("""
                 dependencies:
@@ -189,7 +189,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should generate aggregated JSON schema of dependency when dependency is stored locally`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart(File(project.baseDir(), CHART_NAME)) {
             appendText("""
                 dependencies:
@@ -208,7 +208,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should skip invalid local dependencies`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart(File(project.baseDir(), CHART_NAME)) {
             appendText("""
                 dependencies:
@@ -227,7 +227,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should include aggregated JSON schema of dependency when dependency is stored in child folder`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart {
             appendText("""
                 dependencies:
@@ -249,7 +249,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should include aggregated JSON schema of dependency when local path ends with slash`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart(File(project.baseDir(), CHART_NAME)) {
             appendText("""
                 dependencies:
@@ -280,7 +280,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should update aggregated JSON schema with values schema patch`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart {
             appendText("""
                 dependencies:
@@ -306,7 +306,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
 
     fun `test - aggregate should update aggregated JSON schema with aggregated schema patch`() {
         reset()
-        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepository(REPOSITORY_URL))
+        state.jsonSchemaRepositories = mapOf(EXTERNAL to JsonSchemaRepositoryState(REPOSITORY_URL))
         project.initHelmChart {
             appendText("""
                 dependencies:

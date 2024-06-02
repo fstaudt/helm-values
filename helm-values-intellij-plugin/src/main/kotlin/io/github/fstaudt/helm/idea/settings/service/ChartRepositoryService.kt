@@ -11,7 +11,8 @@ import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.settings.model.ChartRepository
-import io.github.fstaudt.helm.idea.settings.model.ChartRepositorySetting
+import io.github.fstaudt.helm.idea.settings.model.ChartRepositoryState
+import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.tasks.AddRepositoryTask
 import io.github.fstaudt.helm.idea.tasks.RemoveRepositoryTask
 
@@ -25,6 +26,7 @@ class ChartRepositoryService {
 
     private val state = HelmValuesSettings.instance.state
     private val passwordSafe = PasswordSafe.instance
+    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
     private val progressManager = ProgressManager.getInstance()
 
     fun list(): List<ChartRepository> {
@@ -37,7 +39,7 @@ class ChartRepositoryService {
 
     fun update(project: Project?, items: List<ChartRepository>) {
         state.chartRepositories.forEach { (key, value) ->
-            if (items.none { key == it.name } && value.synchronized) {
+            if (items.none { key == it.name } && value.pushedToHelm) {
                 progressManager.run(RemoveRepositoryTask(project, value.toChartRepository(key)))
             }
             if (items.none { key == it.name && it.secured() && !it.referenced() }) {
@@ -46,21 +48,21 @@ class ChartRepositoryService {
         }
         items.forEach {
             if (it.secured() && !it.referenced() && credentialsFor(it.name) != it.credentials()) {
-                it.synchronized = false
+                it.pushedToHelm = false
             } else if (it.secured() && it.referenced() && credentialsFor(it.referenceRepository) != it.credentials()) {
-                it.synchronized = false
+                it.pushedToHelm = false
             } else if (it.url != state.chartRepositories[it.name]?.url) {
-                it.synchronized = false
+                it.pushedToHelm = false
             }
         }
         state.chartRepositories = items.associateBy { it.name }.mapValues { (_, it) ->
-            ChartRepositorySetting(it.url, it.referenceRepository)
+            ChartRepositoryState(it.url, it.referenceRepository)
         }
         items.forEach {
             if (it.secured() && !it.referenced()) {
                 passwordSafe.set(credentialAttributesFor(it.name), it.credentials())
             }
-            if (!it.synchronized) {
+            if (!it.pushedToHelm) {
                 progressManager.runProcessWithProgressSynchronously(
                     AddRepositoryTask(project, it)::runSynchronously,
                     message("tasks.addRepository.title"), false, project)
@@ -68,7 +70,7 @@ class ChartRepositoryService {
         }
     }
 
-    private fun ChartRepositorySetting.toChartRepository(
+    private fun ChartRepositoryState.toChartRepository(
         name: String,
         credentials: Credentials? = null
     ): ChartRepository {
@@ -78,7 +80,8 @@ class ChartRepositoryService {
             referenceRepository,
             credentials?.userName.orEmpty(),
             credentials?.password?.toString().orEmpty(),
-            synchronized
+            pushedToHelm,
+            jsonSchemaRepositoryMappingService.get("@$name") ?: JsonSchemaRepositoryMapping(),
         )
     }
 

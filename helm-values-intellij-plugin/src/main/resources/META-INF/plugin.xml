@@ -66,8 +66,8 @@
                     </action>
                 </group>
                 <action id="HelmValues.AddRepositoryAll"
-                        text="Synchronize chart repositories in Helm"
-                        description="Synchronized all chart repositories configured in settings with Helm local installation"
+                        text="Push All Chart Repositories to Helm"
+                        description="Push all chart repositories configured in settings to Helm local installation"
                         class="io.github.fstaudt.helm.idea.actions.AddRepositoryAllAction"
                         icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                 </action>
