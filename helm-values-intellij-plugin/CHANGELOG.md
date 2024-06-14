@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.9.0 - Jun 14, 2024
+
+### ✨ New
+
+- configure Helm chart repositories from IntelliJ IDEA settings
+  ([#137](https://github.com/fstaudt/helm-values/issues/137))
+- configure Chart and JSON schema repository in same editor in settings
+  ([#137](https://github.com/fstaudt/helm-values/issues/137))
+- support YAML format for patch files
+  ([#55](https://github.com/fstaudt/helm-values/issues/55))
+- support import-values in chart dependencies
+  ([#106](https://github.com/fstaudt/helm-values/issues/106))
+- support for IJ 2024.2
+- drop support for IJ 2022.3
+
+### 🐛 Fixed
+
+- fix deprecation error on ActionUpdateThread since 2024.1
+- fix extraction of JSON schema from dependency archive when dependency is provided with version range
+
+### 🔥 Removed
+ 
+- IntelliJ IDEA 2022.3 is no more supported.\
+  Extension is only available for IntelliJ IDEA 2023.1 and above.
+
 ## 0.8.2 - Mar 23, 2024
 
 ### ✨ New

@@ -87,9 +87,13 @@ The schema is intended to provide auto-completion, documentation and validation 
 current chart.\
 It can also be used to validate values.yaml with Gradle task `validateHelmValues`.
 
-Optional file `aggregated-values.schema.patch.json` can be created in the base folder of the chart (same folder as
-Chart.yaml)
-to [patch aggregated JSON schema](https://jsonpatch.com/).
+Optional file `aggregated-values.schema.patch.json` 
+can be created in the base folder of the chart (same folder as Chart.yaml)
+to [patch aggregated JSON schema](https://jsonpatch.com/).\
+Since [#55 (0.9.0)](https://github.com/fstaudt/helm-values/issues/55),
+optional file `aggregated-values.schema.patch.yaml` can be created in the base folder of the chart.
+to [patch aggregated JSON schema](https://jsonpatch.com/).\
+If JSON patch file is present, YAML patch file is ignored.
 
 For more information on patch files, check dedicated section
 on [patch for generated JSON schemas](../README.md#patch-for-generated-json-schemas).
@@ -107,6 +111,10 @@ schemas.
 
 Optional file `values.schema.patch.json` can be created in the base folder of the chart (same folder as Chart.yaml)
 to [patch generated JSON schema](https://jsonpatch.com/).
+Since [#55 (0.9.0)](https://github.com/fstaudt/helm-values/issues/55),
+optional file `values.schema.patch.yaml` can be created in the base folder of the chart.
+to [patch aggregated JSON schema](https://jsonpatch.com/).\
+If JSON patch file is present, YAML patch file is ignored.
 
 For more information on patch files, check dedicated section
 on [patch for generated JSON schemas](../README.md#patch-for-generated-json-schemas).

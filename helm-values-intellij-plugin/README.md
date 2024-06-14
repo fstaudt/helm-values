@@ -10,9 +10,9 @@
 The plugin provides several actions to generate [JSON schemas](https://json-schema.org/) for values of Helm charts.\
 These schemas can then be used in your IDE to document, validate and auto-complete Helm values.
 
+Plugin allows to configure Helm chart repositories directly from your IDE.\
 Plugin also allows to update Helm dependencies for Helm charts directly from your IDE.\
-_This requires [installation of Helm](https://helm.sh/docs/intro/install/) on your local workstation
-and [configuration of Helm repositories](https://helm.sh/docs/helm/helm_repo/)._
+_This requires [installation of Helm](https://helm.sh/docs/intro/install/) on your local workstation._
 
 More information: [Helm values documentation](https://github.com/fstaudt/helm-values#readme)
 <!-- Plugin description end -->
@@ -51,6 +51,11 @@ if required (e.g. for other values files applied after packaging).
 
 Optional file `aggregated-values.schema.patch.json` can be created in the base folder of the chart
 (same folder as Chart.yaml) to [patch aggregated JSON schema](https://jsonpatch.com/).\
+Since [#55 (0.9.0)](https://github.com/fstaudt/helm-values/issues/55),
+optional file `aggregated-values.schema.patch.yaml` can be created in the base folder of the chart.
+to [patch aggregated JSON schema](https://jsonpatch.com/).\
+If JSON patch file is present, YAML patch file is ignored.
+
 For more information on patch files, check dedicated section
 on [patch for generated JSON schemas](../README.md#patch-for-generated-json-schemas).
 
@@ -108,6 +113,28 @@ Update of Helm repositories is however only executed once for all charts in proj
 _Action requires [installation of Helm](https://helm.sh/docs/intro/install/) on local workstation
 and [configuration of Helm repositories](https://helm.sh/docs/helm/helm_repo/)._
 
+## Configure Helm chart repositories
+
+Helm chart repositories can be configured in plugin settings 
+and are automatically pushed to Helm installed on your local workstation when settings are saved.
+
+### Chart repository security
+
+Each chart repository can be configured with user and password in plugin settings.
+
+A reference chart repository can be defined for each chart repository in plugin settings.\
+When selected, credentials are inherited from the reference chart repository.\
+Inherited configuration is displayed in read-only in editor.
+
+![settings](screenshots/settings-helm-security.png "Configure Helm chart repository in settings")
+
+*:bulb: credentials are stored securely in IntelliJ password safe.*
+
+### JSON schema repository
+
+Each chart repository can be configured with an optional JSON schema repository.\
+More info on this configuration is provided in [next section](#configure-json-schema-repositories). 
+
 ## Configure JSON schema repositories
 
 As explained in [introduction](../README.md#json-schema-repositories),
@@ -146,7 +173,7 @@ The plugin must be configured with following configuration to download JSON sche
 
 Default file names for JSON schemas can be overridden for each repository in plugin settings.
 
-![settings](screenshots/settings-custom.png "Custom JSON schema file names in settings")
+![settings-custom](screenshots/settings-custom.png "Custom JSON schema file names in settings")
 
 **Deprecation notice**: *`globalValuesSchemaFile` is deprecated and will be removed in `1.0.0`.*
 
@@ -156,7 +183,7 @@ JSON schema repositories can be secured with basic authentication.
 
 Each schema repository can be configured with user and password in plugin settings.
 
-![settings](screenshots/settings-security.png "Security credentials in settings")
+![settings-security](screenshots/settings-security.png "Security credentials in settings")
 
 *:bulb: credentials are stored securely in IntelliJ password safe.*
 
@@ -167,14 +194,14 @@ A reference repository mapping can be defined for each repository in plugin sett
 When selected, credentials and schema file names are inherited from the reference repository mapping.\
 Inherited configuration is displayed in read-only in editor.
 
-![settings](screenshots/settings-reference.png "Reference repository mapping in settings")
+![settings-reference](screenshots/settings-reference.png "Reference repository mapping in settings")
 
 ## Screenshots
 
 #### Get documentation in values.yaml
 
-![settings](screenshots/values-documentation.png "Get documentation in values.yaml")
+![values-documentation](screenshots/values-documentation.png "Get documentation in values.yaml")
 
 #### Get validation and auto-completion in values.yaml
 
-![settings](screenshots/values-validation.png "Get validation and auto-completion in values.yaml")
+![values-validation](screenshots/values-validation.png "Get validation and auto-completion in values.yaml")

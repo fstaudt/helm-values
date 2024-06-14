@@ -1,15 +1,44 @@
+## 0.9.0 - Jun 14, 2024
+
+- :sparkles: (intellij) configure Helm chart repositories from IntelliJ IDEA
+  ([#137](https://github.com/fstaudt/helm-values/issues/137))
+- :sparkles: (intellij) configure Chart and JSON schema repositories in same editor in settings
+  ([#137](https://github.com/fstaudt/helm-values/issues/137))
+- :sparkles: support of YAML format for patch files
+  ([#55](https://github.com/fstaudt/helm-values/issues/55))
+- :sparkles: support import-values in chart dependencies
+  ([#106](https://github.com/fstaudt/helm-values/issues/106))
+- :sparkles: (intellij) support for IJ 2024.2
+- :sparkles: (intellij) drop support for IJ 2022.3
+- :bug: fix deprecation error on ActionUpdateThread since 2024.1
+- :bug: fix extraction of JSON schema from dependency archive when dependency is provided with version range
+
+**BREAKING CHANGES**:
+
+- :boom: (intellij) IntelliJ IDEA 2022.3 is no more supported.\
+  Extension is only available for IntelliJ IDEA 2023.1 and above.
+- :boom: (gradle) since [#55](https://github.com/fstaudt/helm-values/issues/55),
+  property `patchValuesFile` must be renamed `valuesPatchFile` for Gradle tasks aggregateJsonSchema and
+  generateJsonSchemas
+- :boom: (gradle) since [#55](https://github.com/fstaudt/helm-values/issues/55),
+  property `patchAggregatedFile` must be renamed `aggregatedValuesPatchFile` for Gradle tasks aggregateJsonSchema
+
 ## 0.8.2 - Mar 23, 2024
+
 - :sparkles: (intellij) support IJ 2024.1
 
 ## 0.8.1 - Feb 20, 2024
+
 - :sparkles: (gradle) compatibility with Gradle configuration cache
 - :bug: (gradle) disable caching by default for task validateHelmValues
 - :bug: (intellij) use alphabetical order for actions on all charts in project
 
 **BREAKING CHANGES**:
+
 - Minimal Gradle version for Gradle plugin: Gradle 8.3
 
 ## 0.8.0 - Nov 11, 2023
+
 - :sparkles: discard required properties when already defined in dependency values
   ([#40](https://github.com/fstaudt/helm-values/issues/40))
 - :sparkles: (intellij) actions to trigger helm dependency update
@@ -28,12 +57,14 @@
   ([#133](https://github.com/fstaudt/helm-values/issues/133))
 
 **BREAKING CHANGES**:
+
 - Since [#130](https://github.com/fstaudt/helm-values/issues/130),
   JSON schema validation is no more applied by default on files `*-values.yaml` in IntelliJ IDEA.\
   Validation of non-standard Helm values files with generated JSON schema can be configured
   in [IntelliJ settings](https://www.jetbrains.com/help/idea/json.html#ws_json_schema_add_custom).
 
 ## 0.7.1 - Jul 14, 2023
+
 - :sparkles: (intellij) support for IntelliJ IDEA 2023.2
 - :zap: (intellij) avoid full project scanning in JSON schema provider factory
   ([#64](https://github.com/fstaudt/helm-values/issues/64))
