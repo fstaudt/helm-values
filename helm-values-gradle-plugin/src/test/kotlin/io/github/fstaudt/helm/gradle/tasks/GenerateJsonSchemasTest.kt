@@ -4,6 +4,7 @@ import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.SCHEMA
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
 import io.github.fstaudt.helm.gradle.CHART_NAME
@@ -229,7 +230,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchemas should update generated values schema with values schema patch`() {
+    fun `generateJsonSchemas should update generated values schema with values JSON schema patch`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -260,7 +261,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchemas should update generated values schema with values schema patch in sourcesDir`() {
+    fun `generateJsonSchemas should update generated values schema with values JSON schema patch in sourcesDir`() {
         val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.initHelmChart(sourcesDir) {
             appendText(
@@ -305,7 +306,7 @@ class GenerateJsonSchemasTest {
     }
 
     @Test
-    fun `generateJsonSchemas should update generated values schema with provided values schema patch`() {
+    fun `generateJsonSchemas should update generated values schema with provided values JSON schema patch`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -326,7 +327,7 @@ class GenerateJsonSchemasTest {
                   publicationRepository = "$APPS"
                 }
                 tasks.named<${GenerateJsonSchemas::class.java.name}>("$GENERATE_JSON_SCHEMAS") {
-                  patchValuesFile.set(File(project.projectDir, "custom.schema.patch.json"))
+                  valuesPatchFile.set(File(project.projectDir, "custom.schema.patch.json"))
                 }
             """.trimIndent()
             )
@@ -345,6 +346,188 @@ class GenerateJsonSchemasTest {
                 .hasContent().and(
                     { it.node("title").isEqualTo("overridden value") },
                     { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF) },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should update generated values schema with values YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_VALUES_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: replace
+              path: "/title"
+              value: "overridden YAML value"
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("title").isEqualTo("overridden YAML value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF) },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should update generated values schema with values YAML schema patch in sourcesDir`() {
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
+        testProject.initHelmChart(sourcesDir) {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "$CHART_NAME"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH")
+                  )
+                  publicationRepository = "$APPS"
+                }
+            """.trimIndent()
+            )
+        }
+        File(sourcesDir, PATCH_VALUES_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: replace
+              path: "/title"
+              value: "overridden YAML value"
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("title").isEqualTo("overridden YAML value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF) },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should update generated values schema with provided values YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH")
+                  )
+                  publicationRepository = "$APPS"
+                }
+                tasks.named<${GenerateJsonSchemas::class.java.name}>("$GENERATE_JSON_SCHEMAS") {
+                  valuesYamlPatchFile.set(File(project.projectDir, "custom.schema.patch.yaml"))
+                }
+            """.trimIndent()
+            )
+        }
+        File(testProject, "custom.schema.patch.yaml").writeText(
+            """
+            - op: replace
+              path: "/title"
+              value: "overridden YAML value"
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("title").isEqualTo("overridden YAML value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF) },
+                )
+        }
+    }
+
+    @Test
+    fun `generateJsonSchemas should give precedence on values JSON schema patch over values YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$BASE_URL/$APPS_PATH")
+                  )
+                  publicationRepository = "$APPS"
+                }
+            """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_VALUES_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden JSON value" },
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional JSON value" }
+            ]
+            """.trimIndent()
+        )
+
+        File(testProject, PATCH_VALUES_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: replace
+              path: "/title"
+              value: "overridden YAML value"
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
+                .hasContent().and(
+                    { it.node("title").isEqualTo("overridden JSON value") },
+                    { it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional JSON value") },
                     { it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF) },
                 )
         }

@@ -5,7 +5,9 @@ import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
@@ -304,7 +306,7 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should update aggregated values schema with aggregated schema patch`() {
+    fun `aggregateJsonSchema should update aggregated values schema with aggregated JSON schema patch`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -334,7 +336,7 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should update aggregated values schema with aggregated schema patch in sourcesDir`() {
+    fun `aggregateJsonSchema should update aggregated values schema with aggregated JSON schema patch in sourcesDir`() {
         val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.clearHelmChart()
         testProject.initHelmChart(sourcesDir) {
@@ -379,7 +381,7 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should update aggregated values schema with provided aggregated schema patch`() {
+    fun `aggregateJsonSchema should update aggregated values schema with provided aggregated JSON schema patch`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -400,7 +402,7 @@ class AggregateJsonSchemaTest {
                   publicationRepository = "$APPS"
                 }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
-                  patchAggregatedFile.set(File(project.projectDir, "custom.schema.patch.json"))
+                  aggregatedValuesPatchFile.set(File(project.projectDir, "custom.schema.patch.json"))
                 }
                 """.trimIndent()
             )
@@ -424,7 +426,173 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should update aggregated values schema with values schema patch`() {
+    fun `aggregateJsonSchema should update aggregated values schema with aggregated YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_AGGREGATED_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: replace
+              path: "/title"
+              value: "overridden YAML value"
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+                it.node("title").isEqualTo("overridden YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with aggregated YAML schema patch in sourcesDir`() {
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
+        testProject.clearHelmChart()
+        testProject.initHelmChart(sourcesDir) {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "$CHART_NAME"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+                """.trimIndent()
+            )
+        }
+        File(sourcesDir, PATCH_AGGREGATED_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: replace
+              path: "/title"
+              value: "overridden YAML value"
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+                it.node("title").isEqualTo("overridden YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with provided aggregated YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+                tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
+                  aggregatedValuesYamlPatchFile.set(File(project.projectDir, "custom.schema.patch.yaml"))
+                }
+                """.trimIndent()
+            )
+        }
+        File(testProject, "custom.schema.patch.yaml").writeText(
+            """
+            - op: replace
+              path: "/title"
+              value: "overridden YAML value"
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+                it.node("title").isEqualTo("overridden YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should give precedence on aggregated JSON schema patch over aggregated YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_AGGREGATED_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "replace", "path": "/title", "value": "overridden JSON value" },
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional JSON value" }
+            ]
+            """.trimIndent()
+        )
+        File(testProject, PATCH_AGGREGATED_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: replace
+              path: "/title"
+              value: "overridden YAML value"
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+                it.node("title").isEqualTo("overridden JSON value")
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional JSON value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with values JSON schema patch`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -452,7 +620,7 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should update aggregated values schema with values schema patch in sourcesDir`() {
+    fun `aggregateJsonSchema should update aggregated values schema with values JSON schema patch in sourcesDir`() {
         val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
         testProject.clearHelmChart()
         testProject.initHelmChart(sourcesDir) {
@@ -495,7 +663,7 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
-    fun `aggregateJsonSchema should update aggregated values schema with provided values schema patch`() {
+    fun `aggregateJsonSchema should update aggregated values schema with provided values JSON schema patch`() {
         testProject.initHelmChart {
             appendText(
                 """
@@ -516,7 +684,7 @@ class AggregateJsonSchemaTest {
                   publicationRepository = "$APPS"
                 }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
-                  patchValuesFile.set(File(project.projectDir, "custom.schema.patch.json"))
+                  valuesPatchFile.set(File(project.projectDir, "custom.schema.patch.json"))
                 }
                 """.trimIndent()
             )
@@ -532,6 +700,155 @@ class AggregateJsonSchemaTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with values YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_VALUES_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with values YAML schema patch in sourcesDir`() {
+        val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
+        testProject.clearHelmChart()
+        testProject.initHelmChart(sourcesDir) {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  sourcesDir = "$CHART_NAME"
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+                """.trimIndent()
+            )
+        }
+        File(sourcesDir, PATCH_VALUES_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should update aggregated values schema with provided values YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings = mapOf(
+                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
+                  )
+                  publicationRepository = "$APPS"
+                }
+                tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
+                  valuesYamlPatchFile.set(File(project.projectDir, "custom.schema.patch.yaml"))
+                }
+                """.trimIndent()
+            )
+        }
+        File(testProject, "custom.schema.patch.yaml").writeText(
+            """
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional YAML value")
+                it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
+            })
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should give precedence on values JSON schema patch over values YAML schema patch`() {
+        testProject.initHelmChart {
+            appendText(
+                """
+                dependencies:
+                - name: $EXTERNAL_SCHEMA
+                  version: $EXTERNAL_VERSION
+                  repository: "$APPS"
+                """.trimIndent()
+            )
+        }
+        File(testProject, PATCH_VALUES_SCHEMA_FILE).writeText(
+            """
+            [
+              { "op": "add", "path": "/properties/$EXTERNAL_SCHEMA/title", "value": "additional JSON value" }
+            ]
+            """.trimIndent()
+        )
+        File(testProject, PATCH_VALUES_SCHEMA_YAML_FILE).writeText(
+            """
+            - op: add
+              path: "/properties/$EXTERNAL_SCHEMA/title"
+              value: "additional YAML value"
+            """.trimIndent()
+        )
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+            assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
+                it.node("properties.$EXTERNAL_SCHEMA.title").isEqualTo("additional JSON value")
                 it.node("properties.$EXTERNAL_SCHEMA").isObject.containsKey(REF)
             })
         }

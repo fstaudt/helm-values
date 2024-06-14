@@ -1,6 +1,7 @@
 package io.github.fstaudt.helm.gradle.services
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.Mappers.chartMapper
 import io.github.fstaudt.helm.model.Chart
 import org.gradle.api.provider.Property
@@ -16,4 +17,10 @@ abstract class YamlMapper : BuildService<None> {
     fun valuesFrom(valuesFile: Property<File>): JsonNode {
         return valuesFile.get().inputStream().use { chartMapper.readTree(it) }
     }
+
+    fun patchFrom(yamlFile: Property<File>): JsonPatch? {
+        return yamlFile.get().takeIf { it.exists() }?.toJsonPatch()
+    }
+
+    private fun File.toJsonPatch() = let { JsonPatch.fromJson(chartMapper.readTree(it)) }
 }

@@ -46,7 +46,7 @@ class JsonSchemaAggregator(
     private val localSchemaAggregator = LocalSchemaAggregator(chartDir, schemaLocator)
     private val requiredPropertyCleaner = RequiredPropertyCleaner(extractsDir)
 
-    fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedJsonPatch: JsonPatch?): JsonNode {
+    fun aggregate(chart: Chart, valuesJsonPatch: JsonPatch?, aggregatedValuesJsonPatch: JsonPatch?): JsonNode {
         val jsonSchema = generator.generateValuesJsonSchema(chart, valuesJsonPatch)
         jsonSchema.put(ID, "$BASE_URI/${chart.name}/${chart.version}/$AGGREGATED_SCHEMA_FILE")
         jsonSchema.put("title", "Configuration for chart ${chart.name}:${chart.version}")
@@ -58,7 +58,7 @@ class JsonSchemaAggregator(
         jsonSchema.addGlobalPropertiesDescriptionFor(chart)
         jsonSchema.put(UNEVALUATED_PROPERTIES, false)
         jsonSchema.put(ADDITIONAL_PROPERTIES, false)
-        return aggregatedJsonPatch?.apply(jsonSchema) ?: jsonSchema
+        return aggregatedValuesJsonPatch?.apply(jsonSchema) ?: jsonSchema
     }
 
     private fun ObjectNode.addGlobalPropertiesDescriptionFor(chart: Chart) {

@@ -1,6 +1,5 @@
 package io.github.fstaudt.helm.idea.service
 
-import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -14,7 +13,9 @@ import io.github.fstaudt.helm.HelmDependencyExtractor
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.Mappers.chartMapper
@@ -42,6 +43,10 @@ class HelmJsonSchemaService {
         it.enable(INDENT_OUTPUT)
     }
 
+    private val yamlMapper = ObjectMapper(YAMLFactory()).also {
+        it.registerModule(KotlinModule.Builder().build())
+    }
+
     fun aggregate(project: Project, chartFile: File, updateLocalDependencies: Boolean = true): Boolean {
         val chart = chartFile.inputStream().use { chartMapper.readValue(it, Chart::class.java) }
         if (updateLocalDependencies) {
@@ -59,8 +64,8 @@ class HelmJsonSchemaService {
             chartFile.parentFile,
             downloadSchemaDir,
             extractSchemaDir)
-        val aggregatedJsonPatch = jsonPatch(chartFile, PATCH_AGGREGATED_SCHEMA_FILE)
-        val valuesJsonPatch = jsonPatch(chartFile, PATCH_VALUES_SCHEMA_FILE)
+        val aggregatedJsonPatch = jsonPatch(chartFile, PATCH_AGGREGATED_SCHEMA_FILE, PATCH_AGGREGATED_SCHEMA_YAML_FILE)
+        val valuesJsonPatch = jsonPatch(chartFile, PATCH_VALUES_SCHEMA_FILE, PATCH_VALUES_SCHEMA_YAML_FILE)
         aggregator.aggregate(chart, valuesJsonPatch, aggregatedJsonPatch).also {
             jsonMapper.writeValue(File(jsonSchemasDir, AGGREGATED_SCHEMA_FILE), it)
         }
@@ -83,9 +88,11 @@ class HelmJsonSchemaService {
         HelmDependencyExtractor(chartsDir, it).extract(chart)
     }
 
-    private fun jsonPatch(chartFile: File, patchFile: String): JsonPatch? {
-        return File(chartFile.parent, patchFile).takeIf { it.exists() }?.let {
+    private fun jsonPatch(chartFile: File, jsonPatchFile: String, yamlPatchFile: String): JsonPatch? {
+        return File(chartFile.parent, jsonPatchFile).takeIf { it.exists() }?.let {
             JsonPatch.fromJson(jsonMapper.readTree(it))
+        } ?: File(chartFile.parent, yamlPatchFile).takeIf { it.exists() }?.let {
+            JsonPatch.fromJson(yamlMapper.readTree(it))
         }
     }
 

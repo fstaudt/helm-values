@@ -1,5 +1,6 @@
 package io.github.fstaudt.helm.gradle.tasks
 
+import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
@@ -45,11 +46,19 @@ abstract class AggregateJsonSchema : DefaultTask() {
 
     @get:InputFiles
     @get:PathSensitive(RELATIVE)
-    abstract val patchAggregatedFile: Property<File>
+    abstract val aggregatedValuesPatchFile: Property<File>
 
     @get:InputFiles
     @get:PathSensitive(RELATIVE)
-    abstract val patchValuesFile: Property<File>
+    abstract val aggregatedValuesYamlPatchFile: Property<File>
+
+    @get:InputFiles
+    @get:PathSensitive(RELATIVE)
+    abstract val valuesPatchFile: Property<File>
+
+    @get:InputFiles
+    @get:PathSensitive(RELATIVE)
+    abstract val valuesYamlPatchFile: Property<File>
 
     @InputDirectory
     @PathSensitive(RELATIVE)
@@ -80,10 +89,14 @@ abstract class AggregateJsonSchema : DefaultTask() {
             downloadSchemasDir.get().asFile,
             extractSchemasDir.get().asFile)
         val chart = yamlMapper.get().chartFrom(chartFile)
-        val valuesJsonPatch = jsonMapper.get().patchFrom(patchValuesFile)
-        val aggregatedJsonPatch = jsonMapper.get().patchFrom(patchAggregatedFile)
-        aggregator.aggregate(chart, valuesJsonPatch, aggregatedJsonPatch).also {
+        val valuesJsonPatch = jsonPatchFrom(valuesPatchFile, valuesYamlPatchFile)
+        val aggregatedValuesJsonPatch = jsonPatchFrom(aggregatedValuesPatchFile, aggregatedValuesYamlPatchFile)
+        aggregator.aggregate(chart, valuesJsonPatch, aggregatedValuesJsonPatch).also {
             jsonMapper.get().writeTo(aggregatedSchemaFile, it)
         }
+    }
+
+    private fun jsonPatchFrom(jsonPatchFile: Property<File>, yamlPatchFile: Property<File>): JsonPatch? {
+        return jsonMapper.get().patchFrom(jsonPatchFile) ?: yamlMapper.get().patchFrom(yamlPatchFile)
     }
 }

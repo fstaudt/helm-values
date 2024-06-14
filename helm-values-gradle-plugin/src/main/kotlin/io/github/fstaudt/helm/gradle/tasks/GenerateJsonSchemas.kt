@@ -1,5 +1,6 @@
 package io.github.fstaudt.helm.gradle.tasks
 
+import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.JsonSchemaGenerator
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
 import io.github.fstaudt.helm.gradle.HelmValuesExtension
@@ -40,7 +41,11 @@ abstract class GenerateJsonSchemas : DefaultTask() {
 
     @get:InputFiles
     @get:PathSensitive(RELATIVE)
-    abstract val patchValuesFile: Property<File>
+    abstract val valuesPatchFile: Property<File>
+
+    @get:InputFiles
+    @get:PathSensitive(RELATIVE)
+    abstract val valuesYamlPatchFile: Property<File>
 
     @OutputDirectory
     val generatedSchemaDir: Provider<Directory> = layout.buildDirectory.dir("$HELM_VALUES/$GENERATION_DIR")
@@ -65,8 +70,12 @@ abstract class GenerateJsonSchemas : DefaultTask() {
         }
         val repository = extension.publicationRepository()
         val generator = JsonSchemaGenerator(extension.repositoryMappings, extension.publicationRepository)
-        val jsonPatch = jsonMapper.get().patchFrom(patchValuesFile)
+        val jsonPatch = jsonPatch()
         val jsonSchema = generator.generateValuesJsonSchema(chart, jsonPatch)
         jsonMapper.get().writeTo(generatedSchemaDir.map { it.file(repository.valuesSchemaFile) }, jsonSchema)
+    }
+
+    private fun jsonPatch(): JsonPatch? {
+        return jsonMapper.get().patchFrom(valuesPatchFile) ?: yamlMapper.get().patchFrom(valuesYamlPatchFile)
     }
 }

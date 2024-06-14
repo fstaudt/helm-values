@@ -4,7 +4,9 @@ import io.github.fstaudt.helm.HelmConstants.HELM_CHARTS_DIR
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.EXTENSION
 import io.github.fstaudt.helm.gradle.services.JsonMapper
 import io.github.fstaudt.helm.gradle.services.YamlMapper
@@ -63,8 +65,10 @@ class HelmValuesPlugin : Plugin<Project> {
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
                 println("sourcesDir: $sourcesDir")
                 chartFile.set(File(sourcesDir, HELM_CHART_FILE))
-                patchValuesFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_FILE))
-                patchAggregatedFile.set(File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE))
+                valuesPatchFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_FILE))
+                valuesYamlPatchFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_YAML_FILE))
+                aggregatedValuesPatchFile.set(File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE))
+                aggregatedValuesYamlPatchFile.set(File(sourcesDir, PATCH_AGGREGATED_SCHEMA_YAML_FILE))
                 yamlMapper.set(sharedYamlMapper)
                 usesService(sharedYamlMapper)
                 jsonMapper.set(sharedJsonMapper)
@@ -77,7 +81,8 @@ class HelmValuesPlugin : Plugin<Project> {
                 extension = pluginExtension
                 val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
                 chartFile.set(File(sourcesDir, HELM_CHART_FILE))
-                patchValuesFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_FILE))
+                valuesPatchFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_FILE))
+                valuesYamlPatchFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_YAML_FILE))
                 yamlMapper.set(sharedYamlMapper)
                 usesService(sharedYamlMapper)
                 jsonMapper.set(sharedJsonMapper)

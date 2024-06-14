@@ -38,7 +38,7 @@ abstract class JsonMapper : BuildService<None> {
     }
 
     fun patchFrom(jsonFile: Property<File>): JsonPatch? {
-        return jsonFile.get().takeIf { it.exists() }?.toJson()
+        return jsonFile.get().takeIf { it.exists() }?.toJsonPatch()
     }
 
     fun schemaFrom(aggregatedSchemaFile: Provider<RegularFile>): JsonSchema {
@@ -52,5 +52,5 @@ abstract class JsonMapper : BuildService<None> {
         objectMapper.writeValue(aggregatedSchemaFile.get().asFile, content)
     }
 
-    private fun File.toJson() = let { JsonPatch.fromJson(objectMapper.readTree(it)) }
+    private fun File.toJsonPatch() = let { JsonPatch.fromJson(objectMapper.readTree(it)) }
 }
