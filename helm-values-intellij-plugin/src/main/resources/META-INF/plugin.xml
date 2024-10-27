@@ -4,6 +4,7 @@
     <name>Helm Values</name>
     <vendor url="https://github.com/fstaudt/helm-values">fstaudt</vendor>
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.json</depends>
     <extensions defaultExtensionNs="JavaScript">
         <JsonSchema.ProviderFactory
                 implementation="io.github.fstaudt.helm.idea.providers.HelmValuesJsonSchemaProviderFactory"/>
