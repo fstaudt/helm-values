@@ -28,7 +28,7 @@ dependencies {
     api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
-    testImplementation("io.mockk:mockk:1.13.12")
+    testImplementation("io.mockk:mockk:1.13.13")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation(projects.helmValuesTest) {
         exclude(module = "junit-jupiter-api")
