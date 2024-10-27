@@ -37,7 +37,7 @@ This java library can be used to provide JSON schema generation for other IDE or
 [Licenses for Open Source Development](https://jb.gg/OpenSourceSupport)
 
 </td>
-<td>
+<td align="center">
 <img src="supports/SBS.svg" height="150" alt="SBS"/>
 
 [SBS](https://www.soprabanking.com)
