@@ -1,13 +1,12 @@
 import org.jetbrains.changelog.Changelog.OutputType.HTML
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform
 
 val intellijPluginName: String by project
 val intellijPluginVersion = "$version"
 val intellijPluginSinceBuild: String by project
 val intellijPluginUntilBuild: String by project
-val intellijPlatformType: String by project
 val intellijPlatformVersion: String by project
-val intellijPlatformPlugins: String by project
 
 plugins {
     // Java support
@@ -15,9 +14,15 @@ plugins {
     // Kotlin support
     kotlin("jvm")
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.intellij.platform") version "2.1.0"
     // Gradle Changelog Plugin
     id("org.jetbrains.changelog") version "2.2.1"
+}
+
+repositories {
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 kotlin {
@@ -28,85 +33,70 @@ dependencies {
     api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
+    intellijPlatform {
+        intellijIdeaCommunity(intellijPlatformVersion)
+        instrumentationTools()
+        pluginVerifier()
+        zipSigner()
+        testFramework(Platform)
+    }
     testImplementation("io.mockk:mockk:1.13.13")
-    testImplementation("org.assertj:assertj-core:3.26.3")
+    testImplementation("junit:junit:4.13.2")
     testImplementation(projects.helmValuesTest) {
-        exclude(module = "junit-jupiter-api")
-        exclude(module = "wiremock-jre8")
+        exclude("junit-jupiter-api")
+        exclude("wiremock")
     }
     testRuntimeOnly("org.yaml:snakeyaml:2.3")
 }
 
-// Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-intellij {
-    pluginName.set(intellijPluginName)
-    version.set(intellijPlatformVersion)
-    type.set(intellijPlatformType)
-
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    plugins.set(intellijPlatformPlugins.split(',').map(String::trim).filter(String::isNotEmpty))
+intellijPlatform {
+    pluginConfiguration {
+        name = intellijPluginName
+        version = intellijPluginVersion
+        description = pluginDescription()
+        ideaVersion {
+            sinceBuild = intellijPluginSinceBuild
+            untilBuild = intellijPluginUntilBuild
+        }
+        // Get the latest available change notes from the changelog file
+        changeNotes = provider {
+            changelog.renderItem(changelog.run { getOrNull(intellijPluginVersion) ?: getLatest() }, HTML)
+        }
+    }
+    publishing {
+        token = System.getenv("PUBLISH_TOKEN")
+        channels = listOf("default")
+    }
+    signing {
+        certificateChain = System.getenv("CERTIFICATE_CHAIN")
+        privateKey = System.getenv("PRIVATE_KEY")
+        password = System.getenv("PRIVATE_KEY_PASSWORD")
+    }
+    pluginVerification {
+        ides {
+            recommended()
+        }
+    }
 }
 
-// Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
 changelog {
-    version.set(intellijPluginVersion)
-    groups.set(
-        listOf(
-            "✨ New",
-            "\uD83D\uDC1B Fixed",
-            "\uD83D\uDD12 Security",
-            "\uD83D\uDDD1 Deprecated",
-            "\uD83D\uDD25 Removed"
-        )
+    version = intellijPluginVersion
+    groups = listOf(
+        "✨ New",
+        "\uD83D\uDC1B Fixed",
+        "\uD83D\uDD12 Security",
+        "\uD83D\uDDD1 Deprecated",
+        "\uD83D\uDD25 Removed"
     )
 }
 
-tasks {
-    patchPluginXml {
-        version.set(intellijPluginVersion)
-        sinceBuild.set(intellijPluginSinceBuild)
-        untilBuild.set(intellijPluginUntilBuild)
-
-        // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
-        pluginDescription.set(
-            projectDir.resolve("README.md").readText().lines().run {
-                val start = "<!-- Plugin description -->"
-                val end = "<!-- Plugin description end -->"
-
-                if (!containsAll(listOf(start, end))) {
-                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
-                }
-                subList(indexOf(start) + 1, indexOf(end))
-            }.joinToString("\n").run { markdownToHTML(this) }
-        )
-
-        // Get the latest available change notes from the changelog file
-        changeNotes.set(provider {
-            changelog.renderItem(changelog.run { getOrNull(intellijPluginVersion) ?: getLatest() }, HTML)
-        })
-    }
-
-    // Configure UI tests plugin
-    // Read more: https://github.com/JetBrains/intellij-ui-test-robot
-    runIdeForUiTests {
-        systemProperty("robot-server.port", "8082")
-        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
-        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
-        systemProperty("jb.consents.confirmation.enabled", "false")
-    }
-
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-    }
-
-    publishPlugin {
-        dependsOn("patchChangelog")
-        token.set(System.getenv("PUBLISH_TOKEN"))
-        // pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
-        // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
-        // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
-        channels.set(listOf(intellijPluginVersion.split('-').getOrElse(1) { "default" }.split('.').first()))
-    }
+fun pluginDescription(): String {
+    return projectDir.resolve("README.md").readText().lines().run {
+        val start = "<!-- Plugin description -->"
+        val end = "<!-- Plugin description end -->"
+        if (!containsAll(listOf(start, end))) {
+            throw GradleException("Plugin description section not found in README.md:\n$start\n...\n$end")
+        }
+        subList(indexOf(start) + 1, indexOf(end))
+    }.joinToString("\n").run { markdownToHTML(this) }
 }

@@ -9,23 +9,27 @@ jobs:
     name: "Build"
     runs-on: ubuntu-latest
     steps:
-      - name: "Check disk space before workflow"
-        run: df -h
-      - name: "Fetch Sources"
+      - name: "Fetch sources"
         uses: actions/checkout@v4.2.2
-      - name: "Setup Java 11"
+      - name: "Setup Java 17"
         uses: actions/setup-java@v4.5.0
         with:
           distribution: temurin
           java-version: 17
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-      - name: "Setup gradle wrapper"
+      - name: "Setup Gradle wrapper"
         run: chmod +x gradlew
-      - name: "Setup gradle"
+      - name: "Setup Gradle"
         uses: gradle/actions/setup-gradle@v4.1.0
-      - name: "Run Tests"
+      - name: "Maximize build space"
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          large-packages: false
+          docker-images: false
+      - name: "Run tests"
         run: ./gradlew check
-      - name: "Collect Tests Result of failed tests"
+      - name: "Collect results of failed tests"
         if: ${{ failure() }}
         uses: actions/upload-artifact@v4.4.3
         with:
@@ -41,51 +45,46 @@ jobs:
           PRIVATE_KEY: ${{ secrets.INTELLIJ_PRIVATE_KEY }}
           PRIVATE_KEY_PASSWORD: ${{ secrets.INTELLIJ_PRIVATE_KEY_PASSWORD }}
         run: ./gradlew :helm-values-intellij-plugin:signPlugin
-      - name: "Export IntelliJ Properties & products releases"
+      - name: "Export IntelliJ properties & products releases"
         id: intellij_properties
         shell: bash
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
           VERSION="$(echo "$PROPERTIES" | grep "^version:" | cut -f2- -d ' ')"
-          NAME="$(echo "$PROPERTIES" | grep "^intellijPluginName:" | cut -f2- -d ' ')"
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
 
-          ./gradlew :helm-values-intellij-plugin:listProductsReleases -PintellijPluginSinceBuild=241 # prepare list of IDEs for Plugin Verifier
-      - name: "Setup IntelliJ Plugin Verifier IDEs Cache"
+          ./gradlew :helm-values-intellij-plugin:printProductsReleases -PintellijPluginSinceBuild=241 --quiet > helm-values-intellij-plugin/build/productsReleases.txt
+      - name: "Setup IntelliJ plugin verifier IDEs cache"
         uses: actions/cache@v4.1.2
         with:
           path: ${{ steps.intellij_properties.outputs.pluginVerifierHomeDir }}/ides
-          key: plugin-verifier-${{ hashFiles('helm-values-intellij-plugin/build/listProductsReleases.txt') }}
-      - name: "Run IntelliJ Plugin Verification tasks"
-        run: ./gradlew :helm-values-intellij-plugin:runPluginVerifier -PintellijPluginSinceBuild=241 -Pplugin.verifier.home.dir=${{ steps.intellij_properties.outputs.pluginVerifierHomeDir }}
-      - name: "Collect IntelliJ Plugin Verifier Result"
+          key: plugin-verifier-${{ hashFiles('helm-values-intellij-plugin/build/productsReleases.txt') }}
+      - name: "Run IntelliJ plugin verification tasks"
+        run: ./gradlew :helm-values-intellij-plugin:verifyPlugin -PintellijPluginSinceBuild=241 -Pplugin.verifier.home.dir=${{ steps.intellij_properties.outputs.pluginVerifierHomeDir }}
+      - name: "Collect IntelliJ plugin verifier results"
         if: ${{ always() }}
         uses: actions/upload-artifact@v4.4.3
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/helm-values-intellij-plugin/build/reports/pluginVerifier
-      - name: "Prepare IntelliJ Plugin Artifact"
+      - name: "Prepare IntelliJ plugin artifact"
         id: intellij_artifact
         shell: bash
         run: |
           cd ${{ github.workspace }}/helm-values-intellij-plugin/build/distributions
-          FILENAME="${{ steps.intellij_properties.outputs.name }}-${{ steps.intellij_properties.outputs.version }}"
+          FILENAME="helm-values-intellij-plugin-${{ steps.intellij_properties.outputs.version }}"
           unzip "$FILENAME.zip" -d content
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
-      - name: "Upload IntelliJ Plugin Artifact"
+      - name: "Upload IntelliJ plugin artifact"
         uses: actions/upload-artifact@v4.4.3
         with:
           name: ${{ steps.intellij_artifact.outputs.filename }}
           path: ./helm-values-intellij-plugin/build/distributions/content/*/*
-      - name: "Cleanup IntelliJ IDEs in gradle cache"
+      - name: "Cleanup IntelliJ IDEs in Gradle cache"
         if: ${{ always() }}
         shell: bash
         run: |
           rm -rf ${GRADLE_USER_HOME:-~/.gradle}/caches/modules-*/files-*/com.jetbrains.intellij.idea
           rm -rf ${GRADLE_USER_HOME:-~/.gradle}/caches/modules-*/files-*/com.jetbrains
-      - name: "Check disk space after workflow"
-        if: ${{ always() }}
-        run: df -h
