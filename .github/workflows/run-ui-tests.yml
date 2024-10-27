@@ -27,16 +27,16 @@ jobs:
             runIde: ./gradlew runIdeForUiTests &
     steps:
       - name: "Fetch Sources"
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.2
       - name: "Setup Java 11"
-        uses: actions/setup-java@v4.2.2
+        uses: actions/setup-java@v4.5.0
         with:
           distribution: temurin
           java-version: 17
       - name: "Setup gradle wrapper"
         run: chmod +x gradlew
       - name: "Setup gradle"
-        uses: gradle/actions/setup-gradle@v4.0.1
+        uses: gradle/actions/setup-gradle@v4.1.0
       - name: "Run IDE"
         run: ${{ matrix.runIde }}
       - name: "IDE Health Check"
