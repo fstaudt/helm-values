@@ -38,9 +38,9 @@ This java library can be used to provide JSON schema generation for other IDE or
 
 </td>
 <td>
-<img src="supports/SBS.svg" height="150" alt="Sopra Banking Software"/>
+<img src="supports/SBS.svg" height="150" alt="SBS"/>
 
-[Sopra Banking Software](https://www.soprabanking.com)
+[SBS](https://www.soprabanking.com)
 
 </td>
 </tr>
