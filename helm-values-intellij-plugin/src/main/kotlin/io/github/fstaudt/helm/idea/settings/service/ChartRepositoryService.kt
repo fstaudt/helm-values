@@ -4,6 +4,8 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType.WARNING
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress.ProgressManager
@@ -15,6 +17,7 @@ import io.github.fstaudt.helm.idea.settings.model.ChartRepositoryState
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.tasks.AddRepositoryTask
 import io.github.fstaudt.helm.idea.tasks.RemoveRepositoryTask
+import io.github.fstaudt.helm.idea.tasks.actions.PasswordSafeNotificationAction
 
 @Service
 class ChartRepositoryService {
@@ -66,6 +69,14 @@ class ChartRepositoryService {
                     AddRepositoryTask(project, it)::runSynchronously,
                     message("tasks.addRepository.title"), false, project)
             }
+        }
+        if (passwordSafe.isMemoryOnly && items.any { it.secured() }) {
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("helm.values.errors")
+                .createNotification(message("settings.charts.readOnlyMemory.title"),
+                    message("settings.password.warning"), WARNING)
+                .apply { addAction(PasswordSafeNotificationAction()) }
+                .notify(project)
         }
     }
 

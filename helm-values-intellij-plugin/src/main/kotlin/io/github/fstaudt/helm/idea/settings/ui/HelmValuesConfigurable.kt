@@ -110,7 +110,7 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         val chartRepositoryService = ChartRepositoryService.instance()
         val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance()
         val project = PROJECT.getData(DataManager.getInstance().getDataContext(getPreferredFocusedComponent()))
-        jsonSchemaRepositoryMappingService.update(allJsonSchemaRepositoryMappings())
+        jsonSchemaRepositoryMappingService.update(project, allJsonSchemaRepositoryMappings())
         chartRepositoryService.update(project, chartRepositoriesEditor.model.items)
         state.helmBinaryPath = helmBinaryPath.component.text.trimOrElse(HELM_BINARY)
         reset()

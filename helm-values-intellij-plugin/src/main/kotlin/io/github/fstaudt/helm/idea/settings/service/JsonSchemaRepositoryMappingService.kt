@@ -4,13 +4,18 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType.WARNING
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
+import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryState
+import io.github.fstaudt.helm.idea.tasks.actions.PasswordSafeNotificationAction
 
 @Service
 class JsonSchemaRepositoryMappingService {
@@ -33,7 +38,7 @@ class JsonSchemaRepositoryMappingService {
         return list().firstOrNull { it.name == name }
     }
 
-    fun update(items: List<JsonSchemaRepositoryMapping>) {
+    fun update(project: Project?, items: List<JsonSchemaRepositoryMapping>) {
         val state = HelmValuesSettings.instance().state
         val passwordSafe = PasswordSafe.instance
         state.jsonSchemaRepositories.forEach { r ->
@@ -47,6 +52,14 @@ class JsonSchemaRepositoryMappingService {
             }
         }
         state.jsonSchemaRepositories = items.associateBy { it.name }.mapValues { it.value.toJsonSchemaRepository() }
+        if (passwordSafe.isMemoryOnly && items.any { it.secured() }) {
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("helm.values.errors")
+                .createNotification(message("settings.mappings.readOnlyMemory.title"),
+                    message("settings.password.warning"), WARNING)
+                .apply { addAction(PasswordSafeNotificationAction()) }
+                .notify(project)
+        }
     }
 
     private fun JsonSchemaRepositoryState.toJsonSchemaRepositoryMapping(

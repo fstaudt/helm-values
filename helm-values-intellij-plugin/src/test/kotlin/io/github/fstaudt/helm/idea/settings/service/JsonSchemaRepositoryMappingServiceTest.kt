@@ -115,7 +115,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
 
     fun `test - update should put all mappings in state`() {
         reset()
-        service.update(listOf(
+        service.update(project, listOf(
             JsonSchemaRepositoryMapping(APPS, APPS_URI),
             JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI),
         ))
@@ -128,7 +128,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     fun `test - update should overwrite existing mapping in state`() {
         reset()
         state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState("https://nexus/previous"))
-        service.update(listOf(
+        service.update(project, listOf(
             JsonSchemaRepositoryMapping(
                 BUNDLES,
                 BUNDLES_URI,
@@ -146,7 +146,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
         state.jsonSchemaRepositories = mapOf(
             BUNDLES to JsonSchemaRepositoryState("https://previous", "", VALUES_SCHEMA, GLOBAL_SCHEMA)
         )
-        service.update(listOf(
+        service.update(project, listOf(
             JsonSchemaRepositoryMapping(
                 BUNDLES,
                 BUNDLES_URI,
@@ -163,7 +163,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
 
     fun `test - update should put passwords in password safe`() {
         reset()
-        service.update(
+        service.update(project,
             listOf(
                 JsonSchemaRepositoryMapping(APPS, APPS_URI, "", USERNAME, PASSWORD),
                 JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI),
@@ -181,7 +181,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
         reset()
         state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState(APPS_URI))
         passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
-        service.update(listOf(JsonSchemaRepositoryMapping(APPS, APPS_URI)))
+        service.update(project, listOf(JsonSchemaRepositoryMapping(APPS, APPS_URI)))
         assertThat(state.jsonSchemaRepositories).containsExactly(entry(APPS, JsonSchemaRepositoryState(APPS_URI)))
         assertThat(state.jsonSchemaRepositories).doesNotContainKey(BUNDLES)
         assertThat(passwordSafe.get(credentialAttributes(BUNDLES))).isNull()
@@ -191,7 +191,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
         reset()
         state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI))
         passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
-        service.update(listOf(JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI)))
+        service.update(project, listOf(JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI)))
         assertThat(state.jsonSchemaRepositories).containsExactly(
             entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI))
         )
@@ -202,7 +202,7 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
         reset()
         state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState("https://previous"))
         passwordSafe.set(credentialAttributes(BUNDLES), Credentials(USERNAME, PASSWORD))
-        service.update(listOf(
+        service.update(project, listOf(
             JsonSchemaRepositoryMapping(APPS, APPS_URI, "", USERNAME, PASSWORD),
             JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS, USERNAME, PASSWORD)
         ))
