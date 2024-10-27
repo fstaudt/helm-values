@@ -5,23 +5,24 @@ import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
 import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator
-import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.services.GradleSchemaLocator
 import io.github.fstaudt.helm.gradle.services.JsonMapper
 import io.github.fstaudt.helm.gradle.services.YamlMapper
+import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
@@ -36,8 +37,8 @@ abstract class AggregateJsonSchema : DefaultTask() {
         const val AGGREGATE_JSON_SCHEMA = "aggregateJsonSchema"
     }
 
-    @get:Nested
-    abstract var extension: HelmValuesExtension
+    @get:Input
+    abstract val repositoryMappings: MapProperty<String, JsonSchemaRepository>
 
     @get:InputFile
     @get:SkipWhenEmpty
@@ -83,7 +84,7 @@ abstract class AggregateJsonSchema : DefaultTask() {
     @TaskAction
     fun aggregate() {
         val aggregator = JsonSchemaAggregator(
-            extension.repositoryMappings,
+            repositoryMappings.get(),
             GradleSchemaLocator(layout.projectDirectory.asFile),
             chartFile.get().parentFile,
             downloadSchemasDir.get().asFile,

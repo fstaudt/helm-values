@@ -25,27 +25,10 @@ class ValidateHelmValuesTest {
 
     private lateinit var testProject: TestProject
 
-    companion object {
-        private const val REPOSITORY_URL = "http://localhost:1980"
-        private const val APPS = "@apps"
-        private const val APPS_PATH = "apps"
-    }
-
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
-        testProject.initBuildFile {
-            appendText(
-                """
-                helmValues {
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
-                }
-                """.trimIndent()
-            )
-        }
+        testProject.initBuildFile()
         testProject.initHelmChart()
     }
 
@@ -107,10 +90,6 @@ class ValidateHelmValuesTest {
                 """
                 helmValues {
                   sourcesDir = "$CHART_NAME"
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )

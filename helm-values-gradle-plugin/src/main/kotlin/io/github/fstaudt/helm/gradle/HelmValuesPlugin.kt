@@ -8,6 +8,7 @@ import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_YAML_F
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.EXTENSION
+import io.github.fstaudt.helm.gradle.HelmValuesExtension.Companion.HELM_SOURCES_DIR
 import io.github.fstaudt.helm.gradle.services.JsonMapper
 import io.github.fstaudt.helm.gradle.services.YamlMapper
 import io.github.fstaudt.helm.gradle.tasks.AggregateJsonSchema
@@ -35,25 +36,27 @@ class HelmValuesPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         with(project) {
-            val pluginExtension = extensions.create(EXTENSION, HelmValuesExtension::class.java)
+            val extension = extensions.create(EXTENSION, HelmValuesExtension::class.java).apply {
+                sourcesDir.convention(HELM_SOURCES_DIR)
+            }
+
+            fun Project.sourceFile(file: String) = extension.sourcesDir.map { File(File(projectDir, it), file) }
+
             val sharedYamlMapper = project.gradle.sharedServices.registerIfAbsent("yaml", YamlMapper::class.java) {}
             val sharedJsonMapper = project.gradle.sharedServices.registerIfAbsent("json", JsonMapper::class.java) {}
             val downloadJsonSchemas = tasks.register<DownloadJsonSchemas>(DOWNLOAD_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Download JSON schemas of dependencies from JSON schema repositories"
-                extension = pluginExtension
-                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile.set(File(sourcesDir, HELM_CHART_FILE))
+                repositoryMappings.putAll(extension.repositoryMappings)
+                chartFile.set(sourceFile(HELM_CHART_FILE))
                 yamlMapper.set(sharedYamlMapper)
                 usesService(sharedYamlMapper)
             }
             val extractHelmDependencies = tasks.register<ExtractHelmDependencies>(EXTRACT_HELM_DEPENDENCIES) {
                 group = HELM_VALUES
                 description = "Extract JSON schemas, values and chart metadata from chart dependencies"
-                extension = pluginExtension
-                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile.set(File(sourcesDir, HELM_CHART_FILE))
-                chartsDir.set(File(sourcesDir, HELM_CHARTS_DIR))
+                chartFile.set(sourceFile(HELM_CHART_FILE))
+                chartsDir.set(sourceFile(HELM_CHARTS_DIR))
                 yamlMapper.set(sharedYamlMapper)
                 usesService(sharedYamlMapper)
             }
@@ -61,14 +64,12 @@ class HelmValuesPlugin : Plugin<Project> {
                 group = HELM_VALUES
                 description =
                     "Aggregate extracted and downloaded JSON schemas for assistance on Helm values in your IDE"
-                extension = pluginExtension
-                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                println("sourcesDir: $sourcesDir")
-                chartFile.set(File(sourcesDir, HELM_CHART_FILE))
-                valuesPatchFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_FILE))
-                valuesYamlPatchFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_YAML_FILE))
-                aggregatedValuesPatchFile.set(File(sourcesDir, PATCH_AGGREGATED_SCHEMA_FILE))
-                aggregatedValuesYamlPatchFile.set(File(sourcesDir, PATCH_AGGREGATED_SCHEMA_YAML_FILE))
+                repositoryMappings.set(extension.repositoryMappings)
+                chartFile.set(sourceFile(HELM_CHART_FILE))
+                valuesPatchFile.set(sourceFile(PATCH_VALUES_SCHEMA_FILE))
+                valuesYamlPatchFile.set(sourceFile(PATCH_VALUES_SCHEMA_YAML_FILE))
+                aggregatedValuesPatchFile.set(sourceFile(PATCH_AGGREGATED_SCHEMA_FILE))
+                aggregatedValuesYamlPatchFile.set(sourceFile(PATCH_AGGREGATED_SCHEMA_YAML_FILE))
                 yamlMapper.set(sharedYamlMapper)
                 usesService(sharedYamlMapper)
                 jsonMapper.set(sharedJsonMapper)
@@ -78,11 +79,12 @@ class HelmValuesPlugin : Plugin<Project> {
             val generateJsonSchemas = tasks.register<GenerateJsonSchemas>(GENERATE_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Generate JSON schemas for publication to a repository of JSON schemas"
-                extension = pluginExtension
-                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile.set(File(sourcesDir, HELM_CHART_FILE))
-                valuesPatchFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_FILE))
-                valuesYamlPatchFile.set(File(sourcesDir, PATCH_VALUES_SCHEMA_YAML_FILE))
+                publishedVersion.set(extension.publishedVersion)
+                publicationRepository.set(extension.publicationRepository)
+                repositoryMappings.set(extension.repositoryMappings)
+                chartFile.set(sourceFile(HELM_CHART_FILE))
+                valuesPatchFile.set(sourceFile(PATCH_VALUES_SCHEMA_FILE))
+                valuesYamlPatchFile.set(sourceFile(PATCH_VALUES_SCHEMA_YAML_FILE))
                 yamlMapper.set(sharedYamlMapper)
                 usesService(sharedYamlMapper)
                 jsonMapper.set(sharedJsonMapper)
@@ -91,9 +93,10 @@ class HelmValuesPlugin : Plugin<Project> {
             tasks.register<PublishJsonSchemas>(PUBLISH_JSON_SCHEMAS) {
                 group = HELM_VALUES
                 description = "Publish generated JSON schemas to a repository of JSON schemas"
-                extension = pluginExtension
-                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                chartFile.set(File(sourcesDir, HELM_CHART_FILE))
+                publishedVersion.set(extension.publishedVersion)
+                publicationRepository.set(extension.publicationRepository)
+                repositoryMappings.set(extension.repositoryMappings)
+                chartFile.set(sourceFile(HELM_CHART_FILE))
                 yamlMapper.set(sharedYamlMapper)
                 usesService(sharedYamlMapper)
                 dependsOn(generateJsonSchemas)
@@ -101,9 +104,7 @@ class HelmValuesPlugin : Plugin<Project> {
             tasks.register<ValidateHelmValues>(VALIDATE_HELM_VALUES) {
                 group = HELM_VALUES
                 description = "Validate Helm values against aggregated JSON schema"
-                extension = pluginExtension
-                val sourcesDir = File(projectDir, pluginExtension.sourcesDir)
-                valuesFile.set(File(sourcesDir, HELM_VALUES_FILE))
+                valuesFile.set(sourceFile(HELM_VALUES_FILE))
                 yamlMapper.set(sharedYamlMapper)
                 usesService(sharedYamlMapper)
                 jsonMapper.set(sharedJsonMapper)

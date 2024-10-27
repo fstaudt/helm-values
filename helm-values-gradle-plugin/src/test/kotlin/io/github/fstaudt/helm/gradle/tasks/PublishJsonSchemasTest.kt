@@ -90,6 +90,25 @@ class PublishJsonSchemasTest {
     }
 
     @Test
+    fun `publishJsonSchemas should accept repository mapping provided with put`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings.put("$APPS", JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"))
+                  publicationRepository = "$APPS"
+                }
+            """.trimIndent()
+            )
+        }
+        stubForSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
+        testProject.runTask(PUBLISH_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$PUBLISH_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+        }
+    }
+
+    @Test
     fun `publishJsonSchemas should publish generated JSON schemas of chart on JSON schema repository`() {
         stubForSchemaPublication("$BASE_CHART_PATH/$VALUES_SCHEMA_FILE")
         testProject.runTask(WITH_BUILD_CACHE, PUBLISH_JSON_SCHEMAS).also {

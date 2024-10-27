@@ -68,7 +68,6 @@ class AggregateJsonSchemaTest {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -91,6 +90,34 @@ class AggregateJsonSchemaTest {
     }
 
     @Test
+    fun `aggregateJsonSchema should accept repository mapping provided with put`() {
+        testProject.initBuildFile {
+            appendText(
+                """
+                helmValues {
+                  repositoryMappings.put("$APPS", JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"))
+                }
+                """.trimIndent()
+            )
+        }
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        }
+    }
+
+    @Test
+    fun `aggregateJsonSchema should run without repository mappings`() {
+        testProject.initBuildFile()
+        testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isEqualTo(SUCCESS)
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
+        }
+    }
+
+    @Test
     fun `aggregateJsonSchema should get chart configuration in sourcesDir`() {
         testProject.clearHelmChart()
         val sourcesDir = File(testProject, CHART_NAME).also { it.mkdirs() }
@@ -100,10 +127,6 @@ class AggregateJsonSchemaTest {
                 """
                 helmValues {
                   sourcesDir = "$CHART_NAME"
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -151,10 +174,6 @@ class AggregateJsonSchemaTest {
                 """
                 helmValues {
                   sourcesDir = "$CHART_NAME"
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -234,10 +253,6 @@ class AggregateJsonSchemaTest {
                 """
                 helmValues {
                   sourcesDir = "$CHART_NAME"
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -279,10 +294,6 @@ class AggregateJsonSchemaTest {
                 """
                 helmValues {
                   sourcesDir = "$CHART_NAME"
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -354,10 +365,6 @@ class AggregateJsonSchemaTest {
                 """
                 helmValues {
                   sourcesDir = "$CHART_NAME"
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -395,12 +402,6 @@ class AggregateJsonSchemaTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValues {
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
-                }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
                   aggregatedValuesPatchFile.set(File(project.projectDir, "custom.schema.patch.json"))
                 }
@@ -476,10 +477,6 @@ class AggregateJsonSchemaTest {
                 """
                 helmValues {
                   sourcesDir = "$CHART_NAME"
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -519,12 +516,6 @@ class AggregateJsonSchemaTest {
         testProject.initBuildFile {
             appendText(
                 """
-                helmValues {
-                  repositoryMappings = mapOf(
-                    "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
-                  )
-                  publicationRepository = "$APPS"
-                }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
                   aggregatedValuesYamlPatchFile.set(File(project.projectDir, "custom.schema.patch.yaml"))
                 }
@@ -641,7 +632,6 @@ class AggregateJsonSchemaTest {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -681,7 +671,6 @@ class AggregateJsonSchemaTest {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
-                  publicationRepository = "$APPS"
                 }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
                   valuesPatchFile.set(File(project.projectDir, "custom.schema.patch.json"))
@@ -755,7 +744,6 @@ class AggregateJsonSchemaTest {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
-                  publicationRepository = "$APPS"
                 }
                 """.trimIndent()
             )
@@ -795,7 +783,6 @@ class AggregateJsonSchemaTest {
                   repositoryMappings = mapOf(
                     "$APPS" to JsonSchemaRepository("$REPOSITORY_URL/$APPS_PATH"),
                   )
-                  publicationRepository = "$APPS"
                 }
                 tasks.named<${AggregateJsonSchema::class.java.name}>("$AGGREGATE_JSON_SCHEMA") {
                   valuesYamlPatchFile.set(File(project.projectDir, "custom.schema.patch.yaml"))

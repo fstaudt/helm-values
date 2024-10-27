@@ -3,20 +3,23 @@ package io.github.fstaudt.helm.gradle.tasks
 import com.github.fge.jsonpatch.JsonPatch
 import io.github.fstaudt.helm.JsonSchemaGenerator
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
-import io.github.fstaudt.helm.gradle.HelmValuesExtension
+import io.github.fstaudt.helm.exceptions.RepositoryMappingException
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.services.JsonMapper
 import io.github.fstaudt.helm.gradle.services.YamlMapper
+import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
 import org.gradle.api.file.ProjectLayout
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
@@ -31,8 +34,16 @@ abstract class GenerateJsonSchemas : DefaultTask() {
         const val GENERATE_JSON_SCHEMAS = "generateJsonSchemas"
     }
 
-    @get:Nested
-    abstract var extension: HelmValuesExtension
+    @get:Input
+    @get:Optional
+    abstract val publishedVersion: Property<String>
+
+    @get:Input
+    @get:Optional
+    abstract val publicationRepository: Property<String>
+
+    @get:Input
+    abstract val repositoryMappings: MapProperty<String, JsonSchemaRepository>
 
     @get:InputFile
     @get:SkipWhenEmpty
@@ -62,14 +73,14 @@ abstract class GenerateJsonSchemas : DefaultTask() {
     @TaskAction
     fun generate() {
         val chart = yamlMapper.get().chartFrom(chartFile)
-        extension.publishedVersion?.let { publishedVersion ->
+        publishedVersion.orNull?.let { publishedVersion ->
             chart.version = publishedVersion
             chart.dependencies.filter { it.isStoredLocally() }.forEach {
                 it.apply { version = publishedVersion }
             }
         }
-        val repository = extension.publicationRepository()
-        val generator = JsonSchemaGenerator(extension.repositoryMappings, extension.publicationRepository)
+        val repository = publicationRepository()
+        val generator = JsonSchemaGenerator(repositoryMappings.get(), publicationRepository.orNull)
         val jsonPatch = jsonPatch()
         val jsonSchema = generator.generateValuesJsonSchema(chart, jsonPatch)
         jsonMapper.get().writeTo(generatedSchemaDir.map { it.file(repository.valuesSchemaFile) }, jsonSchema)
@@ -77,5 +88,10 @@ abstract class GenerateJsonSchemas : DefaultTask() {
 
     private fun jsonPatch(): JsonPatch? {
         return jsonMapper.get().patchFrom(valuesPatchFile) ?: yamlMapper.get().patchFrom(valuesYamlPatchFile)
+    }
+
+    private fun publicationRepository(): JsonSchemaRepository {
+        val jsonSchemaRepository = repositoryMappings.get()[publicationRepository.orNull]
+        return jsonSchemaRepository ?: throw RepositoryMappingException(publicationRepository.orNull)
     }
 }

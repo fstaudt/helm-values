@@ -1,7 +1,6 @@
 package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.exceptions.ValuesValidationException
 import io.github.fstaudt.helm.gradle.services.JsonMapper
@@ -13,7 +12,6 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.SkipWhenEmpty
@@ -27,9 +25,6 @@ abstract class ValidateHelmValues : DefaultTask() {
     companion object {
         const val VALIDATE_HELM_VALUES = "validateHelmValues"
     }
-
-    @get:Nested
-    abstract var extension: HelmValuesExtension
 
     @get:InputFile
     @get:PathSensitive(RELATIVE)
@@ -58,5 +53,4 @@ abstract class ValidateHelmValues : DefaultTask() {
             throw ValuesValidationException(valuesFile.get(), validationMessages)
         }
     }
-
 }

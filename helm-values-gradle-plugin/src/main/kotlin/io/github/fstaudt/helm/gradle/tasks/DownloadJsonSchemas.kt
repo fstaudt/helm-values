@@ -2,18 +2,19 @@ package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
-import io.github.fstaudt.helm.gradle.HelmValuesExtension
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.services.YamlMapper
+import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
@@ -28,8 +29,8 @@ abstract class DownloadJsonSchemas : DefaultTask() {
         const val DOWNLOAD_JSON_SCHEMAS = "downloadJsonSchemas"
     }
 
-    @get:Nested
-    abstract var extension: HelmValuesExtension
+    @get:Input
+    abstract val repositoryMappings: MapProperty<String, JsonSchemaRepository>
 
     @get:InputFile
     @get:SkipWhenEmpty
@@ -48,7 +49,7 @@ abstract class DownloadJsonSchemas : DefaultTask() {
     @TaskAction
     fun download() {
         val chart = yamlMapper.get().chartFrom(chartFile)
-        val downloader = JsonSchemaDownloader(extension.repositoryMappings, downloadSchemasDir.get().asFile)
+        val downloader = JsonSchemaDownloader(repositoryMappings.get(), downloadSchemasDir.get().asFile)
         downloader.download(chart)
     }
 }

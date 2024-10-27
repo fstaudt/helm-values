@@ -1,19 +1,22 @@
 package io.github.fstaudt.helm.gradle.tasks
 
 import io.github.fstaudt.helm.JsonSchemaGenerator.Companion.GENERATION_DIR
-import io.github.fstaudt.helm.gradle.HelmValuesExtension
+import io.github.fstaudt.helm.exceptions.RepositoryMappingException
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.services.YamlMapper
 import io.github.fstaudt.helm.http.NexusRawJsonSchemaPublisher
+import io.github.fstaudt.helm.model.JsonSchemaRepository
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.SkipWhenEmpty
@@ -28,8 +31,16 @@ abstract class PublishJsonSchemas : DefaultTask() {
         const val PUBLISH_JSON_SCHEMAS = "publishJsonSchemas"
     }
 
-    @get:Nested
-    abstract var extension: HelmValuesExtension
+    @get:Input
+    @get:Optional
+    abstract val publishedVersion: Property<String>
+
+    @get:Input
+    @get:Optional
+    abstract val publicationRepository: Property<String>
+
+    @get:Input
+    abstract val repositoryMappings: MapProperty<String, JsonSchemaRepository>
 
     @get:InputFile
     @get:SkipWhenEmpty
@@ -49,10 +60,15 @@ abstract class PublishJsonSchemas : DefaultTask() {
     @TaskAction
     fun publish() {
         val jsonSchemaPublisher = NexusRawJsonSchemaPublisher()
-        val repository = extension.publicationRepository()
+        val repository = publicationRepository()
         val chart = yamlMapper.get().chartFrom(chartFile)
-        extension.publishedVersion?.let { chart.version = it }
+        publishedVersion.orNull?.let { chart.version = it }
         jsonSchemaPublisher.publish(repository, chart,
             File(generatedSchemaDir.get().asFile, repository.valuesSchemaFile))
+    }
+
+    private fun publicationRepository(): JsonSchemaRepository {
+        val jsonSchemaRepository = repositoryMappings.get()[publicationRepository.orNull]
+        return jsonSchemaRepository ?: throw RepositoryMappingException(publicationRepository.orNull)
     }
 }

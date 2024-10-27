@@ -29,9 +29,6 @@ abstract class ExtractHelmDependencies : DefaultTask() {
         const val EXTRACT_HELM_DEPENDENCIES = "extractHelmDependencies"
     }
 
-    @get:Nested
-    abstract var extension: HelmValuesExtension
-
     @get:InputFiles
     @get:PathSensitive(RELATIVE)
     abstract val chartsDir: Property<File>
