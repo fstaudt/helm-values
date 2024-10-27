@@ -39,7 +39,7 @@ tasks.validatePlugins {
 }
 
 val currentGradleVersion: String = GradleVersion.current().version
-val additionalGradleVersions = listOf("8.3")
+val additionalGradleVersions = listOf("8.4")
 val testGradleVersion = "testGradleVersion"
 val displayNameSuffix = "displayNameSuffix"
 testing {
