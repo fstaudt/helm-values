@@ -37,10 +37,6 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         internal const val FIELD_REQUIRED = "settings.field.required"
     }
 
-    private val state = HelmValuesSettings.instance.state
-    private val chartRepositoryService = ChartRepositoryService.instance
-    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
-
     private val chartRepositoriesEditor = TableModelEditor(
         arrayOf(
             Column("charts", ChartRepository::name, 40),
@@ -78,6 +74,7 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     private lateinit var helmBinaryPath: Cell<JBTextField>
 
     override fun createPanel(): DialogPanel {
+        val state = HelmValuesSettings.instance().state
         return panel {
             rowWithTextFieldForProperty(state::helmBinaryPath) { cell ->
                 cell.focused().also { helmBinaryPath = it }
@@ -101,12 +98,17 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     }
 
     override fun isModified(): Boolean {
+        val state = HelmValuesSettings.instance().state
+        val chartRepositoryService = ChartRepositoryService.instance()
         return additionalJsonSchemaRepositoryMappingsEditor.model.items.sortedBy { it.name } != additionalJsonSchemaRepositoryMappings()
                 || chartRepositoriesEditor.model.items.sortedBy { it.name } != chartRepositoryService.list()
                 || helmBinaryPath.component.text.trimOrElse(HELM_BINARY) != state.helmBinaryPath
     }
 
     override fun apply() {
+        val state = HelmValuesSettings.instance().state
+        val chartRepositoryService = ChartRepositoryService.instance()
+        val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance()
         val project = PROJECT.getData(DataManager.getInstance().getDataContext(getPreferredFocusedComponent()))
         jsonSchemaRepositoryMappingService.update(allJsonSchemaRepositoryMappings())
         chartRepositoryService.update(project, chartRepositoriesEditor.model.items)
@@ -115,6 +117,8 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     }
 
     override fun reset() {
+        val state = HelmValuesSettings.instance().state
+        val chartRepositoryService = ChartRepositoryService.instance()
         val chartRepositories = chartRepositoryService.list()
         chartRepositoriesEditor.reset(chartRepositories)
         chartJsonSchemaRepositoryMappingsViewer.reset(chartRepositories.mapNotNull { it.toJsonSchemaRepositoryMapping() })
@@ -130,6 +134,8 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
     }
 
     private fun additionalJsonSchemaRepositoryMappings(): List<JsonSchemaRepositoryMapping> {
+        val chartRepositoryService = ChartRepositoryService.instance()
+        val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance()
         val chartRepositories = chartRepositoryService.list()
         return jsonSchemaRepositoryMappingService.list().filter { mapping ->
             chartRepositories.mapNotNull { it.toJsonSchemaRepositoryMapping()?.name }.contains(mapping.name).not()

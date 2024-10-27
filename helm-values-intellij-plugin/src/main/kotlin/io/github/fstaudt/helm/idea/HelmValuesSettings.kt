@@ -16,7 +16,7 @@ import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryState
 class HelmValuesSettings : PersistentStateComponent<HelmValuesSettings> {
     companion object {
         const val HELM_BINARY = "helm"
-        val instance: HelmValuesSettings =
+        fun instance(): HelmValuesSettings =
             ApplicationManager.getApplication().getService(HelmValuesSettings::class.java)
     }
 

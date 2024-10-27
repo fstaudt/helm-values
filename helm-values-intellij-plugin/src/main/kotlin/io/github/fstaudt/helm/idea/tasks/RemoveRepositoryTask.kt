@@ -9,10 +9,9 @@ import io.github.fstaudt.helm.idea.tasks.actions.RemoveRepositoryNotificationAct
 class RemoveRepositoryTask(project: Project?, private val repository: ChartRepository) :
     NotifiableTask(project, "tasks.removeRepository") {
 
-    private val helmService = HelmService.instance
     override fun run(indicator: ProgressIndicator) {
         try {
-            helmService.removeRepository(repository)
+            HelmService.instance().removeRepository(repository)
             success(repository.name)
         } catch (e: Exception) {
             error(repository.name, e, RemoveRepositoryNotificationAction(repository))

@@ -14,7 +14,7 @@ class AggregateTask(private val project: Project, private val chartFile: File) :
     override fun run(indicator: ProgressIndicator) {
         indicator.updateProgress(chartName)
         try {
-            val complete = HelmJsonSchemaService.instance.aggregate(project, chartFile)
+            val complete = HelmJsonSchemaService.instance().aggregate(project, chartFile)
             if (complete) {
                 success(chartName)
             } else {

@@ -27,7 +27,7 @@ class AddRepositoryAllTaskTest : HeavyPlatformTestCase() {
     private lateinit var passwordSafe: PasswordSafe
 
     private fun reset() {
-        state = HelmValuesSettings.instance.state
+        state = HelmValuesSettings.instance().state
         state.reset()
         passwordSafe = PasswordSafe.instance
         passwordSafe.set(credentialsFor(APPS), null)

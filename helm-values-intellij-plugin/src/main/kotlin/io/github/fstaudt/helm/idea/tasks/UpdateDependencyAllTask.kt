@@ -13,7 +13,7 @@ class UpdateDependencyAllTask(private val project: Project) : BackgroundAllTask(
     override fun run(indicator: ProgressIndicator) {
         indicator.initProgress()
         try {
-            HelmService.instance.updateRepositories(project)
+            HelmService.instance().updateRepositories(project)
         } catch (e: Exception) {
             error("", e,
                 HelmInstallBrowserNotificationAction(),
@@ -25,7 +25,7 @@ class UpdateDependencyAllTask(private val project: Project) : BackgroundAllTask(
             forEachIndexed { index, dir ->
                 indicator.updateProgress(dir.name, index.toDouble() / size)
                 try {
-                    HelmService.instance.updateDependencies(dir.chartFile(), false)
+                    HelmService.instance().updateDependencies(dir.chartFile(), false)
                 } catch (e: Exception) {
                     error(dir.name, e,
                         HelmValuesSettingsNotificationAction("tasks.helmRepo"),

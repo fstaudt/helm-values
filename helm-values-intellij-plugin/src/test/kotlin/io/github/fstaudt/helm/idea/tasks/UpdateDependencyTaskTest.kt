@@ -19,7 +19,7 @@ class UpdateDependencyTaskTest : HeavyPlatformTestCase() {
     private lateinit var state: HelmValuesSettings
 
     private fun reset() {
-        state = HelmValuesSettings.instance.state
+        state = HelmValuesSettings.instance().state
         state.reset()
         mockkConstructor(GeneralCommandLine::class)
         every { anyConstructed<GeneralCommandLine>().createProcess() } returns mockk<Process>(relaxed = true)

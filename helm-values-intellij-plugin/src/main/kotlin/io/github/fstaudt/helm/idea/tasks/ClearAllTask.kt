@@ -14,7 +14,7 @@ class ClearAllTask(private val project: Project) : BackgroundTask(project, "task
             forEachIndexed { index, dir ->
                 indicator.updateProgress(dir.name, index.toDouble() / size)
                 try {
-                    HelmJsonSchemaService.instance.clear(project, dir.chartFile())
+                    HelmJsonSchemaService.instance().clear(project, dir.chartFile())
                 } catch (e: Exception) {
                     error(dir.name, e)
                     return

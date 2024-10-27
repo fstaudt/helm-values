@@ -31,9 +31,9 @@ class HelmServiceTest : HeavyPlatformTestCase() {
     private lateinit var service: HelmService
 
     private fun reset() {
-        state = HelmValuesSettings.instance.state
+        state = HelmValuesSettings.instance().state
         state.reset()
-        service = HelmService.instance
+        service = HelmService.instance()
         mockkConstructor(GeneralCommandLine::class)
         every { anyConstructed<GeneralCommandLine>().createProcess() } returns mockk<Process>(relaxed = true)
         mockkConstructor(OSProcessHandler::class)

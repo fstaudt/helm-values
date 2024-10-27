@@ -28,12 +28,12 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
     }
 
     private fun reset() {
-        state = HelmValuesSettings.instance.state
+        state = HelmValuesSettings.instance().state
         state.reset()
         passwordSafe = PasswordSafe.instance
         passwordSafe.set(credentialAttributes(APPS), null)
         passwordSafe.set(credentialAttributes(BUNDLES), null)
-        service = JsonSchemaRepositoryMappingService.instance
+        service = JsonSchemaRepositoryMappingService.instance()
     }
 
     fun `test - jsonSchemaRepositoryMappings should return empty mappings by default`() {

@@ -34,7 +34,7 @@ class HelmJsonSchemaService {
     companion object {
         const val JSON_SCHEMAS_DIR = ".idea/json-schemas"
         const val CHART_METADATA_FILE = "metadata.yaml"
-        val instance: HelmJsonSchemaService =
+        fun instance(): HelmJsonSchemaService =
             ApplicationManager.getApplication().getService(HelmJsonSchemaService::class.java)
     }
 
@@ -97,7 +97,7 @@ class HelmJsonSchemaService {
     }
 
     private fun mappings(): Map<String, JsonSchemaRepository> {
-        return JsonSchemaRepositoryMappingService.instance.list()
+        return JsonSchemaRepositoryMappingService.instance().list()
             .associateBy { it.name }.mapValues { it.value.toJsonSchemaRepository() }
     }
 

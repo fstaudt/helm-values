@@ -10,17 +10,14 @@ import io.github.fstaudt.helm.idea.tasks.actions.HelmValuesSettingsNotificationA
 
 class AddRepositoryAllTask(project: Project) : BackgroundTask(project, "tasks.addRepositoryAll") {
 
-    private val chartRepositoryService = ChartRepositoryService.instance
-    private val helmService = HelmService.instance
-    private val state = HelmValuesSettings.instance.state
-
     override fun run(indicator: ProgressIndicator) {
+        val state = HelmValuesSettings.instance().state
         indicator.initProgress()
-        with(chartRepositoryService.list()) {
+        with(ChartRepositoryService.instance().list()) {
             forEachIndexed { index, repository ->
                 indicator.updateProgress(repository.name, index.toDouble() / size)
                 try {
-                    helmService.addRepository(repository)
+                    HelmService.instance().addRepository(repository)
                     state.chartRepositories[repository.name]?.pushedToHelm = true
                 } catch (e: Exception) {
                     state.chartRepositories[repository.name]?.pushedToHelm = false

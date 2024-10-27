@@ -51,9 +51,9 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
     private lateinit var service: HelmJsonSchemaService
 
     private fun reset() {
-        state = HelmValuesSettings.instance.state
+        state = HelmValuesSettings.instance().state
         state.reset()
-        service = HelmJsonSchemaService.instance
+        service = HelmJsonSchemaService.instance()
     }
 
     fun `test - aggregate should download JSON schemas from external repositories`() {

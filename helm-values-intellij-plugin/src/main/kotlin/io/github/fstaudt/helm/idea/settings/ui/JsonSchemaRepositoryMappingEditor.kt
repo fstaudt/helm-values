@@ -47,7 +47,7 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         mutator: Function<in JsonSchemaRepositoryMapping, out JsonSchemaRepositoryMapping>,
         isAdd: Boolean
     ) {
-        val mappings = JsonSchemaRepositoryMappingService.instance.list()
+        val mappings = JsonSchemaRepositoryMappingService.instance().list()
         val referenceMappings = mappings.filter { !it.referenced() && it.name != item.name }.map { it.name }
         lateinit var name: Cell<JBTextField>
         lateinit var baseUri: Cell<JBTextField>

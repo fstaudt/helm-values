@@ -16,13 +16,12 @@ import java.io.File
 @Service
 class HelmService {
     companion object {
-        val instance: HelmService =
+        fun instance(): HelmService =
             ApplicationManager.getApplication().getService(HelmService::class.java)
     }
 
-    private val state = HelmValuesSettings.instance.state
-
     fun addRepository(repository: ChartRepository) {
+        val state = HelmValuesSettings.instance().state
         with(repository) {
             val parameters = if (secured()) {
                 arrayOf("repo", "add", name, url,
@@ -45,6 +44,7 @@ class HelmService {
     }
 
     fun removeRepository(repository: ChartRepository) {
+        val state = HelmValuesSettings.instance().state
         with(repository) {
             GeneralCommandLine()
                 .withExePath(state.helmBinaryPath)
@@ -59,6 +59,7 @@ class HelmService {
     }
 
     fun updateRepositories(project: Project) {
+        val state = HelmValuesSettings.instance().state
         GeneralCommandLine()
             .withWorkDirectory(project.baseDir())
             .withExePath(state.helmBinaryPath)
@@ -72,6 +73,7 @@ class HelmService {
     }
 
     fun updateDependencies(chartFile: File, updateLocalDependencies: Boolean = true) {
+        val state = HelmValuesSettings.instance().state
         if (updateLocalDependencies) {
             val chart = chartFile.inputStream().use { chartMapper.readValue(it, Chart::class.java) }
             chart.dependencies.filter { it.isStoredLocally() }.forEach { dependency ->

@@ -34,12 +34,12 @@ class ChartRepositoryServiceTest : BasePlatformTestCase() {
     }
 
     private fun reset() {
-        state = HelmValuesSettings.instance.state
+        state = HelmValuesSettings.instance().state
         state.reset()
         passwordSafe = PasswordSafe.instance
         passwordSafe.set(credentialsFor(APPS), null)
         passwordSafe.set(credentialsFor(BUNDLES), null)
-        service = ChartRepositoryService.instance
+        service = ChartRepositoryService.instance()
         mockkConstructor(GeneralCommandLine::class)
         every { anyConstructed<GeneralCommandLine>().createProcess() } returns mockk<Process>(relaxed = true)
         mockkConstructor(OSProcessHandler::class)

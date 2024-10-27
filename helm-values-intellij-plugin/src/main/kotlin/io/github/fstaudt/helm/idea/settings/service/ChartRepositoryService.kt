@@ -20,16 +20,12 @@ import io.github.fstaudt.helm.idea.tasks.RemoveRepositoryTask
 class ChartRepositoryService {
     companion object {
         private const val CREDENTIALS = "HelmValues.helmRepositories"
-        val instance: ChartRepositoryService =
+        fun instance(): ChartRepositoryService =
             ApplicationManager.getApplication().getService(ChartRepositoryService::class.java)
     }
 
-    private val state = HelmValuesSettings.instance.state
-    private val passwordSafe = PasswordSafe.instance
-    private val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance
-    private val progressManager = ProgressManager.getInstance()
-
     fun list(): List<ChartRepository> {
+        val state = HelmValuesSettings.instance().state
         return state.chartRepositories.map {
             it.value.toChartRepository(it.key, credentialsFor(it.key))
         }.also { list ->
@@ -38,6 +34,9 @@ class ChartRepositoryService {
     }
 
     fun update(project: Project?, items: List<ChartRepository>) {
+        val state = HelmValuesSettings.instance().state
+        val passwordSafe = PasswordSafe.instance
+        val progressManager = ProgressManager.getInstance()
         state.chartRepositories.forEach { (key, value) ->
             if (items.none { key == it.name } && value.pushedToHelm) {
                 progressManager.run(RemoveRepositoryTask(project, value.toChartRepository(key)))
@@ -74,6 +73,7 @@ class ChartRepositoryService {
         name: String,
         credentials: Credentials? = null
     ): ChartRepository {
+        val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance()
         return ChartRepository(
             name,
             url,
@@ -92,6 +92,6 @@ class ChartRepositoryService {
         }
     }
 
-    private fun credentialsFor(key: String) = passwordSafe.get(credentialAttributesFor(key))
+    private fun credentialsFor(key: String) = PasswordSafe.instance.get(credentialAttributesFor(key))
     private fun credentialAttributesFor(key: String) = CredentialAttributes(generateServiceName(CREDENTIALS, key))
 }

@@ -16,7 +16,7 @@ class UpdateDependencyTask(project: Project, private val chartFile: File) :
     override fun run(indicator: ProgressIndicator) {
         indicator.initProgress()
         try {
-            HelmService.instance.updateRepositories(project)
+            HelmService.instance().updateRepositories(project)
         } catch (e: Exception) {
             error(chartName, e,
                 HelmInstallBrowserNotificationAction(),
@@ -26,7 +26,7 @@ class UpdateDependencyTask(project: Project, private val chartFile: File) :
         }
         indicator.updateProgress(chartName)
         try {
-            HelmService.instance.updateDependencies(chartFile)
+            HelmService.instance().updateDependencies(chartFile)
             success(chartName, AggregateNotificationAction(chartFile))
         } catch (e: Exception) {
             error(chartName, e,

@@ -49,7 +49,7 @@ class ChartRepositoryEditor : TableModelEditor.DialogItemEditor<ChartRepository>
         mutator: Function<in ChartRepository, out ChartRepository>,
         isAdd: Boolean
     ) {
-        val repositories = ChartRepositoryService.instance.list()
+        val repositories = ChartRepositoryService.instance().list()
         val referenceRepositories = repositories.filter { !it.referenced() && it.name != item.name }.map { it.name }
         lateinit var name: Cell<JBTextField>
         lateinit var url: Cell<JBTextField>
@@ -58,7 +58,7 @@ class ChartRepositoryEditor : TableModelEditor.DialogItemEditor<ChartRepository>
         lateinit var password: Cell<JBPasswordField>
         lateinit var username: Cell<JBTextField>
         val mappingItem = item.jsonSchemaRepositoryMapping
-        val mappings = JsonSchemaRepositoryMappingService.instance.list()
+        val mappings = JsonSchemaRepositoryMappingService.instance().list()
         val referenceMappings = mappings.filter { !it.referenced() && it.name != item.name }.map { it.name }
         lateinit var jsonSchemaRepositoryMapping: Cell<JBCheckBox>
         lateinit var mappingBaseUri: Cell<JBTextField>

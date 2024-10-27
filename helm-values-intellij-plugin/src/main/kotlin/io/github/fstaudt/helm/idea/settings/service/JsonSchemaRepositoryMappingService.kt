@@ -16,14 +16,12 @@ import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryState
 class JsonSchemaRepositoryMappingService {
     companion object {
         private const val CREDENTIALS = "HelmValues"
-        val instance: JsonSchemaRepositoryMappingService =
+        fun instance(): JsonSchemaRepositoryMappingService =
             ApplicationManager.getApplication().getService(JsonSchemaRepositoryMappingService::class.java)
     }
 
-    private val state = HelmValuesSettings.instance.state
-    private val passwordSafe = PasswordSafe.instance
-
     fun list(): List<JsonSchemaRepositoryMapping> {
+        val state = HelmValuesSettings.instance().state
         return state.jsonSchemaRepositories.map {
             it.value.toJsonSchemaRepositoryMapping(it.key, credentialsFor(it.key))
         }.also { list ->
@@ -36,6 +34,8 @@ class JsonSchemaRepositoryMappingService {
     }
 
     fun update(items: List<JsonSchemaRepositoryMapping>) {
+        val state = HelmValuesSettings.instance().state
+        val passwordSafe = PasswordSafe.instance
         state.jsonSchemaRepositories.forEach { r ->
             if (items.none { r.key == it.name && it.secured() && !it.referenced() }) {
                 passwordSafe.set(credentialAttributesFor(r.key), null)
@@ -83,6 +83,6 @@ class JsonSchemaRepositoryMappingService {
     }
 
     private fun String?.orElse(default: String) = takeUnless { it.isNullOrBlank() } ?: default
-    private fun credentialsFor(key: String) = passwordSafe.get(credentialAttributesFor(key))
+    private fun credentialsFor(key: String) = PasswordSafe.instance.get(credentialAttributesFor(key))
     private fun credentialAttributesFor(key: String) = CredentialAttributes(generateServiceName(CREDENTIALS, key))
 }

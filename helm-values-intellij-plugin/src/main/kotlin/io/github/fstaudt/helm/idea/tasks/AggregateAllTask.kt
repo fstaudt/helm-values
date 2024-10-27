@@ -14,7 +14,7 @@ class AggregateAllTask(private val project: Project) : BackgroundAllTask(project
             forEachIndexed { index, dir ->
                 indicator.updateProgress(dir.name, index.toDouble() / size)
                 try {
-                    val complete = HelmJsonSchemaService.instance.aggregate(project, dir.chartFile(), false)
+                    val complete = HelmJsonSchemaService.instance().aggregate(project, dir.chartFile(), false)
                     if (!complete) {
                         warning(dir.name, UpdateDependencyNotificationAction(dir.chartFile()))
                     }
