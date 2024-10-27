@@ -14,8 +14,6 @@ updates:
       interval: "monthly"
     assignees:
       - "fstaudt"
-    ignore:
-      - dependency-name: "net.javacrumbs.json-unit:json-unit-assertj"
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
