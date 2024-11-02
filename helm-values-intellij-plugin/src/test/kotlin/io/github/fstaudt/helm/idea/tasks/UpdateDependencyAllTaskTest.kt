@@ -53,22 +53,6 @@ class UpdateDependencyAllTaskTest : HeavyPlatformTestCase() {
         }
     }
 
-    fun `test - run should update repositories before updating dependencies for all charts in project`() {
-        reset()
-        project.initHelmChart(File(project.baseDir(), CHART_NAME))
-        UpdateDependencyAllTask(project).also {
-            it.run(BackgroundableProcessIndicator(it))
-        }
-        verifyOrder {
-            anyConstructed<GeneralCommandLine>().withWorkDirectory(project.baseDir())
-            anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("repo", "update"))
-            anyConstructed<GeneralCommandLine>().createProcess()
-            anyConstructed<GeneralCommandLine>().withWorkDirectory(File(project.baseDir(), CHART_NAME))
-            anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("dependency", "update", ".", "--skip-refresh"))
-            anyConstructed<GeneralCommandLine>().createProcess()
-        }
-    }
-
     fun `test - run should update dependencies with order depending on local chart dependencies`() {
         reset()
         project.initHelmChart(File(project.baseDir(), CHART_NAME)) {

@@ -7,15 +7,21 @@ import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.idea.CHART_NAME
 import io.github.fstaudt.helm.idea.CHART_VERSION
 import io.github.fstaudt.helm.idea.HelmValuesSettings
+import io.github.fstaudt.helm.idea.Mappers.metadataMapper
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.initHelmChart
+import io.github.fstaudt.helm.idea.model.HelmMetadata
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR
+import io.github.fstaudt.helm.idea.service.HelmService.Companion.HELM_METADATA_FILE
 import io.github.fstaudt.helm.idea.settings.model.ChartRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.verify
 import io.mockk.verifyOrder
+import org.assertj.core.api.Assertions.assertThat
 import java.io.File
+import java.time.OffsetDateTime
 
 class HelmServiceTest : HeavyPlatformTestCase() {
     companion object {
@@ -51,6 +57,18 @@ class HelmServiceTest : HeavyPlatformTestCase() {
             anyConstructed<OSProcessHandler>().waitFor(any())
             anyConstructed<OSProcessHandler>().exitCode
         }
+    }
+
+    fun `test - updateRepositories should update Helm metadata`() {
+        reset()
+        val beforeUpdate = OffsetDateTime.now()
+        service.updateRepositories(project)
+        val helmMetadataFile = File(project.baseDir(), "$JSON_SCHEMAS_DIR/$HELM_METADATA_FILE")
+        assertThat(helmMetadataFile).isFile.exists()
+        val helmMetadata = helmMetadataFile.inputStream().use {
+            metadataMapper.readValue(it, HelmMetadata::class.java)
+        }
+        assertThat(helmMetadata.lastUpdate).isAfterOrEqualTo(beforeUpdate)
     }
 
     fun `test - updateRepositories should get helm binary from settings`() {

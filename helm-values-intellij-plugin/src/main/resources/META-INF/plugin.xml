@@ -18,6 +18,7 @@
                                  instance="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
                                  id="io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable"
                                  displayName="Helm Values"/>
+        <postStartupActivity implementation="io.github.fstaudt.helm.idea.HelmValuesProjectActivity"/>
     </extensions>
     <actions>
         <group id="ProjectViewPopupMenu.HelmValues" compact="true">
@@ -70,6 +71,12 @@
                         text="Push All Chart Repositories to Helm"
                         description="Push all chart repositories configured in settings to Helm local installation"
                         class="io.github.fstaudt.helm.idea.actions.AddRepositoryAllAction"
+                        icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
+                </action>
+                <action id="HelmValues.UpdateRepositoryAll"
+                        text="Update All Chart Repositories"
+                        description="Update all chart repositories configured in Helm local installation"
+                        class="io.github.fstaudt.helm.idea.actions.UpdateRepositoryAllAction"
                         icon="io.github.fstaudt.helm.idea.HelmValuesIcons.Action">
                 </action>
             </group>

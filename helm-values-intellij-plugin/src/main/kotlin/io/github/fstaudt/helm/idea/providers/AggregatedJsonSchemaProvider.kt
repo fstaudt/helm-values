@@ -6,14 +6,14 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.SchemaType.userSchema
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion.SCHEMA_7
 import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
-import io.github.fstaudt.helm.Mappers.chartMetadataMapper
+import io.github.fstaudt.helm.idea.Mappers.metadataMapper
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
 import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.CHART_METADATA_FILE
 import java.io.File
 
 class AggregatedJsonSchemaProvider(private val jsonSchemasDir: File) : JsonSchemaFileProvider {
     private val chartMetadata = File(jsonSchemasDir, CHART_METADATA_FILE).inputStream().use {
-        chartMetadataMapper.readValue(it, HelmChartMetadata::class.java)
+        metadataMapper.readValue(it, HelmChartMetadata::class.java)
     }
 
     private val jsonSchemaFile = findFileByIoFile(File(jsonSchemasDir, AGGREGATED_SCHEMA_FILE), false)

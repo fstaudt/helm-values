@@ -7,15 +7,21 @@ import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.Mappers.chartMapper
 import io.github.fstaudt.helm.idea.HelmValuesSettings
+import io.github.fstaudt.helm.idea.Mappers.metadataMapper
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.exceptions.ProcessFailureException
+import io.github.fstaudt.helm.idea.model.HelmMetadata
+import io.github.fstaudt.helm.idea.service.HelmJsonSchemaService.Companion.JSON_SCHEMAS_DIR
 import io.github.fstaudt.helm.idea.settings.model.ChartRepository
 import io.github.fstaudt.helm.model.Chart
 import java.io.File
+import java.time.OffsetDateTime
+import java.time.OffsetDateTime.now
 
 @Service
 class HelmService {
     companion object {
+        const val HELM_METADATA_FILE = "helm-metadata.yaml"
         fun instance(): HelmService =
             ApplicationManager.getApplication().getService(HelmService::class.java)
     }
@@ -70,6 +76,15 @@ class HelmService {
                 if (exitCode != 0)
                     throw ProcessFailureException(output)
             }
+        updateHelmMetadata(project, now())
+    }
+
+    fun updateHelmMetadata(project: Project, lastUpdate: OffsetDateTime) {
+        HelmMetadata(lastUpdate).also {
+            val jsonSchemasDir = File(project.baseDir(), JSON_SCHEMAS_DIR)
+            jsonSchemasDir.mkdirs()
+            metadataMapper.writeValue(File(jsonSchemasDir, HELM_METADATA_FILE), it)
+        }
     }
 
     fun updateDependencies(chartFile: File, updateLocalDependencies: Boolean = true) {

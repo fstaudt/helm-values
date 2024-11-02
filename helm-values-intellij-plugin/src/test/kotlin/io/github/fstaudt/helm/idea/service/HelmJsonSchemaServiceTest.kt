@@ -13,7 +13,6 @@ import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
-import io.github.fstaudt.helm.Mappers.chartMetadataMapper
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.BASE_URI
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator.Companion.DEFS
 import io.github.fstaudt.helm.aggregation.schema.DownloadedSchemaAggregator.Companion.DOWNLOADS
@@ -22,6 +21,7 @@ import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator.Companion
 import io.github.fstaudt.helm.idea.CHART_NAME
 import io.github.fstaudt.helm.idea.CHART_VERSION
 import io.github.fstaudt.helm.idea.HelmValuesSettings
+import io.github.fstaudt.helm.idea.Mappers.metadataMapper
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.initHelmChart
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
@@ -121,7 +121,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
         val chartMetadataFile = File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$CHART_METADATA_FILE")
         assertThat(chartMetadataFile).isFile.exists()
         val chartMetadata = chartMetadataFile.inputStream().use {
-            chartMetadataMapper.readValue(it, HelmChartMetadata::class.java)
+            metadataMapper.readValue(it, HelmChartMetadata::class.java)
         }
         assertThat(chartMetadata.dir.path).isEqualTo("$subdir")
     }

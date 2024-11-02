@@ -28,7 +28,7 @@ class UpdateDependencyTaskTest : HeavyPlatformTestCase() {
         every { anyConstructed<OSProcessHandler>().exitCode } returns 0
     }
 
-    fun `test - run should update repositories and dependencies for provided chart`() {
+    fun `test - run should update dependencies for provided chart`() {
         reset()
         val chartDir = File(project.baseDir(), CHART_NAME)
         project.initHelmChart(chartDir)
@@ -37,9 +37,6 @@ class UpdateDependencyTaskTest : HeavyPlatformTestCase() {
             it.run(indicator)
         }
         verifyOrder {
-            indicator.text = eq("Updating chart repositories")
-            anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("repo", "update"))
-            anyConstructed<GeneralCommandLine>().createProcess()
             indicator.text = eq("Updating dependencies for chart $CHART_NAME")
             anyConstructed<GeneralCommandLine>().withWorkDirectory(File(project.baseDir(), CHART_NAME))
             anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("dependency", "update", ".", "--skip-refresh"))

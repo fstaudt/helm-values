@@ -19,8 +19,8 @@ import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_VALUES_SCHEMA_YAML_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.Mappers.chartMapper
-import io.github.fstaudt.helm.Mappers.chartMetadataMapper
 import io.github.fstaudt.helm.aggregation.JsonSchemaAggregator
+import io.github.fstaudt.helm.idea.Mappers.metadataMapper
 import io.github.fstaudt.helm.idea.baseDir
 import io.github.fstaudt.helm.idea.model.HelmChartMetadata
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
@@ -70,7 +70,7 @@ class HelmJsonSchemaService {
             jsonMapper.writeValue(File(jsonSchemasDir, AGGREGATED_SCHEMA_FILE), it)
         }
         HelmChartMetadata(chartFile.parentFile).also {
-            chartMetadataMapper.writeValue(File(jsonSchemasDir, CHART_METADATA_FILE), it)
+            metadataMapper.writeValue(File(jsonSchemasDir, CHART_METADATA_FILE), it)
         }
         return chart.dependencies.all { File(extractSchemaDir, "${it.name}/$HELM_CHART_FILE").exists() }
     }
