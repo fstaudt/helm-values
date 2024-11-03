@@ -38,7 +38,7 @@ Action will trigger the following processing:
   *A fallback schema is generated if JSON schema can't be extracted from dependency archive*
   *(archive not found, corrupted archive ...).*\
   *The description of the fallback schema provides more information on the download issue.*
-- generate aggregated JSON schema `aggregated-values.schema.json` in `.idea/json-schemas/<chart name>/`\
+- generate aggregated JSON schema `aggregated-values.schema.json` in `.idea/helm-values/<chart name>/`\
   *Action only aggregates extracted JSON schemas for each dependency*
   *if a repository mapping is **not** defined for the Helm repository of the dependency.*\
   *Check dedicated section to [configure JSON schema repositories](#configure-json-schema-repositories).*

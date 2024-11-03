@@ -32,7 +32,7 @@ import java.io.File
 @Service
 class HelmJsonSchemaService {
     companion object {
-        const val JSON_SCHEMAS_DIR = ".idea/json-schemas"
+        const val JSON_SCHEMAS_DIR = ".idea/helm-values"
         const val CHART_METADATA_FILE = "metadata.yaml"
         fun instance(): HelmJsonSchemaService =
             ApplicationManager.getApplication().getService(HelmJsonSchemaService::class.java)
