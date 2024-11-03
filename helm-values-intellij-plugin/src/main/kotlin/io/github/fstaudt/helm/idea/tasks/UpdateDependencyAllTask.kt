@@ -9,7 +9,7 @@ import io.github.fstaudt.helm.idea.tasks.actions.HelmValuesSettingsNotificationA
 import io.github.fstaudt.helm.idea.tasks.actions.UpdateDependencyAllNotificationAction
 import io.github.fstaudt.helm.idea.tasks.actions.UpdateRepositoryAllNotificationAction
 
-class UpdateDependencyAllTask(private val project: Project) : BackgroundAllTask(project, "tasks.updateDependencyAll") {
+class UpdateDependencyAllTask(project: Project) : BackgroundAllTask(project, "tasks.updateDependencyAll") {
     override fun run(indicator: ProgressIndicator) {
         indicator.initProgress()
         with(orderedHelmChartDirs()) {

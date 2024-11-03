@@ -13,6 +13,7 @@ import io.github.fstaudt.helm.idea.initHelmChart
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
+import io.mockk.verify
 import io.mockk.verifyOrder
 import java.io.File
 
@@ -83,5 +84,25 @@ class UpdateDependencyAllTaskTest : HeavyPlatformTestCase() {
             anyConstructed<GeneralCommandLine>().withWorkDirectory(File(project.baseDir(), CHART_NAME))
             anyConstructed<GeneralCommandLine>().createProcess()
         }
+    }
+
+    fun `test - run should ignore charts in internal IntelliJ folder`() {
+        reset()
+        project.initHelmChart(File(project.baseDir(), ".idea/$CHART_NAME"))
+        val indicator = mockk<ProgressIndicator>(relaxed = true)
+        UpdateDependencyAllTask(project).also {
+            it.run(indicator)
+        }
+        verify(exactly = 0) { anyConstructed<GeneralCommandLine>().createProcess() }
+    }
+
+    fun `test - run should ignore charts in internal Gradle folder`() {
+        reset()
+        project.initHelmChart(File(project.baseDir(), "build/helm-values/$CHART_NAME"))
+        val indicator = mockk<ProgressIndicator>(relaxed = true)
+        UpdateDependencyAllTask(project).also {
+            it.run(indicator)
+        }
+        verify(exactly = 0) { anyConstructed<GeneralCommandLine>().createProcess() }
     }
 }
