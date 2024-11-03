@@ -1,3 +1,25 @@
+## 0.10.0 - Nov 3, 2024
+
+- :sparkles: (intellij) update Helm repositories in separate IntelliJ action
+  ([#165](https://github.com/fstaudt/helm-values/issues/165))
+- :sparkles: (intellij) warning in settings when passwords are not saved
+  ([#156](https://github.com/fstaudt/helm-values/issues/156))
+- :sparkles: (intellij) support for IJ 2024.3
+- :sparkles: (intellij) explicit dependency on json module
+  ([#162](https://github.com/fstaudt/helm-values/issues/162))
+- :sparkles: (gradle) use provider API in plugin extension
+- :bug: (intellij) use on-demand instances of services instead of class instances
+  ([#161](https://github.com/fstaudt/helm-values/issues/161))
+- :bug: (intellij) rename .idea/json-schemas to .idea/helm-values for clarity
+- :bug: (intellij) search for helm charts in project should ignore internal Gradle folder
+- :construction_worker: bump JVM toolchain to 17
+- :construction_worker: (gradle) bump Gradle to 8.10.2
+
+**BREAKING CHANGES**:
+
+- Minimal Gradle version for Gradle plugin: Gradle 8.4
+- Minimal Java version for Gradle plugin: Java 17
+
 ## 0.9.0 - Jun 14, 2024
 
 - :sparkles: (intellij) configure Helm chart repositories from IntelliJ IDEA

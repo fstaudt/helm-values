@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.10.0 - Nov 3, 2024
+
+### ✨ New
+
+## 0.10.0 - Nov 3, 2024
+
+- update Helm repositories in separate IntelliJ action
+  ([#165](https://github.com/fstaudt/helm-values/issues/165))
+- warning in settings when passwords are not saved
+  ([#156](https://github.com/fstaudt/helm-values/issues/156))
+- support for IJ 2024.3
+- explicit dependency on json module
+  ([#162](https://github.com/fstaudt/helm-values/issues/162))
+
+### 🐛 Fixed
+- use on-demand instances of services instead of class instances
+  ([#161](https://github.com/fstaudt/helm-values/issues/161))
+- rename .idea/json-schemas to .idea/helm-values for clarity
+- search for helm charts in project should ignore internal Gradle folder
+
 ## 0.9.0 - Jun 14, 2024
 
 ### ✨ New
