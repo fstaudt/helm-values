@@ -7,6 +7,6 @@ import io.github.fstaudt.helm.idea.settings.ui.HelmValuesConfigurable
 
 class HelmValuesSettingsNotificationAction(key: String = "tasks.settings") : ProjectNotificationAction(key) {
     override fun actionPerformed(event: AnActionEvent, notification: Notification) {
-        ShowSettingsUtil.getInstance().editConfigurable(event.project!!, HelmValuesConfigurable())
+        ShowSettingsUtil.getInstance().showSettingsDialog(event.project!!, HelmValuesConfigurable::class.java)
     }
 }
