@@ -25,6 +25,11 @@ class ValidateHelmValuesTest {
 
     private lateinit var testProject: TestProject
 
+    companion object {
+        private const val UNEVALUATED_PROPERTY_MESSAGE = "- \$: property '%s' is not evaluated " +
+                "and the schema does not allow unevaluated properties\n   (from \$.unevaluatedProperties)"
+    }
+
     @BeforeEach
     fun `init test project`() {
         testProject = testProject()
@@ -57,8 +62,7 @@ class ValidateHelmValuesTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThat(it.task(":$VALIDATE_HELM_VALUES")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains(ValuesValidationException::class.java.name)
-            assertThat(it.output).contains("- There are unevaluated properties at following paths \$.invalid\n" +
-                    "   (from #/unevaluatedProperties)")
+            assertThat(it.output).contains(UNEVALUATED_PROPERTY_MESSAGE.format("invalid"))
         }
     }
 
@@ -74,8 +78,9 @@ class ValidateHelmValuesTest {
             assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
             assertThat(it.task(":$VALIDATE_HELM_VALUES")!!.outcome).isEqualTo(FAILED)
             assertThat(it.output).contains(ValuesValidationException::class.java.name)
-            assertThat(it.output).contains("- There are unevaluated properties at following paths \$.invalid, \$.other\n" +
-                    "   (from #/unevaluatedProperties)")
+            assertThat(it.output)
+                .contains(UNEVALUATED_PROPERTY_MESSAGE.format("invalid"))
+                .contains(UNEVALUATED_PROPERTY_MESSAGE.format("other"))
         }
     }
 

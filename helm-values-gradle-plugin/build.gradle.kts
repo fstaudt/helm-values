@@ -31,7 +31,7 @@ dependencies {
     compileOnly(gradleKotlinDsl())
     api(kotlin("gradle-plugin"))
     api(projects.helmValuesShared)
-    api("com.networknt", "json-schema-validator", "1.0.81")
+    api("com.networknt", "json-schema-validator", "1.5.3")
 }
 
 tasks.validatePlugins {

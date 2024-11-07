@@ -31,7 +31,7 @@ abstract class JsonMapper : BuildService<None> {
         val locale = Locale.getDefault()
         try {
             Locale.setDefault(ENGLISH)
-            return JsonSchemaFactory.builder(getInstance(V202012)).objectMapper(objectMapper).build()
+            return JsonSchemaFactory.builder(getInstance(V202012)).build()
         } finally {
             Locale.setDefault(locale)
         }
