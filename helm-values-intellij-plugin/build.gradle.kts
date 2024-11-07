@@ -1,5 +1,6 @@
 import org.jetbrains.changelog.Changelog.OutputType.HTML
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform
 
 val intellijPluginName: String by project
@@ -7,6 +8,7 @@ val intellijPluginVersion = "$version"
 val intellijPluginSinceBuild: String by project
 val intellijPluginUntilBuild: String by project
 val intellijPlatformVersion: String by project
+val intellijPlatformLatestVersion: String by project
 
 plugins {
     // Java support
@@ -76,6 +78,16 @@ intellijPlatform {
     pluginVerification {
         ides {
             recommended()
+        }
+    }
+}
+
+intellijPlatformTesting {
+    runIde {
+        register("runIdeLatest") {
+            type = IntellijIdeaCommunity
+            version = intellijPlatformLatestVersion
+            useInstaller = false
         }
     }
 }
