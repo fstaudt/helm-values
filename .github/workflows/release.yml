@@ -20,7 +20,7 @@ jobs:
       - name: "Setup gradle wrapper"
         run: chmod +x gradlew
       - name: "Setup gradle"
-        uses: gradle/actions/setup-gradle@v4.1.0
+        uses: gradle/actions/setup-gradle@v4.2.1
         with:
           cache-read-only: true
       - name: "Get version from tag"
