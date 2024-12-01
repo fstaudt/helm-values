@@ -64,7 +64,7 @@ jobs:
     - name: "Setup Gradle wrapper"
       run: chmod +x gradlew
     - name: "Setup Gradle"
-      uses: gradle/actions/setup-gradle@v4.1.0
+      uses: gradle/actions/setup-gradle@v4.2.1
       with:
         cache-read-only: true
     # Initializes the CodeQL tools for scanning.
