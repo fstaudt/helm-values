@@ -12,7 +12,7 @@ jobs:
       - name: "Fetch Sources"
         uses: actions/checkout@v4.2.2
       - name: "Setup Java 17"
-        uses: actions/setup-java@v4.5.0
+        uses: actions/setup-java@v4.6.0
         with:
           distribution: temurin
           java-version: 17
@@ -20,7 +20,7 @@ jobs:
       - name: "Setup gradle wrapper"
         run: chmod +x gradlew
       - name: "Setup gradle"
-        uses: gradle/actions/setup-gradle@v4.1.0
+        uses: gradle/actions/setup-gradle@v4.2.2
         with:
           cache-read-only: true
       - name: "Get version from tag"
