@@ -1,7 +1,7 @@
 package io.github.fstaudt.helm.test.assertions
 
 import net.javacrumbs.jsonunit.assertj.JsonAssert
-import net.javacrumbs.jsonunit.assertj.assertThatJson
+import net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson
 import org.assertj.core.api.AbstractFileAssert
 import org.assertj.core.internal.Files.instance
 import java.io.File
