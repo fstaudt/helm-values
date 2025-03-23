@@ -38,7 +38,6 @@ dependencies {
     api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3")
     intellijPlatform {
         intellijIdeaCommunity(intellijPlatformVersion)
-        instrumentationTools()
         pluginVerifier()
         zipSigner()
         testFramework(Platform)
