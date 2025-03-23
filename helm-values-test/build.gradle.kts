@@ -13,9 +13,12 @@ dependencies {
     api("net.javacrumbs.json-unit:json-unit-assertj:4.1.0")
     api("org.wiremock:wiremock:3.12.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
-tasks.test {
-    useJUnitPlatform()
+testing {
+    suites {
+        named<JvmTestSuite>("test") {
+            useJUnitJupiter()
+        }
+    }
 }
