@@ -29,11 +29,13 @@ testing {
 
 val sourcesJar = tasks.register<Jar>("sourcesJar") {
     archiveClassifier.set("sources")
+    group = "build"
     from(sourceSets.main.get().allSource)
 }
 val javadocJar = tasks.register<Jar>("javadocJar") {
     archiveClassifier.set("javadoc")
-    from(tasks.getByName("dokkaHtml").outputs)
+    group = "documentation"
+    from(tasks.getByName("dokkaGeneratePublicationHtml").outputs)
 }
 
 publishing {
