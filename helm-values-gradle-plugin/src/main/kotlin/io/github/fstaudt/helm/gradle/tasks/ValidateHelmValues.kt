@@ -45,7 +45,7 @@ abstract class ValidateHelmValues : DefaultTask() {
     abstract val jsonMapper: Property<JsonMapper>
 
     @TaskAction
-    fun aggregate() {
+    fun validate() {
         val schema = jsonMapper.get().schemaFrom(aggregatedSchemaFile)
         val values = yamlMapper.get().valuesFrom(valuesFile)
         val validationMessages = schema.validate(values)
