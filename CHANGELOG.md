@@ -1,3 +1,22 @@
+## 0.10.1 - Mar 24, 2025
+
+- :sparkles: drop support for global values schema
+- :sparkles: (intellij) support IJ 2025.1
+- :sparkles: (intellij) drop support for IJ 2023.3
+- :bug: (intellij) avoid usage of internal IntelliJ IDEA classes
+- :construction_worker: bump Gradle to 8.13
+- :construction_worker: migrate to Dokka Gradle plugin v2
+- :construction_worker: (gradle) bump json-schema-validator to 1.5.3
+- :construction_worker: (intellij) rename IntelliJ plugin name to "Helm values"
+- :construction_worker: (intellij) remove deprecated instrumentationTools
+- :construction_worker: bump JsonUnit to 4.1.0
+
+**BREAKING CHANGES**:
+
+- :boom: (intellij) IntelliJ IDEA 2023.3 is no more supported.\
+  Extension is only available for IntelliJ IDEA 2025.1 and above.
+- :boom: global values schema (deprecated since 0.4.0) is no more supported.
+
 ## 0.10.0 - Nov 3, 2024
 
 - :sparkles: (intellij) update Helm repositories in separate IntelliJ action

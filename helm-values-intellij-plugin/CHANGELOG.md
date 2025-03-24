@@ -1,10 +1,27 @@
 # Changelog
 
-## 0.10.0 - Nov 3, 2024
+## 0.10.1 - Mar 24, 2025
 
 ### ✨ New
 
+- drop support for global values schema
+- support IntelliJ IDEA 2025.1
+- drop support for IntelliJ IDEA 2023.3
+- rename IntelliJ plugin name to "Helm values"
+
+### 🐛 Fixed
+
+- avoid usage of internal IntelliJ IDEA classes
+
+### 🔥 Removed
+
+- IntelliJ IDEA 2023.3 is no more supported.\
+  Extension is only available for IntelliJ IDEA 2024.1 and above.
+- global values schema (deprecated since 0.4.0) is no more supported.
+
 ## 0.10.0 - Nov 3, 2024
+
+### ✨ New
 
 - update Helm repositories in separate IntelliJ action
   ([#165](https://github.com/fstaudt/helm-values/issues/165))
