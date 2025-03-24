@@ -23,6 +23,7 @@ import io.github.fstaudt.helm.idea.settings.model.ChartRepository
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.settings.service.ChartRepositoryService
 import io.github.fstaudt.helm.idea.settings.service.JsonSchemaRepositoryMappingService
+import java.awt.Dimension
 import javax.swing.JTable
 import javax.swing.JTextField
 import kotlin.reflect.KFunction
@@ -41,8 +42,8 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         arrayOf(
             Column("charts", ChartRepository::name, 40),
             Column("charts", ChartRepository::url, 150),
-            BooleanColumn("charts", ChartRepository::secured, 50),
-            BooleanColumn("charts", ChartRepository::pushedToHelm, 90)
+            BooleanColumn("charts", ChartRepository::secured, 60),
+            BooleanColumn("charts", ChartRepository::pushedToHelm, 120)
         ),
         ChartRepositoryEditor(),
         message("settings.charts.none")
@@ -85,12 +86,14 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
                     .label(message("settings.charts.label"), LabelPosition.TOP)
             }.resizableRow()
             row {
-                cell(chartJsonSchemaRepositoryMappingsViewer.createComponent().apply { preferredHeight = 162 })
+                cell(chartJsonSchemaRepositoryMappingsViewer.createComponent()
+                    .apply { preferredSize = Dimension(0, 162) })
                     .align(FILL)
                     .label(message("settings.chartMappings.label"), LabelPosition.TOP)
             }
             row {
-                cell(additionalJsonSchemaRepositoryMappingsEditor.createComponent().apply { preferredHeight = 162 })
+                cell(additionalJsonSchemaRepositoryMappingsEditor.createComponent()
+                    .apply { preferredSize = Dimension(0, 162) })
                     .align(FILL)
                     .label(message("settings.mappings.label"), LabelPosition.TOP)
             }
