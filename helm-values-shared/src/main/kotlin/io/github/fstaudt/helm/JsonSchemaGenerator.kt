@@ -77,8 +77,6 @@ class JsonSchemaGenerator(
                         val refPrefix = "${it.baseUri}/${dep.name}/${dep.sanitizedVersion()}".toRelativeUri()
                         val ref = "$refPrefix/${it.valuesSchemaFile}#/properties/global"
                         allOf.add(ObjectNode(nodeFactory).put(REF, ref))
-                        val globalRef = "$refPrefix/${it.globalValuesSchemaFile}"
-                        allOf.add(ObjectNode(nodeFactory).put(REF, globalRef))
                     }
                 }
                 allOf.add(globalPropertiesDescriptionFor(chart))

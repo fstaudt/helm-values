@@ -9,7 +9,6 @@ import com.intellij.notification.NotificationType.WARNING
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.HelmValuesSettings
@@ -73,7 +72,6 @@ class JsonSchemaRepositoryMappingService {
             credentials?.userName.orEmpty(),
             credentials?.password?.toString().orEmpty(),
             valuesSchemaFile,
-            globalValuesSchemaFile
         )
     }
 
@@ -82,7 +80,6 @@ class JsonSchemaRepositoryMappingService {
             baseUri,
             referenceRepositoryMapping,
             valuesSchemaFile.takeUnless { referenced() }.orElse(VALUES_SCHEMA_FILE),
-            globalValuesSchemaFile.takeUnless { referenced() }.orElse(GLOBAL_VALUES_SCHEMA_FILE)
         )
     }
 
@@ -91,7 +88,6 @@ class JsonSchemaRepositoryMappingService {
             username = it.username
             password = it.password
             valuesSchemaFile = it.valuesSchemaFile
-            globalValuesSchemaFile = it.globalValuesSchemaFile
         }
     }
 

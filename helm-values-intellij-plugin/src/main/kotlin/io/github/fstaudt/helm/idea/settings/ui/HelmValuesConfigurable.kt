@@ -53,8 +53,7 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
             Column("mappings", JsonSchemaRepositoryMapping::name, 40),
             Column("mappings", JsonSchemaRepositoryMapping::baseUri, 150),
             Column("mappings", JsonSchemaRepositoryMapping::valuesSchemaFile, 50),
-            Column("mappings", JsonSchemaRepositoryMapping::globalValuesSchemaFile, 60),
-            BooleanColumn("mappings", JsonSchemaRepositoryMapping::secured, 50)
+            BooleanColumn("mappings", JsonSchemaRepositoryMapping::secured, 60)
         ),
         JsonSchemaRepositoryMappingEditor(),
         message("settings.chartMappings.none")
@@ -66,8 +65,7 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
             Column("mappings", JsonSchemaRepositoryMapping::name, 40),
             Column("mappings", JsonSchemaRepositoryMapping::baseUri, 150),
             Column("mappings", JsonSchemaRepositoryMapping::valuesSchemaFile, 50),
-            Column("mappings", JsonSchemaRepositoryMapping::globalValuesSchemaFile, 60),
-            BooleanColumn("mappings", JsonSchemaRepositoryMapping::secured, 50)
+            BooleanColumn("mappings", JsonSchemaRepositoryMapping::secured, 60)
         ),
         JsonSchemaRepositoryMappingEditor(),
         message("settings.mappings.none")

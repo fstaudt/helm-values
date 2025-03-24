@@ -1,7 +1,5 @@
 package io.github.fstaudt.helm.model
 
-import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_DEPRECATION
-import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import org.apache.hc.client5.http.utils.Base64
 import java.io.Serializable
@@ -25,15 +23,12 @@ import java.io.Serializable
  * @param username optional username for basic authentication
  * @param password optional password for basic authentication
  * @param valuesSchemaFile optional file name of JSON schema for values.yaml (defaults to values.schema.json)
- * @param globalValuesSchemaFile optional file name of JSON schema for global section in values.yaml (defaults to global-values.schema.json)
  */
 data class JsonSchemaRepository(
     val baseUri: String,
     val username: String? = null,
     val password: String? = null,
     val valuesSchemaFile: String = VALUES_SCHEMA_FILE,
-    @Deprecated(GLOBAL_VALUES_DEPRECATION)
-    val globalValuesSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
 ) : Serializable {
 
     companion object {

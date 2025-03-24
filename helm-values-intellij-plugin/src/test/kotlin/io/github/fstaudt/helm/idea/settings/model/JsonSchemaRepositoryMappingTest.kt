@@ -12,12 +12,11 @@ class JsonSchemaRepositoryMappingTest {
         private const val PASSWORD = "passwd"
         private const val REF = "ref"
         private const val VALUES_SCHEMA = "values.schema.json"
-        private const val GLOBAL_SCHEMA = "global.schema.json"
     }
 
     @Test
     fun `applyFrom should override all values of the object`() {
-        val mapping = JsonSchemaRepositoryMapping(APPS, APPS_URL, REF, USERNAME, PASSWORD, VALUES_SCHEMA, GLOBAL_SCHEMA)
+        val mapping = JsonSchemaRepositoryMapping(APPS, APPS_URL, REF, USERNAME, PASSWORD, VALUES_SCHEMA)
         val receiver = JsonSchemaRepositoryMapping()
         val applied = receiver.applyFrom(mapping)
         assert(applied === receiver) { "applyFrom should return the same object" }

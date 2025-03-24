@@ -4,10 +4,8 @@ import io.github.fstaudt.helm.HelmConstants.HELM_CHARTS_DIR
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
-import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
-import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import java.io.File
@@ -79,26 +77,17 @@ fun TestProject.initExtractedHelmDependency(
 fun TestProject.initDownloadedSchemas(
     dependencyPath: String,
     valuesSchemaFile: String = VALUES_SCHEMA_FILE,
-    globalSchemaFile: String = GLOBAL_VALUES_SCHEMA_FILE,
-    globalSchemaContent: String = """
-        {
-          "$ID": "$dependencyPath/$globalSchemaFile"
-        }
-    """.trimIndent(),
     valuesSchemaContent: String = """
         {
           "$ID": "$dependencyPath/$valuesSchemaFile",
           "properties": {
-            "global": {
-              "$REF": "$globalSchemaFile"
-            }
+            "global": {}
           }
         }
     """.trimIndent()
 ) {
     File(downloadSchemasDir, dependencyPath).mkdirs()
     File(downloadSchemasDir, "$dependencyPath/$valuesSchemaFile").writeText(valuesSchemaContent)
-    File(downloadSchemasDir, "$dependencyPath/$globalSchemaFile").writeText(globalSchemaContent)
 }
 
 fun TestProject.initHelmResources(chartName: String, chartVersion: String) {

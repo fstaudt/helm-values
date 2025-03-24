@@ -102,6 +102,6 @@ class HelmJsonSchemaService {
     }
 
     private fun JsonSchemaRepositoryMapping.toJsonSchemaRepository(): JsonSchemaRepository {
-        return JsonSchemaRepository(baseUri, username, password, valuesSchemaFile, globalValuesSchemaFile)
+        return JsonSchemaRepository(baseUri, username, password, valuesSchemaFile)
     }
 }

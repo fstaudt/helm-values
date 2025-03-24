@@ -22,7 +22,6 @@ import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.ui.table.TableModelEditor
-import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.settings.model.ChartRepository
@@ -67,7 +66,6 @@ class ChartRepositoryEditor : TableModelEditor.DialogItemEditor<ChartRepository>
         lateinit var mappingPassword: Cell<JBPasswordField>
         lateinit var mappingUsername: Cell<JBTextField>
         lateinit var mappingValuesSchemaFile: Cell<JBTextField>
-        lateinit var mappingGlobalValuesSchemaFile: Cell<JBTextField>
         val panel = panel {
             rowWithTextFieldForProperty(item::name) { cell ->
                 cell.focused().also { name = it }
@@ -122,7 +120,6 @@ class ChartRepositoryEditor : TableModelEditor.DialogItemEditor<ChartRepository>
                                 mappingPassword.component.text = ""
                                 mappingUsername.component.text = ""
                                 mappingValuesSchemaFile.component.text = VALUES_SCHEMA_FILE
-                                mappingGlobalValuesSchemaFile.component.text = GLOBAL_VALUES_SCHEMA_FILE
                             }
                         }
                     )
@@ -150,12 +147,10 @@ class ChartRepositoryEditor : TableModelEditor.DialogItemEditor<ChartRepository>
                     mappingUsername.component.text = ""
                     mappingPassword.component.text = ""
                     mappingValuesSchemaFile.component.text = VALUES_SCHEMA_FILE
-                    mappingGlobalValuesSchemaFile.component.text = GLOBAL_VALUES_SCHEMA_FILE
                     mappings.firstOrNull { it.name == "${cell.component.selectedItem}" }?.let {
                         mappingUsername.component.text = it.username
                         mappingPassword.component.text = it.password
                         mappingValuesSchemaFile.component.text = it.valuesSchemaFile
-                        mappingGlobalValuesSchemaFile.component.text = it.globalValuesSchemaFile
                     }
                 }
                 cell.visibleIf(jsonSchemaRepositoryMapping.selected.and(mappingReferenced.selected))
@@ -169,9 +164,6 @@ class ChartRepositoryEditor : TableModelEditor.DialogItemEditor<ChartRepository>
             }.visibleIf(jsonSchemaRepositoryMapping.selected)
             rowWithTextFieldForProperty(mappingItem::valuesSchemaFile, "settings.mappings") { cell ->
                 cell.enabledIf(mappingReferenced.selected.not()).also { mappingValuesSchemaFile = it }
-            }.visibleIf(jsonSchemaRepositoryMapping.selected)
-            rowWithTextFieldForProperty(mappingItem::globalValuesSchemaFile, "settings.mappings") { cell ->
-                cell.enabledIf(mappingReferenced.selected.not()).also { mappingGlobalValuesSchemaFile = it }
             }.visibleIf(jsonSchemaRepositoryMapping.selected)
         }
         dialog(title = message("settings.charts.dialog.title"), panel = panel, ok = {

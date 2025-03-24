@@ -175,8 +175,6 @@ Default file names for JSON schemas can be overridden for each repository in plu
 
 ![settings-custom](screenshots/settings-custom.png "Custom JSON schema file names in settings")
 
-**Deprecation notice**: *`globalValuesSchemaFile` is deprecated and will be removed in `1.0.0`.*
-
 ### JSON schema repository security
 
 JSON schema repositories can be secured with basic authentication.

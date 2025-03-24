@@ -185,12 +185,10 @@ Default file names for JSON schemas can be overridden for each repository in bui
 ```kotlin
 helmValues {
     repositoryMappings = mapOf(
-        "@apps" to JsonSchemaRepository("https://my-schemas/repository", valuesSchemaFile="helm-values.json", globalValuesSchemaFile="helm-global.json")
+        "@apps" to JsonSchemaRepository("https://my-schemas/repository", valuesSchemaFile="helm-values.json")
     )
 }
 ```
-
-**Deprecation notice**: *`globalValuesSchemaFile` is deprecated and will be removed in `1.0.0`.*
 
 ### JSON schema repository security
 

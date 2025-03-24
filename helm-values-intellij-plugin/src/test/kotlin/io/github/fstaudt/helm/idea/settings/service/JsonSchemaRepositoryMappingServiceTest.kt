@@ -24,7 +24,6 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
         private const val USERNAME = "user"
         private const val PASSWORD = "password"
         private const val VALUES_SCHEMA = "values.json"
-        private const val GLOBAL_SCHEMA = "global.json"
     }
 
     private fun reset() {
@@ -57,27 +56,23 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
         reset()
         state.jsonSchemaRepositories = mapOf(
             APPS to JsonSchemaRepositoryState(APPS_URI, valuesSchemaFile = VALUES_SCHEMA),
-            BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI, globalValuesSchemaFile = GLOBAL_SCHEMA),
+            BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI),
         )
         assertThat(service.list()).containsExactly(
             JsonSchemaRepositoryMapping(APPS, APPS_URI, valuesSchemaFile = VALUES_SCHEMA),
-            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, globalValuesSchemaFile = GLOBAL_SCHEMA),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI),
         )
     }
 
     fun `test - jsonSchemaRepositoryMappings should retrieve specific values files from reference repository mapping when it is provided`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            APPS to JsonSchemaRepositoryState(APPS_URI, "", VALUES_SCHEMA, GLOBAL_SCHEMA),
+            APPS to JsonSchemaRepositoryState(APPS_URI, "", VALUES_SCHEMA),
             BUNDLES to JsonSchemaRepositoryState(BUNDLES_URI, APPS),
         )
         assertThat(service.list()).containsExactly(
-            JsonSchemaRepositoryMapping(APPS, APPS_URI,
-                valuesSchemaFile = VALUES_SCHEMA,
-                globalValuesSchemaFile = GLOBAL_SCHEMA),
-            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS,
-                valuesSchemaFile = VALUES_SCHEMA,
-                globalValuesSchemaFile = GLOBAL_SCHEMA),
+            JsonSchemaRepositoryMapping(APPS, APPS_URI, valuesSchemaFile = VALUES_SCHEMA),
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS, valuesSchemaFile = VALUES_SCHEMA),
         )
     }
 
@@ -129,33 +124,19 @@ class JsonSchemaRepositoryMappingServiceTest : BasePlatformTestCase() {
         reset()
         state.jsonSchemaRepositories = mapOf(BUNDLES to JsonSchemaRepositoryState("https://nexus/previous"))
         service.update(project, listOf(
-            JsonSchemaRepositoryMapping(
-                BUNDLES,
-                BUNDLES_URI,
-                valuesSchemaFile = VALUES_SCHEMA,
-                globalValuesSchemaFile = GLOBAL_SCHEMA
-            )
+            JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, valuesSchemaFile = VALUES_SCHEMA)
         ))
         assertThat(state.jsonSchemaRepositories).containsExactly(
-            entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI, "", VALUES_SCHEMA, GLOBAL_SCHEMA))
+            entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI, "", VALUES_SCHEMA))
         )
     }
 
     fun `test - update should only keep reference repository mapping in state when it is provided`() {
         reset()
         state.jsonSchemaRepositories = mapOf(
-            BUNDLES to JsonSchemaRepositoryState("https://previous", "", VALUES_SCHEMA, GLOBAL_SCHEMA)
+            BUNDLES to JsonSchemaRepositoryState("https://previous", "", VALUES_SCHEMA)
         )
-        service.update(project, listOf(
-            JsonSchemaRepositoryMapping(
-                BUNDLES,
-                BUNDLES_URI,
-                APPS,
-                "",
-                "",
-                VALUES_SCHEMA,
-                GLOBAL_SCHEMA)
-        ))
+        service.update(project, listOf(JsonSchemaRepositoryMapping(BUNDLES, BUNDLES_URI, APPS, "", "", VALUES_SCHEMA)))
         assertThat(state.jsonSchemaRepositories).containsExactly(
             entry(BUNDLES, JsonSchemaRepositoryState(BUNDLES_URI, APPS))
         )

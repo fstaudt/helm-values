@@ -21,7 +21,6 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.ui.table.TableModelEditor
-import io.github.fstaudt.helm.JsonSchemaConstants.GLOBAL_VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
@@ -56,7 +55,6 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
         lateinit var password: Cell<JBPasswordField>
         lateinit var username: Cell<JBTextField>
         lateinit var valuesSchemaFile: Cell<JBTextField>
-        lateinit var globalValuesSchemaFile: Cell<JBTextField>
         val panel = panel {
             rowWithTextFieldForProperty(item::name) { cell ->
                 cell.focused().also { name = it }
@@ -81,12 +79,10 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
                     username.component.text = ""
                     password.component.text = ""
                     valuesSchemaFile.component.text = VALUES_SCHEMA_FILE
-                    globalValuesSchemaFile.component.text = GLOBAL_VALUES_SCHEMA_FILE
                     mappings.firstOrNull { it.name == "${cell.component.selectedItem}" }?.let {
                         username.component.text = it.username
                         password.component.text = it.password
                         valuesSchemaFile.component.text = it.valuesSchemaFile
-                        globalValuesSchemaFile.component.text = it.globalValuesSchemaFile
                     }
                 }
                 cell.visibleIf(referenced.selected).also { referenceRepositoryMapping = it }
@@ -99,9 +95,6 @@ class JsonSchemaRepositoryMappingEditor : TableModelEditor.DialogItemEditor<Json
             }
             rowWithTextFieldForProperty(item::valuesSchemaFile) { cell ->
                 cell.enabledIf(referenced.selected.not()).also { valuesSchemaFile = it }
-            }
-            rowWithTextFieldForProperty(item::globalValuesSchemaFile) { cell ->
-                cell.enabledIf(referenced.selected.not()).also { globalValuesSchemaFile = it }
             }
         }
         dialog(title = message("settings.mappings.dialog.title"), panel = panel, ok = {
