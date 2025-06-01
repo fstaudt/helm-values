@@ -14,6 +14,12 @@ jobs:
     steps:
       - name: "Fetch sources"
         uses: actions/checkout@v4.2.2
+      - name: "Free disk space"
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          large-packages: false
+          docker-images: false
       - name: "Setup Java"
         uses: actions/setup-java@v4.7.1
         with:
@@ -24,12 +30,6 @@ jobs:
         run: chmod +x gradlew
       - name: "Setup Gradle"
         uses: gradle/actions/setup-gradle@v4.4.0
-      - name: "Maximize build space"
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: false
-          large-packages: false
-          docker-images: false
       - name: "Run tests"
         run: ./gradlew check
       - name: "Collect results of failed tests"
