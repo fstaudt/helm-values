@@ -8,7 +8,11 @@ import java.lang.reflect.Method
  */
 class GradleVersionDisplayNameGenerator : DisplayNameGenerator.Standard() {
     private val displayNameSuffix = displayNameSuffix()
-    override fun generateDisplayNameForMethod(testClass: Class<*>, testMethod: Method): String {
+    override fun generateDisplayNameForMethod(
+        enclosingInstanceTypes: MutableList<Class<*>>,
+        testClass: Class<*>,
+        testMethod: Method
+    ): String {
         return "${testMethod.name}$displayNameSuffix"
     }
 
