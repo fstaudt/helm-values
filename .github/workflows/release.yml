@@ -8,6 +8,8 @@ jobs:
   release:
     name: "Release"
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: "Fetch Sources"
         uses: actions/checkout@v4.2.2
