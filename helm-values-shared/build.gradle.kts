@@ -10,7 +10,7 @@ kotlin {
 }
 
 dependencies {
-    api("org.apache.httpcomponents.client5:httpclient5:5.4.4")
+    api("org.apache.httpcomponents.client5:httpclient5:5.5")
     api("org.apache.commons:commons-compress:1.27.1")
     api("com.fasterxml.jackson.core:jackson-databind:2.19.0")
     api("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
