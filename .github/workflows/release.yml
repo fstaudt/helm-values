@@ -11,11 +11,11 @@ jobs:
     steps:
       - name: "Fetch Sources"
         uses: actions/checkout@v4.2.2
-      - name: "Setup Java 17"
+      - name: "Setup Java"
         uses: actions/setup-java@v4.7.1
         with:
-          distribution: temurin
-          java-version: 17
+          distribution: graalvm
+          java-version: 21
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
       - name: "Setup gradle wrapper"
         run: chmod +x gradlew

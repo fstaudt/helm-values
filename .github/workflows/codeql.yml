@@ -58,11 +58,11 @@ jobs:
     steps:
     - name: "Checkout repository"
       uses: actions/checkout@v4
-    - name: "Setup Java 17"
+    - name: "Setup Java"
       uses: actions/setup-java@v4.7.1
       with:
-        distribution: temurin
-        java-version: 17
+        distribution: graalvm
+        java-version: 21
       if: matrix.language == 'java-kotlin'
     - name: "Setup Gradle wrapper"
       run: chmod +x gradlew
