@@ -68,7 +68,7 @@ jobs:
       run: chmod +x gradlew
       if: matrix.language == 'java-kotlin'
     - name: "Setup Gradle"
-      uses: gradle/actions/setup-gradle@v4.4.0
+      uses: gradle/actions/setup-gradle@v4.4.1
       with:
         cache-read-only: true
       if: matrix.language == 'java-kotlin'
