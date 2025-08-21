@@ -8,6 +8,7 @@ jobs:
   build:
     name: "Build"
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       pull-requests: write
@@ -54,18 +55,20 @@ jobs:
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
           VERSION="$(echo "$PROPERTIES" | grep "^version:" | cut -f2- -d ' ')"
+          PLUGIN_VERIFIER_CONFIGURATION=-PintellijPluginSinceBuild=251 -PintellijPlatformVersion=2025.1.4.1
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
+          echo "pluginVerifierConfiguration=$PLUGIN_VERIFIER_CONFIGURATION" >> $GITHUB_OUTPUT
 
-          ./gradlew :helm-values-intellij-plugin:printProductsReleases -PintellijPluginSinceBuild=251 --quiet > helm-values-intellij-plugin/build/productsReleases.txt
+          ./gradlew :helm-values-intellij-plugin:printProductsReleases $PLUGIN_VERIFIER_CONFIGURATION --quiet > helm-values-intellij-plugin/build/productsReleases.txt
       - name: "Setup IntelliJ plugin verifier IDEs cache"
         uses: actions/cache@v4.2.3
         with:
           path: ${{ steps.intellij_properties.outputs.pluginVerifierHomeDir }}/ides
           key: plugin-verifier-${{ hashFiles('helm-values-intellij-plugin/build/productsReleases.txt') }}
       - name: "Run IntelliJ plugin verification tasks"
-        run: ./gradlew :helm-values-intellij-plugin:verifyPlugin -PintellijPluginSinceBuild=251 -Pplugin.verifier.home.dir=${{ steps.intellij_properties.outputs.pluginVerifierHomeDir }}
+        run: ./gradlew :helm-values-intellij-plugin:verifyPlugin ${{ steps.intellij_properties.outputs.pluginVerifierConfiguration }} -Pplugin.verifier.home.dir=${{ steps.intellij_properties.outputs.pluginVerifierHomeDir }}
       - name: "Collect IntelliJ plugin verifier results"
         if: ${{ always() }}
         uses: actions/upload-artifact@v4.6.2
