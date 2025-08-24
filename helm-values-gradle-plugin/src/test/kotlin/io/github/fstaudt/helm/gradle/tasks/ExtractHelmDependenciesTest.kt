@@ -7,6 +7,7 @@ import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.gradle.RERUN_TASKS
 import io.github.fstaudt.helm.gradle.TestProject
 import io.github.fstaudt.helm.gradle.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.gradle.buildDir
@@ -119,8 +120,8 @@ class ExtractHelmDependenciesTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(WITH_BUILD_CACHE, EXTRACT_HELM_DEPENDENCIES).also {
-            assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+        testProject.runTask(WITH_BUILD_CACHE, RERUN_TASKS, EXTRACT_HELM_DEPENDENCIES).also {
+            assertThat(it.task(":$EXTRACT_HELM_DEPENDENCIES")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE").isFile
                 .hasContent().node(ID).isEqualTo("$EMBEDDED_SCHEMA/0.1.0/$HELM_SCHEMA_FILE")
             assertThat(File("$extractSchemasDir/$EMBEDDED_SCHEMA/$HELM_CHART_FILE")).isFile

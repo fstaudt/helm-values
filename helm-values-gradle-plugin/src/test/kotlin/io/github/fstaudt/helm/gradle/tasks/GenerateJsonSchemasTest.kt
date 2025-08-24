@@ -11,6 +11,7 @@ import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.CHART_VERSION
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.gradle.RERUN_TASKS
 import io.github.fstaudt.helm.gradle.TestProject
 import io.github.fstaudt.helm.gradle.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.gradle.buildDir
@@ -604,8 +605,8 @@ class GenerateJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(WITH_BUILD_CACHE, GENERATE_JSON_SCHEMAS).also {
-            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+        testProject.runTask(WITH_BUILD_CACHE, RERUN_TASKS, GENERATE_JSON_SCHEMAS).also {
+            assertThat(it.task(":$GENERATE_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("${testProject.buildDir}/$HELM_VALUES/$GENERATION_DIR/$VALUES_SCHEMA_FILE").isFile
                 .hasContent().node(ID).isEqualTo("$BASE_CHART_URL/$VALUES_SCHEMA_FILE")
         }

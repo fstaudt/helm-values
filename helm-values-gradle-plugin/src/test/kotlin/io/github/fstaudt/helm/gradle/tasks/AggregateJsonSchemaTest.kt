@@ -17,6 +17,7 @@ import io.github.fstaudt.helm.aggregation.schema.LocalSchemaAggregator.Companion
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.CHART_VERSION
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
+import io.github.fstaudt.helm.gradle.RERUN_TASKS
 import io.github.fstaudt.helm.gradle.TestProject
 import io.github.fstaudt.helm.gradle.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.gradle.buildDir
@@ -843,8 +844,8 @@ class AggregateJsonSchemaTest {
 
     @Test
     fun `aggregateJsonSchema should retrieve JSON schemas from cache on second run`() {
-        testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {
-            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+        testProject.runTask(WITH_BUILD_CACHE, RERUN_TASKS, AGGREGATE_JSON_SCHEMA).also {
+            assertThat(it.task(":$AGGREGATE_JSON_SCHEMA")!!.outcome).isEqualTo(SUCCESS)
         }
         aggregatedSchemaFile.delete()
         testProject.runTask(WITH_BUILD_CACHE, AGGREGATE_JSON_SCHEMA).also {

@@ -14,6 +14,7 @@ import io.github.fstaudt.helm.JsonSchemaDownloader.Companion.DOWNLOADS_DIR
 import io.github.fstaudt.helm.gradle.CHART_NAME
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.HELM_VALUES
 import io.github.fstaudt.helm.gradle.HelmValuesPlugin.Companion.SCHEMA_VERSION
+import io.github.fstaudt.helm.gradle.RERUN_TASKS
 import io.github.fstaudt.helm.gradle.TestProject
 import io.github.fstaudt.helm.gradle.WITH_BUILD_CACHE
 import io.github.fstaudt.helm.gradle.buildDir
@@ -186,8 +187,8 @@ class DownloadJsonSchemasTest {
                 """.trimIndent()
             )
         }
-        testProject.runTask(WITH_BUILD_CACHE, DOWNLOAD_JSON_SCHEMAS).also {
-            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isIn(SUCCESS, FROM_CACHE)
+        testProject.runTask(WITH_BUILD_CACHE, RERUN_TASKS, DOWNLOAD_JSON_SCHEMAS).also {
+            assertThat(it.task(":$DOWNLOAD_JSON_SCHEMAS")!!.outcome).isEqualTo(SUCCESS)
             assertThatJsonFile("$downloadDir/$CHARTS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH").isFile
                 .hasContent().node(ID).isEqualTo(EXTERNAL_VALUES_SCHEMA_PATH)
         }
