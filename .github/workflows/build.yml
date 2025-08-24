@@ -55,7 +55,7 @@ jobs:
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
           VERSION="$(echo "$PROPERTIES" | grep "^version:" | cut -f2- -d ' ')"
-          PLUGIN_VERIFIER_CONFIGURATION=-PintellijPluginSinceBuild=251 -PintellijPlatformVersion=2025.1.4.1
+          PLUGIN_VERIFIER_CONFIGURATION="-PintellijPluginSinceBuild=251 -PintellijPlatformVersion=2025.1.4.1"
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
