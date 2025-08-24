@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.0 - Aug 24, 2025
+
+### ✨ New
+
+- support IntelliJ IDEA 2025.2
+- drop support for IntelliJ IDEA 2024.2
+
+### 🔥 Removed
+
+- IntelliJ IDEA 2024.2 is no more supported.\
+  Extension is only available for IntelliJ IDEA 2024.3 and above.
+
 ## 0.10.1 - Mar 24, 2025
 
 ### ✨ New
