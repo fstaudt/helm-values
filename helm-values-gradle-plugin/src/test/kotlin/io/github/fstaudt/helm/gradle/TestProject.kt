@@ -9,6 +9,7 @@ import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 
 const val WITH_BUILD_CACHE = "--build-cache"
+const val RERUN_TASKS = "--rerun-tasks"
 const val CHART_NAME = "helm-chart"
 const val CHART_VERSION = "0.1.0"
 
