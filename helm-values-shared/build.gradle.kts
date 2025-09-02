@@ -11,12 +11,12 @@ kotlin {
 
 dependencies {
     api("org.apache.httpcomponents.client5:httpclient5:5.5")
-    api("org.apache.commons:commons-compress:1.27.1") {
+    api("org.apache.commons:commons-compress:1.28.0") {
         api("org.apache.commons:commons-lang3:3.18.0")
     }
-    api("com.fasterxml.jackson.core:jackson-databind:2.19.2")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.2")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.2")
+    api("com.fasterxml.jackson.core:jackson-databind:2.20.0")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.0")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0")
     api("com.github.java-json-tools:json-patch:1.13")
     testImplementation(projects.helmValuesTest)
 }
