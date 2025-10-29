@@ -14,6 +14,11 @@ updates:
       interval: "monthly"
     assignees:
       - "fstaudt"
+    ignore:
+      # commons-compress 1.28.0 introduced breaking changes in tar.gz extraction
+      # Keep at 1.27.1 until the issue is resolved
+      - dependency-name: "org.apache.commons:commons-compress"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
