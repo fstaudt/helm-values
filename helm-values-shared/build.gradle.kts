@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm")
-    id("org.jetbrains.dokka") version "2.0.0"
+    id("org.jetbrains.dokka") version "2.1.0"
     `maven-publish`
     signing
 }
@@ -14,9 +14,9 @@ dependencies {
     api("org.apache.commons:commons-compress:1.27.1") {
         api("org.apache.commons:commons-lang3:3.19.0")
     }
-    api("com.fasterxml.jackson.core:jackson-databind:2.20.0")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.0")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0")
+    api("com.fasterxml.jackson.core:jackson-databind:2.20.1")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.1")
     api("com.github.java-json-tools:json-patch:1.13")
     testImplementation(projects.helmValuesTest)
 }
