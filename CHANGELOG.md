@@ -1,3 +1,8 @@
+## 0.11.1 - Aug 24, 2025
+
+- :sparkles: (intellij) support IJ 2025.3
+- :construction_worker: bump Gradle to 9.1.0
+
 ## 0.11.0 - Aug 24, 2025
 
 - :sparkles: (intellij) support IJ 2025.2

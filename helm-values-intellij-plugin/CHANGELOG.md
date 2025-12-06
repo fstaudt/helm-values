@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.1 - Dec 6, 2025
+
+### ✨ New
+
+- support IntelliJ IDEA 2025.3
+
 ## 0.11.0 - Aug 24, 2025
 
 ### ✨ New
