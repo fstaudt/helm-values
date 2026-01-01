@@ -16,7 +16,7 @@ plugins {
     // Kotlin support
     kotlin("jvm")
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij.platform") version "2.5.0"
+    id("org.jetbrains.intellij.platform") version "2.10.5"
     // Gradle Changelog Plugin
     id("org.jetbrains.changelog") version "2.5.0"
 }
@@ -43,7 +43,7 @@ dependencies {
         zipSigner()
         testFramework(Platform)
     }
-    testImplementation("io.mockk:mockk:1.14.6")
+    testImplementation("io.mockk:mockk:1.14.7")
     testImplementation("junit:junit:4.13.2")
     testImplementation(projects.helmValuesTest) {
         exclude("junit-jupiter-api")
