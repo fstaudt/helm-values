@@ -16,7 +16,7 @@ plugins {
     // Kotlin support
     kotlin("jvm")
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij.platform") version "2.5.0"
+    id("org.jetbrains.intellij.platform") version "2.11.0"
     // Gradle Changelog Plugin
     id("org.jetbrains.changelog") version "2.5.0"
 }
@@ -35,7 +35,7 @@ dependencies {
     api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
-    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.1")
     intellijPlatform {
         intellijIdeaCommunity(intellijPlatformVersion)
         bundledModule("com.intellij.modules.json")
@@ -43,13 +43,13 @@ dependencies {
         zipSigner()
         testFramework(Platform)
     }
-    testImplementation("io.mockk:mockk:1.14.6")
+    testImplementation("io.mockk:mockk:1.14.9")
     testImplementation("junit:junit:4.13.2")
     testImplementation(projects.helmValuesTest) {
         exclude("junit-jupiter-api")
         exclude("wiremock")
     }
-    testRuntimeOnly("org.yaml:snakeyaml:2.5")
+    testRuntimeOnly("org.yaml:snakeyaml:2.6")
 }
 
 intellijPlatform {
