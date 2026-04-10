@@ -22,6 +22,9 @@ updates:
       # intellij platform plugin not compatible with platform version 2024.3.6
       # Keep at 2.5.0 until the issue is resolved
       - dependency-name: "org.jetbrains.intellij.platform"
+      # json-schema-validator 3.0.1 requires Jackson3
+      - dependency-name: "com.networknt:json-schema-validator"
+        update-types: ["version-update:semver-major"]
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
