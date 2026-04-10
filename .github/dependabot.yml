@@ -19,6 +19,9 @@ updates:
       # Keep at 1.27.1 until the issue is resolved
       - dependency-name: "org.apache.commons:commons-compress"
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # intellij platform plugin not compatible with platform version 2024.3.6
+      # Keep at 2.5.0 until the issue is resolved
+      - dependency-name: "org.jetbrains.intellij.platform"
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
