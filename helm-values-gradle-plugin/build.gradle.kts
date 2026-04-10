@@ -3,7 +3,7 @@
 plugins {
     `java-gradle-plugin`
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "2.0.0"
+    id("com.gradle.plugin-publish") version "2.1.1"
 }
 
 kotlin {
@@ -31,7 +31,7 @@ dependencies {
     compileOnly(gradleKotlinDsl())
     api(kotlin("gradle-plugin"))
     api(projects.helmValuesShared)
-    api("com.networknt:json-schema-validator:1.5.3")
+    api("com.networknt:json-schema-validator:1.5.9")
 }
 
 tasks.validatePlugins {
