@@ -8,7 +8,7 @@ data class ChartDependency(
     val repository: String? = null,
     val alias: String? = null,
     val condition: String? = null,
-    @JsonProperty("import-values") val importValues: List<ChartDependencyImport> = emptyList()
+    @param:JsonProperty("import-values") val importValues: List<ChartDependencyImport> = emptyList()
 ) {
     companion object {
         private const val LOCAL_PATH_PREFIX = "file://"
