@@ -15,6 +15,9 @@ Plugin also allows to update Helm dependencies for Helm charts directly from you
 _This requires [installation of Helm](https://helm.sh/docs/intro/install/) on your local workstation._
 
 More information: [Helm values documentation](https://github.com/fstaudt/helm-values#readme)
+
+Plugin is free to use, not free to build.\
+Consider support its development by [buying me a coffee](https://buymeacoffee.com/fstaudt).
 <!-- Plugin description end -->
 
 ## Actions

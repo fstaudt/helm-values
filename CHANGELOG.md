@@ -1,4 +1,15 @@
-## 0.11.1 - Aug 24, 2025
+## 0.12.0 - Apr 10, 2026
+
+- :sparkles: (intellij) support IJ 2026.1
+- :sparkles: (intellij) drop support for IJ 2024.3
+- :construction_worker: bump Gradle to 9.4.1
+
+**BREAKING CHANGES**:
+
+- :boom: (intellij) IntelliJ IDEA 2024.3 is no more supported.\
+  Extension is only available for IntelliJ IDEA 2025.1 and above.
+
+## 0.11.1 - Dec 06, 2025
 
 - :sparkles: (intellij) support IJ 2025.3
 - :construction_worker: bump Gradle to 9.1.0
