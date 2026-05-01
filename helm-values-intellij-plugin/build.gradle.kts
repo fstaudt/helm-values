@@ -35,7 +35,7 @@ dependencies {
     api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
-    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
     intellijPlatform {
         intellijIdeaCommunity(intellijPlatformVersion)
         bundledModule("com.intellij.modules.json")
