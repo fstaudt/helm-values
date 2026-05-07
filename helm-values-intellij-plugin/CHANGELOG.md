@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.1 - May 7, 2026
+
+### 🐛 Fixed
+
+- fix unresolved references in downloaded JSON schemas
+  ([#208](https://github.com/fstaudt/helm-values/issues/208))
+- fix unresolved references in extracted JSON schemas
+  ([#208](https://github.com/fstaudt/helm-values/issues/208))
+- fix unresolved references in local JSON schemas
+  ([#208](https://github.com/fstaudt/helm-values/issues/208))
+
 ## 0.12.0 - Apr 10, 2026
 
 ### ✨ New
