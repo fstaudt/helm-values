@@ -52,6 +52,7 @@ fun TestProject.initExtractedHelmDependency(
     schema: String? = """
     {
       "$ID": "$dependencyPath/$HELM_SCHEMA_FILE",
+      "title": "$dependencyPath/$HELM_SCHEMA_FILE",
       "properties": {
         "global": {}
       }

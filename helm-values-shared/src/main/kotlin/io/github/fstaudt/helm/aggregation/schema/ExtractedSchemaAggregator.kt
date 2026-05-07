@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.NEW_LINE
 import io.github.fstaudt.helm.Mappers.chartMapper
@@ -111,6 +112,7 @@ class ExtractedSchemaAggregator(
         val schema = File(schemaDir, HELM_SCHEMA_FILE).toObjectNode()
         schema.updateReferencesFor(listOf(schemaPath.toInternalRefMapping()))
         schema.removeAdditionalAndUnevaluatedProperties()
+        schema.remove(ID)
         schemaNode.setAll<JsonNode>(schema)
     }
 

@@ -771,7 +771,7 @@ internal class JsonSchemaAggregatorTest {
             it.node(EMBEDDED_SCHEMA).isObject.containsOnlyKeys(REF)
             it.node("global.allOf[0].$REF").isEqualTo("$extractedSchemaFile/properties/global")
         })
-        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
     }
 
@@ -806,7 +806,7 @@ internal class JsonSchemaAggregatorTest {
                 it.node("global.allOf[1].title").isString.startsWith(GLOBAL_VALUES_TITLE)
             }
         )
-        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
     }
 
@@ -835,7 +835,7 @@ internal class JsonSchemaAggregatorTest {
                 it.node("$EMBEDDED_SUB_SCHEMA.properties.$EMBEDDED_SCHEMA").isObject.containsOnlyKeys(REF)
             }
         )
-        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
     }
 
@@ -875,9 +875,9 @@ internal class JsonSchemaAggregatorTest {
             }
         )
         assertThatJson(json).node("$DEFS.$EXTRACTS").and({
-            it.node("$EMBEDDED_SUB_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$ID")
+            it.node("$EMBEDDED_SUB_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.title")
                 .isEqualTo("$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE")
-            it.node("$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$ID")
+            it.node("$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.title")
                 .isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
         })
     }
@@ -896,6 +896,7 @@ internal class JsonSchemaAggregatorTest {
             schema = """
                 {
                   "$ID": "$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE",
+                  "title": "$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE",
                   "$ADDITIONAL_PROPERTIES": false,
                   "$UNEVALUATED_PROPERTIES": false,
                   "properties": {
@@ -910,6 +911,7 @@ internal class JsonSchemaAggregatorTest {
             schema = """
                 {
                   "$ID": "$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
+                  "title": "$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
                   "$ADDITIONAL_PROPERTIES": false,
                   "$UNEVALUATED_PROPERTIES": false,
                   "properties": {
@@ -923,14 +925,14 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("$DEFS.$EXTRACTS").and({
             it.node("$EMBEDDED_SUB_SCHEMA.${HELM_SCHEMA_FILE.escaped()}").and({
-                it.node(ID).isEqualTo("$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE")
                 it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
                 it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
                 it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
                 it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
             it.node("$EMBEDDED_SUB_SCHEMA.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}").and({
-                it.node(ID).isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
                 it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
                 it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
                 it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
@@ -948,14 +950,15 @@ internal class JsonSchemaAggregatorTest {
             chartDependencies = null,
             schema = """
                 {
-                  "$ID": "fallback"
+                  "$ID": "fallback",
+                  "title": "fallback"
                 }
             """.trimIndent(),
             values = null)
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.$EMBEDDED_SCHEMA.$REF")
             .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
-        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("fallback")
     }
 
@@ -968,7 +971,7 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.alias.$REF")
             .isEqualTo("#/$DEFS/$EXTRACTS/alias/$HELM_SCHEMA_FILE")
-        assertThatJson(json).node("$DEFS.$EXTRACTS.alias.${HELM_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.alias.${HELM_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
         assertThatJson(json).node("properties.global.allOf[0].$REF")
             .isEqualTo("#/$DEFS/$EXTRACTS/alias/$HELM_SCHEMA_FILE/properties/global")
@@ -990,7 +993,7 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.$EMBEDDED_SUB_SCHEMA.properties.alias.$REF")
             .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SUB_SCHEMA/alias/$HELM_SCHEMA_FILE")
-        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SUB_SCHEMA.alias.${HELM_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SUB_SCHEMA.alias.${HELM_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$EMBEDDED_SUB_SCHEMA/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
         assertThatJson(json).node("properties.global.allOf[0].$REF")
             .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SUB_SCHEMA/$HELM_SCHEMA_FILE/properties/global")
@@ -1009,7 +1012,7 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("properties.$EMBEDDED_SCHEMA.$REF")
             .isEqualTo("#/$DEFS/$EXTRACTS/$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
-        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
     }
 
@@ -1051,6 +1054,7 @@ internal class JsonSchemaAggregatorTest {
         testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA, schema = """
             {
               "$ID": "$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
+              "title": "$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
               "properties": {
                 "child": {
                   "properties": {
@@ -1069,7 +1073,7 @@ internal class JsonSchemaAggregatorTest {
             it.node("imported.$REF").isEqualTo("$extractedSchemaFile/properties/child")
         })
         assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}").and({
-            it.node(ID).isEqualTo("$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
+            it.node("title").isEqualTo("$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE")
             it.node("properties").isObject.containsOnlyKeys("child")
         })
     }
@@ -1479,6 +1483,27 @@ internal class JsonSchemaAggregatorTest {
                 it.isObject.doesNotContainKey(ID)
             })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey(ID)
+            })
+    }
+
+    @Test
+    fun `aggregate should remove id from extracted JSON schemas to prevent base URI redefinition`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_SCHEMA, EMBEDDED_VERSION, THIRDPARTY)
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_SCHEMA,
+            schema = """
+                {
+                  "$ID": "$EMBEDDED_SCHEMA/$HELM_SCHEMA_FILE",
+                  "properties": {
+                    "global": {}
+                  }
+                }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}")
             .and({
                 it.isObject.doesNotContainKey(ID)
             })
