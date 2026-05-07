@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.HELM_SCHEMA_FILE
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.JsonSchemaConstants.VALUES_SCHEMA_FILE
 import io.github.fstaudt.helm.ObjectNodeExtensions.allOf
@@ -40,6 +41,7 @@ class LocalSchemaAggregator(private val chartDir: File, private val schemaLocato
             val schema = it.toObjectNode()
             schema.updateReferencesFor(listOf(RefMapping("#", schemaPath)))
             schema.removeAdditionalAndUnevaluatedProperties()
+            schema.remove(ID)
             schemaNode.setAll<JsonNode>(schema)
         }
     }
@@ -58,7 +60,7 @@ class LocalSchemaAggregator(private val chartDir: File, private val schemaLocato
         return takeIf { it.isStoredLocally() }?.let {
             RefMapping(
                 "../../$name/${sanitizedVersion()}/$VALUES_SCHEMA_FILE",
-                "#/$DEFS/local/$name/$AGGREGATED_SCHEMA_FILE")
+                "#/$DEFS/$LOCAL/$name/$AGGREGATED_SCHEMA_FILE")
         }
     }
 
@@ -68,6 +70,7 @@ class LocalSchemaAggregator(private val chartDir: File, private val schemaLocato
         val schema = schemaFile.toObjectNode()
         schema.updateReferencesFor(listOf(RefMapping("#", schemaPath)))
         schema.removeAdditionalAndUnevaluatedProperties()
+        schema.remove(ID)
         schemaNode.setAll<JsonNode>(schema)
     }
 }

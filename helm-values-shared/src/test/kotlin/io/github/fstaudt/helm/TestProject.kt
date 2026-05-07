@@ -35,6 +35,7 @@ fun TestProject.initLocalSchema(
     schemaContent: String = """
         {
           "$ID": "$path/$schemaFile",
+          "title": "$path/$schemaFile",
           "properties": {
             "global": {}
           }

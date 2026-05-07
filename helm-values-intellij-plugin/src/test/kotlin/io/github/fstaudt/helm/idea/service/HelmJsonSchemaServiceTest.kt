@@ -133,7 +133,8 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
         File(project.baseDir(), HELM_SCHEMA_FILE).writeText(
             """
             {
-              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE"
+              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE",
+              "title": "$CHART_NAME/$HELM_SCHEMA_FILE"
             }
             """.trimIndent()
         )
@@ -141,7 +142,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
                 it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-                it.node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.$ID")
+                it.node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.title")
                     .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
@@ -154,7 +155,8 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
         File(subdir, HELM_SCHEMA_FILE).writeText(
             """
             {
-              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE"
+              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE",
+              "title": "$CHART_NAME/$HELM_SCHEMA_FILE"
             }
             """.trimIndent()
         )
@@ -162,7 +164,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
         assertThatJsonFile(File(project.baseDir(), "$JSON_SCHEMAS_DIR/$CHART_NAME/$AGGREGATED_SCHEMA_FILE")).isFile
             .hasContent().and({
                 it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-                it.node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.$ID")
+                it.node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}.title")
                     .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
             })
     }
@@ -184,8 +186,8 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
             .hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.$REF")
                     .isEqualTo("#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
-                    .isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
+                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.title")
+                    .isEqualTo("Configuration for chart $EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
             })
     }
 
@@ -244,8 +246,8 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
             .hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.$REF")
                     .isEqualTo("#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
-                    .isEqualTo("$BASE_URI/$EXTERNAL_SCHEMA/$CHART_VERSION/$AGGREGATED_SCHEMA_FILE")
+                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.title")
+                    .isEqualTo("Configuration for chart $EXTERNAL_SCHEMA:$EXTERNAL_VERSION")
             })
     }
 
@@ -265,7 +267,8 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
             File(it, AGGREGATED_SCHEMA_FILE).writeText(
                 """
                 {
-                  "$ID": "$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
+                  "$ID": "$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
+                  "title": "$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE"
                 }
                 """.trimIndent()
             )
@@ -275,7 +278,7 @@ class HelmJsonSchemaServiceTest : HeavyPlatformTestCase() {
             .hasContent().and({
                 it.node("properties.$EXTERNAL_SCHEMA.$REF")
                     .isEqualTo("#/$DEFS/local/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
-                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.$ID")
+                it.node("$DEFS.local.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}.title")
                     .isEqualTo("$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             })
     }

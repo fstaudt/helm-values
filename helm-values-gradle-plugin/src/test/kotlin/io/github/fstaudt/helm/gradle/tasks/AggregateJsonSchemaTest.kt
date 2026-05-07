@@ -146,7 +146,8 @@ class AggregateJsonSchemaTest {
         File(testProject, HELM_SCHEMA_FILE).writeText(
             """
             {
-              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE"
+              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE",
+              "title": "$CHART_NAME/$HELM_SCHEMA_FILE"
             }
             """.trimIndent())
         testProject.runTask(AGGREGATE_JSON_SCHEMA).also {
@@ -154,7 +155,7 @@ class AggregateJsonSchemaTest {
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
             it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-            it.node("$DEFS.local.${HELM_SCHEMA_FILE.escaped()}.$ID")
+            it.node("$DEFS.local.${HELM_SCHEMA_FILE.escaped()}.title")
                 .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }
@@ -167,7 +168,8 @@ class AggregateJsonSchemaTest {
         File(sourcesDir, HELM_SCHEMA_FILE).writeText(
             """
             {
-              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE"
+              "$ID": "$CHART_NAME/$HELM_SCHEMA_FILE",
+              "title": "$CHART_NAME/$HELM_SCHEMA_FILE"
             }
             """.trimIndent())
         testProject.initBuildFile {
@@ -184,7 +186,7 @@ class AggregateJsonSchemaTest {
         }
         assertThatJsonFile(aggregatedSchemaFile).isFile.hasContent().and({
             it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE")
-            it.node("$DEFS.local.${HELM_SCHEMA_FILE.escaped()}.$ID")
+            it.node("$DEFS.local.${HELM_SCHEMA_FILE.escaped()}.title")
                 .isEqualTo("$CHART_NAME/$HELM_SCHEMA_FILE")
         })
     }

@@ -108,7 +108,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}")
             .and({
-                it.node(ID).isEqualTo("./$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("./$HELM_SCHEMA_FILE")
             })
     }
 
@@ -118,6 +118,7 @@ internal class JsonSchemaAggregatorTest {
             schemaContent = """
                 {
                   "$ID": "./$HELM_SCHEMA_FILE",
+                  "title": "./$HELM_SCHEMA_FILE",
                   "allOf": [
                     {
                       "$REF": "#/ref"
@@ -130,7 +131,7 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}")
             .and({
-                it.node(ID).isEqualTo("./$HELM_SCHEMA_FILE")
+                it.node("title").isEqualTo("./$HELM_SCHEMA_FILE")
                 it.node("allOf[0].$REF").isEqualTo("#/$DEFS/$LOCAL/$HELM_SCHEMA_FILE/ref")
             })
     }
@@ -1280,7 +1281,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$LOCAL.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
             .and({
-                it.node(ID).isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("title").isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             })
     }
 
@@ -1294,6 +1295,7 @@ internal class JsonSchemaAggregatorTest {
         testProject.initLocalSchema("sub/$EXTERNAL_SCHEMA", AGGREGATED_SCHEMA_FILE, schemaContent = """
             {
               "$ID": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
+              "title": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
               "properties": {
                 "child": {
                   "properties": {
@@ -1312,7 +1314,7 @@ internal class JsonSchemaAggregatorTest {
             it.node("parent.$REF").isEqualTo("$subChartAggregatedSchemaFile/properties/child")
         })
         assertThatJson(json).node("$DEFS.$LOCAL.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}").and({
-            it.node(ID).isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+            it.node("title").isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             it.node("properties").isObject.containsOnlyKeys("child")
         })
     }
@@ -1332,7 +1334,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$LOCAL.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
             .and({
-                it.node(ID).isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("title").isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
             })
     }
 
@@ -1345,6 +1347,7 @@ internal class JsonSchemaAggregatorTest {
             schemaContent = """
                 {
                   "$ID": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
+                  "title": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
                   "allOf": [
                     {
                       "$REF": "#/ref"
@@ -1360,7 +1363,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$LOCAL.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
             .and({
-                it.node(ID).isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
+                it.node("title").isEqualTo("sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE")
                 it.node("allOf[0].$REF").isEqualTo("$subChartAggregatedSchemaFile/ref")
             })
     }
@@ -1504,6 +1507,46 @@ internal class JsonSchemaAggregatorTest {
             """.trimIndent())
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("$DEFS.$EXTRACTS.$EMBEDDED_SCHEMA.${HELM_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey(ID)
+            })
+    }
+
+    @Test
+    fun `aggregate should remove id from local JSON schemas to prevent base URI redefinition`() {
+        testProject.initLocalSchema(".",
+            schemaContent = """
+                {
+                  "$ID": "./$HELM_SCHEMA_FILE",
+                  "properties": {
+                    "global": {}
+                  }
+                }
+            """.trimIndent())
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION)
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.$LOCAL.${HELM_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey(ID)
+            })
+    }
+
+    @Test
+    fun `aggregate should remove id from locally stored dependency schemas to prevent base URI redefinition`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, "file://sub/$EXTERNAL_SCHEMA")
+        ))
+        testProject.initLocalSchema("sub/$EXTERNAL_SCHEMA", AGGREGATED_SCHEMA_FILE,
+            schemaContent = """
+                {
+                  "$ID": "sub/$EXTERNAL_SCHEMA/$AGGREGATED_SCHEMA_FILE",
+                  "properties": {
+                    "global": {}
+                  }
+                }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.$LOCAL.$EXTERNAL_SCHEMA.${AGGREGATED_SCHEMA_FILE.escaped()}")
             .and({
                 it.isObject.doesNotContainKey(ID)
             })
