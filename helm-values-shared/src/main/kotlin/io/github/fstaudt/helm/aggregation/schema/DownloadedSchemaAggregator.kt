@@ -3,6 +3,7 @@ package io.github.fstaudt.helm.aggregation.schema
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.ID
 import io.github.fstaudt.helm.JsonSchemaConstants.Keywords.REF
 import io.github.fstaudt.helm.ObjectNodeExtensions.isInternalReference
 import io.github.fstaudt.helm.ObjectNodeExtensions.objectNode
@@ -64,6 +65,7 @@ class DownloadedSchemaAggregator(
                 }
             }
             schema.removeAdditionalAndUnevaluatedProperties()
+            schema.remove(ID)
             schemaNode.setAll<JsonNode>(schema)
         }
         return schemaPath

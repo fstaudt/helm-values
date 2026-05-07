@@ -80,6 +80,7 @@ fun TestProject.initDownloadedSchemas(
     valuesSchemaContent: String = """
         {
           "$ID": "$dependencyPath/$valuesSchemaFile",
+          "title": "$dependencyPath/$valuesSchemaFile",
           "properties": {
             "global": {}
           }

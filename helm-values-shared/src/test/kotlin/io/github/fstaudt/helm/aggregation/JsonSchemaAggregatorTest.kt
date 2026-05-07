@@ -185,7 +185,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
-                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
             })
     }
 
@@ -217,7 +217,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
-                it.node("${VALUES_SCHEMA.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH/$VALUES_SCHEMA")
+                it.node("${VALUES_SCHEMA.escaped()}.title").isEqualTo("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH/$VALUES_SCHEMA")
             })
     }
 
@@ -230,14 +230,15 @@ internal class JsonSchemaAggregatorTest {
             valuesSchemaContent = """
                 {
                     "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+                    "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
                     "$REF": "../../$EXTERNAL_SUB_VALUES_SCHEMA_PATH"
                 }
             """.trimIndent())
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SUB_SCHEMAS_PATH")
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
-        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH")
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.$REF")
             .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SUB_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
@@ -252,6 +253,7 @@ internal class JsonSchemaAggregatorTest {
             valuesSchemaContent = """
                 {
                   "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+                  "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
                   "properties": {
                     "global": {
                       "allOf": [
@@ -271,6 +273,7 @@ internal class JsonSchemaAggregatorTest {
             valuesSchemaContent = """
                 {
                   "$ID": "$APPS_PATH/$EXTERNAL_SUB_SCHEMAS_PATH/$VALUES_SCHEMA_FILE",
+                  "title": "$APPS_PATH/$EXTERNAL_SUB_SCHEMAS_PATH/$VALUES_SCHEMA_FILE",
                   "properties": {
                     "global": {
                       "$ADDITIONAL_PROPERTIES": false,
@@ -282,7 +285,7 @@ internal class JsonSchemaAggregatorTest {
         val json = aggregator.aggregate(chart, null, null)
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
             .and({
-                it.node(ID).isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
                 it.isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
                 it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
                 it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
@@ -290,7 +293,7 @@ internal class JsonSchemaAggregatorTest {
             })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
             .and({
-                it.node(ID).isEqualTo("$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH")
+                it.node("title").isEqualTo("$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH")
                 it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
                 it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
             })
@@ -305,6 +308,7 @@ internal class JsonSchemaAggregatorTest {
             valuesSchemaContent = """
                 {
                     "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+                    "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
                     "$REF": "../../$EXTERNAL_SUB_VALUES_SCHEMA_PATH#/anchor"
                 }
             """.trimIndent())
@@ -312,15 +316,16 @@ internal class JsonSchemaAggregatorTest {
             valuesSchemaContent = """
                 {
                     "$ID": "$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH",
+                    "title": "$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH",
                     "anchor": {}
                 }
             """.trimIndent())
         val json = aggregator.aggregate(chart, null, null)
-        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.$REF")
             .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH/anchor")
-        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.$ID")
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}.title")
             .isEqualTo("$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH")
     }
 
@@ -333,6 +338,7 @@ internal class JsonSchemaAggregatorTest {
             valuesSchemaContent = """
               {
                 "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+                "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
                 "refs": {
                   "downloaded": {
                     "$REF": "../../$EXTERNAL_SUB_VALUES_SCHEMA_PATH"
@@ -348,6 +354,7 @@ internal class JsonSchemaAggregatorTest {
             valuesSchemaContent = """
               {
                 "$ID": "$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH",
+                "title": "$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH",
                 "refs": {
                   "$REF": "#/internal"
                 },
@@ -359,8 +366,8 @@ internal class JsonSchemaAggregatorTest {
             "$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}"
         val subSchemaNode =
             "$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}"
-        assertThatJson(json).node("$schemaNode.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
-        assertThatJson(json).node("$subSchemaNode.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH")
+        assertThatJson(json).node("$schemaNode.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+        assertThatJson(json).node("$subSchemaNode.title").isEqualTo("$APPS_PATH/$EXTERNAL_SUB_VALUES_SCHEMA_PATH")
         assertThatJson(json).node("$schemaNode.refs.downloaded.$REF")
             .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SUB_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
         assertThatJson(json).node("$schemaNode.refs.internal.$REF")
@@ -378,6 +385,7 @@ internal class JsonSchemaAggregatorTest {
             valuesSchemaContent = """
               {
                 "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+                "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
                 "properties": {
                   "global": {
                     "refs": {
@@ -394,7 +402,7 @@ internal class JsonSchemaAggregatorTest {
             .isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE/properties/global")
         val schemaNode =
             "$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}"
-        assertThatJson(json).node("$schemaNode.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+        assertThatJson(json).node("$schemaNode.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
         assertThatJson(json).node("$schemaNode.properties.global.refs.invalid").and({
             it.isObject.doesNotContainKey(REF)
             it.node("_comment").isEqualTo("removed invalid $REF ../\\\"invalid")
@@ -526,6 +534,7 @@ internal class JsonSchemaAggregatorTest {
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
             {
               "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
               "properties": {
                 "imported": {
                   "properties": {
@@ -546,7 +555,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
-                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
                 it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("imported")
             })
     }
@@ -563,6 +572,7 @@ internal class JsonSchemaAggregatorTest {
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
             {
               "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
               "properties": {
                 "child": {
                   "properties": {
@@ -596,7 +606,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
-                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
                 it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("child", "exports")
                 it.node("${VALUES_SCHEMA_FILE.escaped()}.properties.exports.properties").isObject.containsOnlyKeys("from-child")
             })
@@ -611,6 +621,7 @@ internal class JsonSchemaAggregatorTest {
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
             {
               "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
               "properties": {
                 "imported": {
                   "properties": {
@@ -635,7 +646,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
-                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
                 it.node("${VALUES_SCHEMA_FILE.escaped()}.properties.imported.properties").isObject.containsOnlyKeys("sub")
             })
     }
@@ -649,6 +660,7 @@ internal class JsonSchemaAggregatorTest {
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
             {
               "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
               "properties": {
                 "imported": {
                   "properties": {
@@ -669,7 +681,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
-                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
                 it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("imported")
             })
     }
@@ -684,6 +696,7 @@ internal class JsonSchemaAggregatorTest {
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
             {
               "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
               "properties": {
                 "imported": {
                   "properties": {
@@ -705,7 +718,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
-                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
                 it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("imported")
             })
     }
@@ -719,6 +732,7 @@ internal class JsonSchemaAggregatorTest {
         testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH", valuesSchemaContent = """
             {
               "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+              "title": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
               "properties": {
                 "imported": {
                   "properties": {
@@ -739,7 +753,7 @@ internal class JsonSchemaAggregatorTest {
         })
         assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}")
             .and({
-                it.node("${VALUES_SCHEMA_FILE.escaped()}.$ID").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
+                it.node("${VALUES_SCHEMA_FILE.escaped()}.title").isEqualTo("$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH")
                 it.node("${VALUES_SCHEMA_FILE.escaped()}.properties").isObject.containsOnlyKeys("imported")
             })
     }
@@ -1386,6 +1400,87 @@ internal class JsonSchemaAggregatorTest {
                 it.isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
                 it.node("properties.global").isObject.doesNotContainKey(ADDITIONAL_PROPERTIES)
                 it.node("properties.global").isObject.doesNotContainKey(UNEVALUATED_PROPERTIES)
+            })
+    }
+
+    @Test
+    fun `aggregate should preserve all properties of downloaded schema without id`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
+        ))
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH",
+            valuesSchemaContent = """
+                {
+                    "$REF": "../../$EXTERNAL_SUB_VALUES_SCHEMA_PATH",
+                    "title": "External schema title",
+                    "description": "External schema description",
+                    "type": "object",
+                    "properties": {
+                        "global": {
+                            "type": "object",
+                            "description": "Global values"
+                        },
+                        "config": {
+                            "type": "string"
+                        }
+                    }
+                }
+            """.trimIndent())
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SUB_SCHEMAS_PATH",
+            valuesSchemaContent = """
+                {
+                    "title": "Sub schema title",
+                    "type": "object",
+                    "properties": {
+                        "global": {}
+                    }
+                }
+            """.trimIndent())
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey(ID)
+                it.node("title").isEqualTo("External schema title")
+                it.node("description").isEqualTo("External schema description")
+                it.node("type").isEqualTo("object")
+                it.node("properties.global.type").isEqualTo("object")
+                it.node("properties.global.description").isEqualTo("Global values")
+                it.node("properties.config.type").isEqualTo("string")
+                it.node(REF).isEqualTo("#/$DEFS/$DOWNLOADS/$APPS_PATH/$EXTERNAL_SUB_SCHEMA/$EXTERNAL_VERSION/$VALUES_SCHEMA_FILE")
+            })
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey(ID)
+                it.node("title").isEqualTo("Sub schema title")
+                it.node("type").isEqualTo("object")
+                it.node("properties.global").isObject
+            })
+    }
+
+    @Test
+    fun `aggregate should remove id from downloaded JSON schemas to prevent base URI redefinition`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EXTERNAL_SCHEMA, EXTERNAL_VERSION, APPS),
+        ))
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SCHEMAS_PATH",
+            valuesSchemaContent = """
+                {
+                    "$ID": "$APPS_PATH/$EXTERNAL_VALUES_SCHEMA_PATH",
+                    "$REF": "../../$EXTERNAL_SUB_VALUES_SCHEMA_PATH",
+                    "properties": {
+                        "global": {}
+                    }
+                }
+            """.trimIndent())
+        testProject.initDownloadedSchemas("$APPS_PATH/$EXTERNAL_SUB_SCHEMAS_PATH")
+        val json = aggregator.aggregate(chart, null, null)
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey(ID)
+            })
+        assertThatJson(json).node("$DEFS.$DOWNLOADS.$APPS_PATH.$EXTERNAL_SUB_SCHEMA.${EXTERNAL_VERSION.escaped()}.${VALUES_SCHEMA_FILE.escaped()}")
+            .and({
+                it.isObject.doesNotContainKey(ID)
             })
     }
 
