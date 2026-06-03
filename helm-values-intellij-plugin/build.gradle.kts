@@ -35,7 +35,7 @@ dependencies {
     api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
-    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.0")
     intellijPlatform {
         intellijIdeaCommunity(intellijPlatformVersion)
         bundledModule("com.intellij.modules.json")
@@ -43,7 +43,7 @@ dependencies {
         zipSigner()
         testFramework(Platform)
     }
-    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("io.mockk:mockk:1.14.11")
     testImplementation("junit:junit:4.13.2")
     testImplementation(projects.helmValuesTest) {
         exclude("junit-jupiter-api")
