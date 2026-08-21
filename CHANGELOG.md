@@ -1,3 +1,9 @@
+## 0.12.2 - May 07, 2026
+
+- :sparkles: (intellij) support IJ 2026.2
+  ([#212](https://github.com/fstaudt/helm-values/issues/212))
+- :construction_worker: bump Gradle to 9.7.1
+
 ## 0.12.1 - May 07, 2026
 
 - :bug: fix unresolved references in downloaded JSON schemas

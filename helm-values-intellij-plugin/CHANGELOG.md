@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.2 - Aug 21, 2026
+
+### ✨ New
+
+- support IntelliJ IDEA 2026.2
+  ([#212](https://github.com/fstaudt/helm-values/issues/212))
+  
 ## 0.12.1 - May 7, 2026
 
 ### 🐛 Fixed
