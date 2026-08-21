@@ -10,8 +10,8 @@ plugins {
     kotlin("jvm") version embeddedKotlinVersion apply false
     id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
-val sonatypeUsername: String? by project
-val sonatypePassword: String? by project
+val sonatypeUsername = providers.gradleProperty("sonatypeUsername").orNull
+val sonatypePassword = providers.gradleProperty("sonatypePassword").orNull
 nexusPublishing {
     repositories {
         sonatype {
@@ -22,7 +22,7 @@ nexusPublishing {
         }
     }
 }
-val gradleWrapperVersion: String by project
+val gradleWrapperVersion: String = providers.gradleProperty("gradleWrapperVersion").get()
 tasks {
     wrapper {
         gradleVersion = gradleWrapperVersion

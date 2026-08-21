@@ -3,12 +3,12 @@ import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform
 
-val intellijPluginName: String by project
+val intellijPluginName: String = providers.gradleProperty("intellijPluginName").get()
 val intellijPluginVersion = "$version"
-val intellijPluginSinceBuild: String by project
-val intellijPluginUntilBuild: String by project
-val intellijPlatformVersion: String by project
-val intellijPlatformLatestVersion: String by project
+val intellijPluginSinceBuild: String = providers.gradleProperty("intellijPluginSinceBuild").get()
+val intellijPluginUntilBuild: String = providers.gradleProperty("intellijPluginUntilBuild").get()
+val intellijPlatformVersion: String = providers.gradleProperty("intellijPlatformVersion").get()
+val intellijPlatformLatestVersion: String = providers.gradleProperty("intellijPlatformLatestVersion").get()
 
 plugins {
     // Java support
