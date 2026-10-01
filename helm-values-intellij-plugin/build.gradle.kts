@@ -35,7 +35,7 @@ dependencies {
     api(projects.helmValuesShared) {
         exclude(module = "slf4j-api")
     }
-    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.0")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.3")
     intellijPlatform {
         intellijIdeaCommunity(intellijPlatformVersion)
         bundledModule("com.intellij.modules.json")
@@ -49,7 +49,7 @@ dependencies {
         exclude("junit-jupiter-api")
         exclude("wiremock")
     }
-    testRuntimeOnly("org.yaml:snakeyaml:2.6")
+    testRuntimeOnly("org.yaml:snakeyaml:2.7")
 }
 
 intellijPlatform {
