@@ -23,7 +23,7 @@ jobs:
           docker-images: false
           swap-storage: true
       - name: "Setup Java"
-        uses: actions/setup-java@v6.0.1
+        uses: actions/setup-java@v6.1.0
         with:
           distribution: graalvm
           java-version: 21
@@ -31,12 +31,12 @@ jobs:
       - name: "Setup Gradle wrapper"
         run: chmod +x gradlew
       - name: "Setup Gradle"
-        uses: gradle/actions/setup-gradle@v6.4.0
+        uses: gradle/actions/setup-gradle@v6.4.1
       - name: "Run tests"
         run: ./gradlew check
       - name: "Collect results of failed tests"
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: tests-result
           path: ${{ github.workspace }}/*/build/reports/tests
@@ -72,7 +72,7 @@ jobs:
         run: ./gradlew :helm-values-intellij-plugin:verifyPlugin ${{ steps.intellij_properties.outputs.pluginVerifierConfiguration }} -Pplugin.verifier.home.dir=${{ steps.intellij_properties.outputs.pluginVerifierHomeDir }}
       - name: "Collect IntelliJ plugin verifier results"
         if: ${{ always() }}
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/helm-values-intellij-plugin/build/reports/pluginVerifier
@@ -85,7 +85,7 @@ jobs:
           unzip "$FILENAME.zip" -d content
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
       - name: "Upload IntelliJ plugin artifact"
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: ${{ steps.intellij_artifact.outputs.filename }}
           path: ./helm-values-intellij-plugin/build/distributions/content/*/*
