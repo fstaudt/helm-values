@@ -2,7 +2,6 @@ package io.github.fstaudt.helm.idea.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.github.fge.jsonpatch.JsonPatch
 import com.intellij.openapi.application.ApplicationManager
@@ -11,6 +10,7 @@ import com.intellij.openapi.project.Project
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.HelmDependencyExtractor
 import io.github.fstaudt.helm.HelmDependencyExtractor.Companion.EXTRACTS_DIR
+import io.github.fstaudt.helm.HelmYAMLFactory
 import io.github.fstaudt.helm.JsonSchemaConstants.AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_FILE
 import io.github.fstaudt.helm.JsonSchemaConstants.PATCH_AGGREGATED_SCHEMA_YAML_FILE
@@ -43,7 +43,7 @@ class HelmJsonSchemaService {
         it.enable(INDENT_OUTPUT)
     }
 
-    private val yamlMapper = ObjectMapper(YAMLFactory()).also {
+    private val yamlMapper = ObjectMapper(HelmYAMLFactory()).also {
         it.registerModule(KotlinModule.Builder().build())
     }
 
