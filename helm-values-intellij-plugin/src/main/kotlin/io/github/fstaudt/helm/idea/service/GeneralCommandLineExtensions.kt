@@ -12,11 +12,14 @@ import java.time.temporal.ChronoUnit
 
 private val TIMEOUT = Duration.of(60, ChronoUnit.SECONDS).toMillis()
 
-internal fun GeneralCommandLine.execute(callback: GeneralCommandLineResult.() -> Unit) {
+internal fun GeneralCommandLine.execute(
+    timeout: Long = TIMEOUT,
+    callback: GeneralCommandLineResult.() -> Unit,
+) {
     val processHandler = OSProcessHandler(withRedirectErrorStream(true))
     val processOutputLogger = ProcessOutputLogger().also { processHandler.addProcessListener(it) }
     processHandler.startNotify()
-    val exited = processHandler.waitFor(TIMEOUT)
+    val exited = processHandler.waitFor(timeout)
     callback(GeneralCommandLineResult(processHandler.exitCode, !exited, processOutputLogger.output()))
 }
 
