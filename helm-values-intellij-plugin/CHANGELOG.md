@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.0 - Nov 9, 2026
+
+### ✨ New
+
+- configurable timeout for Helm commands
+  ([#222](https://github.com/fstaudt/helm-values/issues/222))
+- support IntelliJ IDEA 2026.3
+  ([#220](https://github.com/fstaudt/helm-values/issues/220))
+
 ## 0.12.2 - Aug 21, 2026
 
 ### ✨ New

@@ -1,3 +1,11 @@
+## 0.13.0 - Nov 09, 2026
+
+- :sparkles: (intellij) configurable timeout for Helm commands
+  ([#222](https://github.com/fstaudt/helm-values/issues/222))
+- :sparkles: (intellij) support IJ 2026.3
+  ([#220](https://github.com/fstaudt/helm-values/issues/220))
+- :construction_worker: bump Gradle to 9.8.2
+
 ## 0.12.2 - May 07, 2026
 
 - :sparkles: (intellij) support IJ 2026.2
