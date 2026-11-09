@@ -21,6 +21,7 @@ import io.mockk.verify
 import io.mockk.verifyOrder
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
+import java.time.Duration
 import java.time.OffsetDateTime
 
 class HelmServiceTest : HeavyPlatformTestCase() {
@@ -54,9 +55,16 @@ class HelmServiceTest : HeavyPlatformTestCase() {
             anyConstructed<GeneralCommandLine>().withWorkDirectory(project.baseDir())
             anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("repo", "update"))
             anyConstructed<GeneralCommandLine>().createProcess()
-            anyConstructed<OSProcessHandler>().waitFor(any())
+            anyConstructed<OSProcessHandler>().waitFor(Duration.ofMinutes(5).toMillis())
             anyConstructed<OSProcessHandler>().exitCode
         }
+    }
+
+    fun `test - updateRepositories should use configured timeout`() {
+        reset()
+        state.helmTimeoutMinutes = "12"
+        service.updateRepositories(project)
+        verify { anyConstructed<OSProcessHandler>().waitFor(Duration.ofMinutes(12).toMillis()) }
     }
 
     fun `test - updateRepositories should update Helm metadata`() {
@@ -88,9 +96,18 @@ class HelmServiceTest : HeavyPlatformTestCase() {
             anyConstructed<GeneralCommandLine>().withExePath("helm")
             anyConstructed<GeneralCommandLine>().withParameters(*arrayOf("dependency", "update", ".", "--skip-refresh"))
             anyConstructed<GeneralCommandLine>().createProcess()
-            anyConstructed<OSProcessHandler>().waitFor(any())
+            anyConstructed<OSProcessHandler>().waitFor(Duration.ofMinutes(5).toMillis())
             anyConstructed<OSProcessHandler>().exitCode
         }
+    }
+
+    fun `test - updateDependencies should use configured timeout`() {
+        reset()
+        val chartDir = File(project.baseDir(), CHART_NAME)
+        project.initHelmChart(chartDir)
+        state.helmTimeoutMinutes = "12"
+        service.updateDependencies(File(chartDir, HELM_CHART_FILE))
+        verify { anyConstructed<OSProcessHandler>().waitFor(Duration.ofMinutes(12).toMillis()) }
     }
 
     fun `test - updateDependencies should update dependencies for provided chart and its local dependencies`() {

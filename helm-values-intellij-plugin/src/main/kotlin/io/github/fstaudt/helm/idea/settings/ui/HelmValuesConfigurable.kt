@@ -3,6 +3,7 @@ package io.github.fstaudt.helm.idea.settings.ui
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align.Companion.FILL
@@ -14,11 +15,11 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.table.TableModelEditor
 import io.github.fstaudt.helm.idea.HelmValuesBundle.message
 import io.github.fstaudt.helm.idea.HelmValuesSettings
 import io.github.fstaudt.helm.idea.HelmValuesSettings.Companion.HELM_BINARY
+import io.github.fstaudt.helm.idea.HelmValuesSettings.Companion.HELM_TIMEOUT_MINUTES
 import io.github.fstaudt.helm.idea.settings.model.ChartRepository
 import io.github.fstaudt.helm.idea.settings.model.JsonSchemaRepositoryMapping
 import io.github.fstaudt.helm.idea.settings.service.ChartRepositoryService
@@ -71,12 +72,19 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         message("settings.mappings.none")
     ).disableUpDownActions()
     private lateinit var helmBinaryPath: Cell<JBTextField>
+    private lateinit var helmTimeoutMinutes: Cell<JBTextField>
 
     override fun createPanel(): DialogPanel {
         val state = HelmValuesSettings.instance().state
         return panel {
             rowWithTextFieldForProperty(state::helmBinaryPath) { cell ->
                 cell.focused().also { helmBinaryPath = it }
+            }
+            rowWithTextFieldForProperty(state::helmTimeoutMinutes) { cell ->
+                cell.validationOnInput {
+                    error(message("settings.helmTimeoutMinutes.errors.invalid"))
+                        .takeUnless { cell.component.text.isStrictlyPositive() }
+                }.also { helmTimeoutMinutes = it }
             }
             row {
                 cell(chartRepositoriesEditor.createComponent())
@@ -104,9 +112,12 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         return additionalJsonSchemaRepositoryMappingsEditor.model.items.sortedBy { it.name } != additionalJsonSchemaRepositoryMappings()
                 || chartRepositoriesEditor.model.items.sortedBy { it.name } != chartRepositoryService.list()
                 || helmBinaryPath.component.text.trimOrElse(HELM_BINARY) != state.helmBinaryPath
+                || helmTimeoutMinutes.component.text.trimOrElse(HELM_TIMEOUT_MINUTES) != state.helmTimeoutMinutes
     }
 
     override fun apply() {
+        val helmTimeout = helmTimeoutMinutes.component.text.takeIf { it.isStrictlyPositive() }
+            ?: throw ConfigurationException(message("settings.helmTimeoutMinutes.errors.invalid"))
         val state = HelmValuesSettings.instance().state
         val chartRepositoryService = ChartRepositoryService.instance()
         val jsonSchemaRepositoryMappingService = JsonSchemaRepositoryMappingService.instance()
@@ -114,6 +125,7 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         jsonSchemaRepositoryMappingService.update(project, allJsonSchemaRepositoryMappings())
         chartRepositoryService.update(project, chartRepositoriesEditor.model.items)
         state.helmBinaryPath = helmBinaryPath.component.text.trimOrElse(HELM_BINARY)
+        state.helmTimeoutMinutes = helmTimeout
         reset()
     }
 
@@ -125,6 +137,7 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
         chartJsonSchemaRepositoryMappingsViewer.reset(chartRepositories.mapNotNull { it.toJsonSchemaRepositoryMapping() })
         additionalJsonSchemaRepositoryMappingsEditor.reset(additionalJsonSchemaRepositoryMappings())
         helmBinaryPath.component.text = state.helmBinaryPath
+        helmTimeoutMinutes.component.text = state.helmTimeoutMinutes
     }
 
     private fun allJsonSchemaRepositoryMappings(): List<JsonSchemaRepositoryMapping> {
@@ -189,6 +202,8 @@ class HelmValuesConfigurable : BoundSearchableConfigurable(message("name"), "hel
             .comment(message("settings.${prop.name}.comment"))
             .let { textFieldFn(it) }
     }
+
+    private fun String.isStrictlyPositive() = (toIntOrNull()?:0) > 0
 
     private fun String.trimOrElse(default: String) = trim().takeIf { it.isNotEmpty() } ?: default
 }

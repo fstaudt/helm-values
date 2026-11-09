@@ -70,7 +70,7 @@ class HelmService {
             .withWorkDirectory(project.baseDir())
             .withExePath(state.helmBinaryPath)
             .withParameters("repo", "update")
-            .execute {
+            .execute(state.helmTimeoutMillis()) {
                 if (timeout)
                     throw ProcessFailureException("Timeout while updating repositories")
                 if (exitCode != 0)
@@ -100,7 +100,7 @@ class HelmService {
             .withWorkDirectory(chartFile.parentFile)
             .withExePath(state.helmBinaryPath)
             .withParameters("dependency", "update", ".", "--skip-refresh")
-            .execute {
+            .execute(state.helmTimeoutMillis()) {
                 if (timeout)
                     throw ProcessFailureException("Timeout while updating dependencies for chart ${chartFile.parent}")
                 if (exitCode != 0)
