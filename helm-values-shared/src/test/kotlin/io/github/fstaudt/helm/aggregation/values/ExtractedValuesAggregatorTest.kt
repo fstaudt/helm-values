@@ -50,6 +50,24 @@ class ExtractedValuesAggregatorTest {
     }
 
     @Test
+    fun `aggregate should treat unquoted time values as strings`() {
+        val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
+            ChartDependency(EMBEDDED_VALUES, EMBEDDED_VERSION, APPS)
+        ))
+        testProject.initExtractedHelmDependency(EMBEDDED_VALUES, values = """
+            reconciliation:
+              fromTime: 00:00:00.000
+              toTime: 23:59:59.999
+        """.trimIndent())
+
+        val values = aggregator.aggregate(chart)
+        assertThatJson(values).and({
+            it.node("$EMBEDDED_VALUES.reconciliation.fromTime").isEqualTo("00:00:00.000")
+            it.node("$EMBEDDED_VALUES.reconciliation.toTime").isEqualTo("23:59:59.999")
+        })
+    }
+
+    @Test
     fun `aggregate should aggregate values defined at different levels`() {
         val chart = Chart("v2", CHART_NAME, CHART_VERSION, listOf(
             ChartDependency(EMBEDDED_VALUES, EMBEDDED_VERSION, APPS)

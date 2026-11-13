@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PRO
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.github.fstaudt.helm.HelmConstants.HELM_CHART_FILE
 import io.github.fstaudt.helm.HelmConstants.HELM_VALUES_FILE
+import io.github.fstaudt.helm.HelmYAMLFactory
 import io.github.fstaudt.helm.Mappers.chartMapper
 import io.github.fstaudt.helm.ObjectNodeExtensions.global
 import io.github.fstaudt.helm.ObjectNodeExtensions.globalOrNull
@@ -19,7 +19,7 @@ import java.io.File
 class ExtractedValuesAggregator(private val extractsDir: File) {
 
     companion object {
-        private val yamlMapper = ObjectMapper(YAMLFactory()).also {
+        private val yamlMapper = ObjectMapper(HelmYAMLFactory()).also {
             it.registerModule(KotlinModule.Builder().build())
             it.configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
         }
